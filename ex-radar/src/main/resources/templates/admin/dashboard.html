@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>管理者ダッシュボード | EXレーダー</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a>
+      <nav>
+        <a href="/experiences">体験談</a>
+        <a href="/mypage">マイページ</a>
+        <form th:action="@{/logout}" method="post">
+          <button type="submit">ログアウト</button>
+        </form>
+      </nav>
+    </header>
+    <main class="page admin-page">
+      <div class="page-heading">
+        <p class="eyebrow">ADMIN CONSOLE</p>
+        <h1>管理者ダッシュボード</h1>
+        <p>サービスの状態とアカウントを管理します。</p>
+      </div>
+      <p class="success" th:if="${success}" th:text="${success}"></p>
+      <p class="error" th:if="${error}" th:text="${error}"></p>
+      <section class="admin-stats" aria-label="サービス統計">
+        <a class="admin-stat panel reveal" th:href="@{/admin(filter='all')}" th:classappend="${filter == 'all'} ? ' is-selected' : ''">
+          <span>総登録者数</span><strong th:text="${userCount}">0</strong><small>登録済みアカウント</small>
+        </a>
+        <article class="admin-stat panel reveal">
+          <span>公開投稿数</span><strong th:text="${publishedPostCount}">0</strong><small>公開中の体験談</small>
+        </article>
+        <a class="admin-stat panel reveal" th:href="@{/admin(filter='admins')}" th:classappend="${filter == 'admins'} ? ' is-selected' : ''">
+          <span>管理者数</span><strong th:text="${adminCount}">0</strong><small>運用権限を持つアカウント</small>
+        </a>
+        <a class="admin-stat panel reveal" th:href="@{/admin(filter='suspended')}" th:classappend="${filter == 'suspended'} ? ' is-selected' : ''">
+          <span>停止中</span><strong th:text="${suspendedUserCount}">0</strong><small>ログインできないアカウント</small>
+        </a>
+      </section>
+      <section class="panel reveal admin-users">
+        <div class="section-heading">
+          <div>
+            <h2>アカウント管理</h2>
+            <p th:text="${filter == 'admins' ? '管理者アカウントだけを表示しています。' : filter == 'suspended' ? '停止中のアカウントだけを表示しています。' : '権限とログイン状態を変更できます。'}">権限とログイン状態を変更できます。</p>
+          </div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>ユーザー</th><th>登録日</th><th>権限</th><th>状態</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr th:each="u : ${users}" class="admin-user-row" th:attr="data-url=@{/admin/users/{id}(id=${u.id})}" tabindex="0">
+                <td><a class="admin-user-link" th:href="@{/admin/users/{id}(id=${u.id})}"><strong th:text="${u.displayName}">ユーザー</strong><small th:text="${u.email}">email</small></a></td>
+                <td th:text="${#temporals.format(u.createdAt, 'yyyy/MM/dd')}">2026/01/01</td>
+                <td><span class="role-badge" th:classappend="${u.role.name() == 'ADMIN'} ? ' is-admin' : ''" th:text="${u.role.name() == 'ADMIN' ? '管理者' : '一般ユーザー'}">一般ユーザー</span></td>
+                <td><span th:class="${u.suspended ? 'status-badge is-stopped' : 'status-badge'}" th:text="${u.suspended ? '停止中' : '利用中'}">利用中</span></td>
+                <td class="admin-actions">
+                  <span th:if="${u.email.equalsIgnoreCase(currentEmail)}" class="current-user">現在のアカウント</span>
+                  <th:block th:unless="${u.email.equalsIgnoreCase(currentEmail)}">
+                    <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post" onclick="event.stopPropagation()">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                      <input type="hidden" name="role" th:value="${u.role.name() == 'ADMIN' ? 'USER' : 'ADMIN'}" />
+                      <button class="button button-secondary" type="submit" th:text="${u.role.name() == 'ADMIN' ? '一般ユーザーに戻す' : '管理者にする'}">管理者にする</button>
+                    </form>
+                    <form th:action="@{/admin/users/{id}/suspension(id=${u.id})}" method="post" onclick="event.stopPropagation()">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                      <input type="hidden" name="suspended" th:value="${!u.suspended}" />
+                      <button class="button button-danger" type="submit" th:text="${u.suspended ? '利用可能に戻す' : '利用停止'}">利用停止</button>
+                    </form>
+                  </th:block>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel reveal admin-posts" th:if="${selectedUser != null}">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ACCOUNT DETAILS</p>
+            <h2 th:text="|${selectedUser.displayName}さんの投稿|">ユーザーの投稿</h2>
+            <p th:text="${selectedUser.email}">email</p>
+          </div>
+          <a href="/admin">一覧へ戻る</a>
+        </div>
+        <p th:if="${#lists.isEmpty(selectedUserPosts)}">投稿はありません。</p>
+        <div class="admin-post-list" th:unless="${#lists.isEmpty(selectedUserPosts)}">
+          <article class="admin-post" th:each="post : ${selectedUserPosts}">
+            <h3 th:text="${post.title}">投稿タイトル</h3>
+            <p th:text="${post.learned ?: post.lesson ?: post.situationBefore}">投稿内容</p>
+            <a th:href="@{/experiences/{id}(id=${post.id})}">投稿の詳細を見る</a>
+          </article>
+        </div>
+      </section>
+    </main>
+    <script>
+      document.querySelectorAll('.admin-user-row').forEach(function (row) {
+        row.addEventListener('click', function (event) {
+          if (event.target.closest('a, button, form')) return;
+          window.location.href = row.dataset.url;
+        });
+        row.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') window.location.href = row.dataset.url;
+        });
+      });
+    </script>
+  </body>
+</html>

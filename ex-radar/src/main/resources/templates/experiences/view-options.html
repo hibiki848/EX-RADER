@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>表示方法を選択 | EXレーダー</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <main class="page view-options-page">
+      <p class="eyebrow">READ EXPERIENCE</p>
+      <h1 th:text="${post.title}">体験談のタイトル</h1>
+      <p th:text="${post.author.displayName} + 'さんの体験談'">投稿者の体験談</p>
+      <section class="view-options">
+        <button class="view-option panel" type="button" id="open-summary">
+          <span class="view-option-icon">要点</span>
+          <h2>簡易表示で読む</h2>
+          <p>教訓や結果など、主要な内容を1画面でスクロールして確認します。</p>
+        </button>
+        <a class="view-option panel" th:href="@{/experiences/{id}(id=${post.id})}">
+          <span class="view-option-icon">詳細</span>
+          <h2>詳細ページで読む</h2>
+          <p>体験の経緯、リアクション、コメントを含む全内容を確認します。</p>
+        </a>
+      </section>
+      <a href="/experiences">体験談一覧に戻る</a>
+    </main>
+    <div class="summary-modal" id="summary-modal" hidden>
+      <div class="summary-backdrop" data-close-summary></div>
+      <section class="summary-modal-card" role="dialog" aria-modal="true" aria-labelledby="summary-title">
+        <button class="summary-close" type="button" data-close-summary aria-label="簡易表示を閉じる">×</button>
+        <p class="eyebrow" th:text="${post.category.name}">カテゴリ</p>
+        <h2 id="summary-title" th:text="${post.title}">体験談のタイトル</h2>
+        <p th:text="${post.author.displayName} + 'さんの体験談'">投稿者</p>
+        <div class="summary-facts">
+          <span th:text="'満足度 ' + ${post.satisfaction} + '/10'">満足度</span>
+          <span th:text="'後悔度 ' + ${post.regret} + '/10'">後悔度</span>
+        </div>
+        <div class="summary-modal-body">
+          <div class="summary-item"><h3>選択前の状況</h3><p th:text="${post.situationBefore}">内容</p></div>
+          <div class="summary-item"><h3>選んだこと</h3><p th:text="${post.choiceMade}">内容</p></div>
+          <div class="summary-item"><h3>その後の結果</h3><p th:text="${post.outcome}">内容</p></div>
+          <div class="summary-item"><h3>経験して分かったこと</h3><p th:text="${post.learned ?: post.lesson ?: post.adviceToPastSelf}">内容</p></div>
+        </div>
+        <div class="summary-actions">
+          <a class="button" th:href="@{/experiences/{id}(id=${post.id})}">詳細ページで読む</a>
+        </div>
+      </section>
+    </div>
+    <script>
+      const summaryModal = document.querySelector('#summary-modal');
+      const summaryOpen = document.querySelector('#open-summary');
+      const closeSummary = () => { summaryModal.hidden = true; document.body.classList.remove('modal-open'); };
+      summaryOpen.addEventListener('click', () => { summaryModal.hidden = false; document.body.classList.add('modal-open'); });
+      summaryModal.querySelectorAll('[data-close-summary]').forEach((element) => element.addEventListener('click', closeSummary));
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSummary(); });
+    </script>
+  </body>
+</html>

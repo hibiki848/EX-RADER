@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>カテゴリ統計 | EXレーダー</title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/insights.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a>
+      <nav>
+        <a href="/experiences">体験談</a><a href="/insights">あなたの分析</a>
+      </nav>
+    </header>
+    <main class="insight-page">
+      <div class="insight-hero reveal">
+        <p class="eyebrow">PUBLIC DATA</p>
+        <h1>経験者の投稿から見える傾向</h1>
+        <p>実体験を、人数と母数を隠さずに見渡せます。</p>
+      </div>
+      <aside class="data-note">
+        ここに表示する内容は、EXレーダーへ投稿されたデータ上の傾向です。一般的な結論や将来の保証ではありません。
+      </aside>
+      <section class="stats-grid">
+        <article class="stat-card reveal" th:each="s:${statistics}">
+          <h2 th:text="${s.categoryName}">カテゴリ</h2>
+          <p class="sample">
+            <strong th:text="${s.contributorCount}">0</strong>人 /
+            <span th:text="${s.postCount}">0</span>件
+          </p>
+          <div class="metric-row">
+            <div>
+              <span>平均満足</span
+              ><b th:text="${s.averageSatisfaction}+'/10'">0</b>
+            </div>
+            <div>
+              <span>平均後悔</span><b th:text="${s.averageRegret}+'/10'">0</b>
+            </div>
+            <div>
+              <span>もう一度選ぶ</span
+              ><b th:text="${s.chooseAgainPercentage}+'%'">0</b>
+            </div>
+          </div>
+          <h3>よくある後悔・困難</h3>
+          <ol class="rank-list">
+            <li th:each="v:${s.commonRegrets}">
+              <span th:text="${v.label}">項目</span
+              ><small th:text="${v.count}+'件'">0件</small>
+            </li>
+          </ol>
+          <div class="split">
+            <div>
+              <h3>次の進路</h3>
+              <ul>
+                <li
+                  th:each="v:${s.nextRoutes}"
+                  th:text="${v.label}+' ('+${v.count}+')'"
+                >
+                  進路
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3>現在の職業</h3>
+              <ul>
+                <li
+                  th:each="v:${s.currentOccupations}"
+                  th:text="${v.label}+' ('+${v.count}+')'"
+                >
+                  職業
+                </li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      </section>
+      <div class="empty-state" th:if="${statistics.empty}">
+        <h2>統計はこれから育ちます</h2>
+        <p>公開された体験談は0件です。</p>
+      </div>
+    </main>
+  </body>
+</html>

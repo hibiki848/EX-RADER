@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>意思決定メモ | EXレーダー</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a
+      ><a href="/decision-memos">メモ一覧</a>
+    </header>
+    <main class="form-page">
+      <h1>考えていることを整理する</h1>
+      <p>
+        ここに正解を書く必要はありません。後から考えがどう変わったかも残せます。
+      </p>
+      <form
+        class="experience-form"
+        th:object="${decisionMemoForm}"
+        th:action="${memoId==null?'/decision-memos':'/decision-memos/'+memoId}"
+        method="post"
+      >
+        <section class="panel form-section">
+          <h2>今の問い</h2>
+          <label
+            >メモのタイトル<input
+              th:field="*{title}"
+              required
+              maxlength="150" /></label
+          ><label
+            >今悩んでいること<textarea
+              th:field="*{concern}"
+              required
+            ></textarea></label
+          ><label
+            >考えている選択肢<textarea
+              th:field="*{optionsText}"
+              required
+            ></textarea>
+          </label>
+        </section>
+        <section class="panel form-section">
+          <h2>大切にしたいこと</h2>
+          <div class="value-grid">
+            <label class="value-choice" th:each="v:${personalValues}"
+              ><input
+                type="checkbox"
+                th:field="*{valueIds}"
+                th:value="${v.id}" /><span th:text="${v.name}"></span
+            ></label>
+          </div>
+          <label
+            >一番不安なこと<textarea th:field="*{anxieties}"></textarea></label
+          ><label
+            >得たいもの<textarea th:field="*{desiredGain}"></textarea></label
+          ><label
+            >絶対に失いたくないもの<textarea
+              th:field="*{mustNotLose}"
+            ></textarea></label
+          ><label
+            >妥協できること<textarea
+              th:field="*{canCompromise}"
+            ></textarea></label
+          ><label
+            >妥協できないこと<textarea
+              th:field="*{cannotCompromise}"
+            ></textarea>
+          </label>
+        </section>
+        <section class="panel form-section">
+          <h2>考えの変化</h2>
+          <label
+            >使い始める前の考え<textarea
+              th:field="*{initialThoughts}"
+            ></textarea></label
+          ><label
+            >経験談を読んで気づいたこと<textarea
+              th:field="*{discoveries}"
+            ></textarea></label
+          ><label
+            >参考になった教訓<textarea
+              th:field="*{helpfulLessons}"
+            ></textarea></label
+          ><label
+            >現時点で考えていること<textarea
+              th:field="*{currentThoughts}"
+            ></textarea>
+          </label>
+        </section>
+        <button>自分用に保存</button>
+      </form>
+    </main>
+  </body>
+</html>

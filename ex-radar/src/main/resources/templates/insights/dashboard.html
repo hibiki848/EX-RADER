@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>あなたの分析 | EXレーダー</title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/insights.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a>
+      <nav>
+        <a href="/statistics">公開統計</a
+        ><a href="/life-report">人生レポート</a>
+      </nav>
+    </header>
+    <main class="insight-page">
+      <div class="insight-hero reveal">
+        <p class="eyebrow">GIVE TO GET</p>
+        <h1>経験を分けると、すべての分析が開く</h1>
+        <p>
+          <strong th:text="${insight.ownPostCount}">0</strong>件投稿・分析
+          <strong th:text="${insight.unlockedLevel}+'/5 解放済み'"
+            >未解放</strong
+          >
+        </p>
+        <div class="progress">
+          <i th:style="'width:'+${insight.unlockedLevel*20}+'%'"></i>
+        </div>
+      </div>
+      <aside class="data-note">
+        分析は投稿データ上の傾向です。個人の適性や結果を断定するものではありません。
+      </aside>
+      <section class="unlock-grid">
+        <article
+          class="unlock-card is-open"
+          th:each="label:${insight.unlocked}"
+        >
+          <span>利用可能</span>
+          <h2 th:text="${label}">機能</h2>
+        </article>
+        <article
+          class="unlock-card is-locked"
+          th:each="label:${insight.locked}"
+        >
+          <span>体験談を1件投稿すると解放</span>
+          <h2 th:text="${label}">機能</h2>
+        </article>
+      </section>
+      <section th:if="${insight.unlockedLevel >= 1}" class="panel">
+        <h2>基本統計</h2>
+        <p class="sample">
+          <span th:text="${insight.basicStatistics.postCount}">0</span>件・<span
+            th:text="${insight.basicStatistics.contributorCount}"
+            >0</span
+          >人が母数
+        </p>
+        <div class="metric-row">
+          <div>
+            <span>平均満足</span
+            ><b th:text="${insight.basicStatistics.averageSatisfaction}">0</b>
+          </div>
+          <div>
+            <span>平均後悔</span
+            ><b th:text="${insight.basicStatistics.averageRegret}">0</b>
+          </div>
+          <div>
+            <span>再選択</span
+            ><b th:text="${insight.basicStatistics.chooseAgainPercentage}+'%'"
+              >0</b
+            >
+          </div>
+        </div>
+      </section>
+      <section th:if="${insight.canSeeSimilarUsers}" class="panel reveal">
+        <h2>似ているユーザー</h2>
+        <p>
+          カテゴリ40点、年代15点、当時の立場15点、タグ20点、評価傾向10点の100点満点です。
+        </p>
+        <div class="similar-list">
+          <a
+            th:each="u:${insight.similarUsers}"
+            th:href="@{/profiles/{id}(id=${u.id})}"
+            ><strong th:text="${u.displayName}">名前</strong
+            ><span th:text="${u.score}+'/100'">0</span></a
+          >
+        </div>
+        <p th:if="${insight.similarUsers.empty}">
+          比較できる投稿がまだありません。
+        </p>
+        <h2>似た状況にいた人から学ぶ</h2>
+        <div class="similar-list">
+          <a
+            th:each="post:${insight.similarPosts}"
+            th:href="@{/experiences/{id}(id=${post.id})}"
+            ><strong th:text="${post.title}">投稿</strong
+            ><span th:text="${post.score}+'/100'">0</span></a
+          >
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,79 @@
+ALTER TABLE experience_posts ADD COLUMN decision_criteria VARCHAR(3000);
+ALTER TABLE experience_posts ADD COLUMN learned VARCHAR(5000);
+ALTER TABLE experience_posts ADD COLUMN wish_known VARCHAR(3000);
+ALTER TABLE experience_posts ADD COLUMN unexpectedly_okay VARCHAR(3000);
+ALTER TABLE experience_posts ADD COLUMN preparation_helped VARCHAR(3000);
+ALTER TABLE experience_posts ADD COLUMN missed_regret VARCHAR(3000);
+ALTER TABLE experience_posts ADD COLUMN lesson VARCHAR(3000);
+ALTER TABLE experience_posts ADD COLUMN suitable_for VARCHAR(3000);
+ALTER TABLE experience_posts ADD COLUMN caution_for VARCHAR(3000);
+
+CREATE TABLE personal_values (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(40) NOT NULL,
+  display_order INT NOT NULL,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL,
+  CONSTRAINT uk_personal_values_name UNIQUE(name)
+);
+
+CREATE TABLE user_values (
+  user_id BIGINT NOT NULL,
+  value_id BIGINT NOT NULL,
+  PRIMARY KEY(user_id, value_id),
+  FOREIGN KEY(user_id) REFERENCES users(id),
+  FOREIGN KEY(value_id) REFERENCES personal_values(id)
+);
+
+CREATE TABLE experience_post_values (
+  post_id BIGINT NOT NULL,
+  value_id BIGINT NOT NULL,
+  PRIMARY KEY(post_id, value_id),
+  FOREIGN KEY(post_id) REFERENCES experience_posts(id),
+  FOREIGN KEY(value_id) REFERENCES personal_values(id)
+);
+
+CREATE TABLE decision_memos (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  concern VARCHAR(3000) NOT NULL,
+  options_text VARCHAR(3000) NOT NULL,
+  anxieties VARCHAR(3000),
+  desired_gain VARCHAR(3000),
+  must_not_lose VARCHAR(3000),
+  can_compromise VARCHAR(3000),
+  cannot_compromise VARCHAR(3000),
+  initial_thoughts VARCHAR(5000),
+  discoveries VARCHAR(5000),
+  helpful_lessons VARCHAR(5000),
+  current_thoughts VARCHAR(5000),
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE TABLE decision_memo_values (
+  memo_id BIGINT NOT NULL,
+  value_id BIGINT NOT NULL,
+  PRIMARY KEY(memo_id, value_id),
+  FOREIGN KEY(memo_id) REFERENCES decision_memos(id),
+  FOREIGN KEY(value_id) REFERENCES personal_values(id)
+);
+
+INSERT INTO personal_values(name, display_order, created_at, updated_at) VALUES
+('収入', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('安定', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('自由', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('成長', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('人間関係', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('地元', 6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('家族', 7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('新しい経験', 8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('時間', 9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('やりがい', 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('働きやすさ', 11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('挑戦', 12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('専門性', 13, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('健康', 14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('趣味との両立', 15, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

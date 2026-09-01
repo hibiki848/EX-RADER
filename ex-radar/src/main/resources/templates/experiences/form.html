@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title
+      th:text="${editing ? '体験談を編集 | EXレーダー' : '体験談を投稿 | EXレーダー'}"
+    ></title>
+    <link rel="stylesheet" href="/css/app.css" defer />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a>
+      <nav><a href="/mypage">マイページ</a></nav>
+    </header>
+    <main class="form-page">
+      <div class="page-heading">
+        <p class="eyebrow">SHARE YOUR ROUTE</p>
+        <h1
+          th:text="${editing ? '経験と教訓を編集する' : 'あなたの経験から得た知恵を伝える'}"
+        ></h1>
+        <p>具体的な経験ほど、同じ岐路に立つ人の助けになります。</p>
+      </div>
+      <form
+        class="experience-form"
+        th:object="${experiencePostForm}"
+        th:action="${editing ? '/experiences/'+postId : '/experiences'}"
+        method="post"
+      >
+        <div
+          class="error-summary"
+          th:if="${#fields.hasAnyErrors()}"
+          role="alert"
+        >
+          <strong>入力内容を確認してください</strong>
+          <ul>
+            <li th:each="e:${#fields.allErrors()}" th:text="${e}"></li>
+          </ul>
+        </div>
+        <section class="panel form-section">
+          <h2>基本情報</h2>
+          <label
+            >カテゴリ（必須）<select th:field="*{categoryId}">
+              <option value="">選択してください</option>
+              <option
+                th:each="c:${categories}"
+                th:value="${c.id}"
+                th:text="${c.name}"
+              ></option></select
+            ><small th:errors="*{categoryId}"></small></label
+          ><label
+            >タイトル（必須）<input
+              th:field="*{title}"
+              maxlength="150"
+              placeholder="例：未経験からIT業界へ転職した3年間" /><small
+              th:errors="*{title}"
+            ></small
+          ></label>
+          <div class="form-grid">
+            <label
+              >選択時の年齢<input
+                type="number"
+                min="0"
+                max="120"
+                th:field="*{ageAtChoice}" /></label
+            ><label
+              >当時の立場<input
+                th:field="*{statusAtChoice}"
+                maxlength="100"
+                placeholder="大学生、会社員など" /></label
+            ><label
+              >現在の年代<input
+                th:field="*{currentAgeGroup}"
+                maxlength="20"
+                placeholder="30代前半など" /></label
+            ><label
+              >経過年数<input
+                type="number"
+                min="0"
+                max="100"
+                th:field="*{yearsElapsed}"
+            /></label>
+          </div>
+        </section>
+        <section class="panel form-section">
+          <h2>選択するまで</h2>
+          <label
+            >選択前の状況（必須）<textarea
+              th:field="*{situationBefore}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{situationBefore}"></small></label
+          ><label
+            >当時の悩み（必須）<textarea
+              th:field="*{worries}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{worries}"></small></label
+          ><label
+            >検討した選択肢（必須）<textarea
+              th:field="*{alternatives}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{alternatives}"></small></label
+          ><label
+            >実際に選んだこと（必須）<textarea
+              th:field="*{choiceMade}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{choiceMade}"></small></label
+          ><label
+            >選んだ理由（必須）<textarea
+              th:field="*{reason}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{reason}"></small
+          ></label>
+        </section>
+        <section class="panel form-section wisdom-form">
+          <p class="eyebrow">CORE OF YOUR EXPERIENCE</p>
+          <h2>経験して分かったこと・教訓</h2>
+          <p>
+            結果の良し悪しより、経験したからこそ伝えられる判断材料を残してください。
+          </p>
+          <label
+            >決めるときに重視したこと<textarea
+              th:field="*{decisionCriteria}"
+              maxlength="3000"
+            ></textarea>
+          </label>
+          <label
+            >実際に経験して初めて分かったこと<textarea
+              th:field="*{learned}"
+              maxlength="5000"
+              required
+            ></textarea>
+          </label>
+          <label
+            >選ぶ前に知っておきたかったこと<textarea
+              th:field="*{wishKnown}"
+              maxlength="3000"
+            ></textarea>
+          </label>
+          <label
+            >意外と大丈夫だったこと<textarea
+              th:field="*{unexpectedlyOkay}"
+              maxlength="3000"
+            ></textarea>
+          </label>
+          <label
+            >やっておいて良かったこと<textarea
+              th:field="*{preparationHelped}"
+              maxlength="3000"
+            ></textarea>
+          </label>
+          <label
+            >やらなくて後悔したこと<textarea
+              th:field="*{missedRegret}"
+              maxlength="3000"
+            ></textarea>
+          </label>
+          <label
+            >この経験から得た教訓<textarea
+              th:field="*{lesson}"
+              maxlength="3000"
+              required
+            ></textarea>
+          </label>
+          <label
+            >どんな人には向いていると感じるか<textarea
+              th:field="*{suitableFor}"
+              maxlength="3000"
+            ></textarea>
+          </label>
+          <label
+            >どんな人には慎重に考えてほしいか<textarea
+              th:field="*{cautionFor}"
+              maxlength="3000"
+            ></textarea>
+          </label>
+          <fieldset>
+            <legend>この経験で関係した価値観</legend>
+            <div class="value-grid">
+              <label class="value-choice" th:each="v:${personalValues}"
+                ><input
+                  type="checkbox"
+                  th:field="*{valueIds}"
+                  th:value="${v.id}" /><span th:text="${v.name}"></span
+              ></label>
+            </div>
+          </fieldset>
+        </section>
+        <section class="panel form-section">
+          <div class="section-title">
+            <div>
+              <h2>人生ルート</h2>
+              <p>選択後の出来事を時系列で追加できます（最大20件）。</p>
+            </div>
+            <button type="button" class="secondary" id="add-event">
+              出来事を追加
+            </button>
+          </div>
+          <div id="life-events">
+            <article
+              class="life-event-editor"
+              th:each="event,stat:*{lifeEvents}"
+            >
+              <div class="event-head">
+                <strong th:text="'出来事 '+${stat.count}"></strong
+                ><button type="button" class="text-button remove-event">
+                  削除
+                </button>
+              </div>
+              <div class="form-grid">
+                <label
+                  >年齢・時期<input
+                    th:field="*{lifeEvents[__${stat.index}__].ageLabel}"
+                    maxlength="20"
+                    placeholder="25歳、2年後など" /></label
+                ><label
+                  >タイトル（必須）<input
+                    th:field="*{lifeEvents[__${stat.index}__].title}"
+                    maxlength="100" /><small
+                    th:errors="*{lifeEvents[__${stat.index}__].title}"
+                  ></small
+                ></label>
+              </div>
+              <label
+                >説明<textarea
+                  th:field="*{lifeEvents[__${stat.index}__].description}"
+                  maxlength="1000"
+                ></textarea>
+              </label>
+            </article>
+          </div>
+        </section>
+        <section class="panel form-section">
+          <h2>補助情報：選択した、その後</h2>
+          <p>
+            満足度や後悔度は、選択の正解を示すものではなく、一人の経験を理解するための補助情報です。
+          </p>
+          <label
+            >その後の結果（必須）<textarea
+              th:field="*{outcome}"
+              maxlength="5000"
+            ></textarea
+            ><small th:errors="*{outcome}"></small></label
+          ><label
+            >良かったこと（必須）<textarea
+              th:field="*{goodThings}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{goodThings}"></small></label
+          ><label
+            >大変だったこと（必須）<textarea
+              th:field="*{difficulties}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{difficulties}"></small></label
+          ><label
+            >想定外だったこと（必須）<textarea
+              th:field="*{unexpectedThings}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{unexpectedThings}"></small
+          ></label>
+          <div class="form-grid">
+            <label
+              >満足度 1〜10（必須）<input
+                type="number"
+                min="1"
+                max="10"
+                th:field="*{satisfaction}" /><small
+                th:errors="*{satisfaction}"
+              ></small></label
+            ><label
+              >後悔度 1〜10（必須）<input
+                type="number"
+                min="1"
+                max="10"
+                th:field="*{regret}" /><small th:errors="*{regret}"></small
+            ></label>
+          </div>
+          <label class="check"
+            ><input
+              type="checkbox"
+              th:field="*{chooseAgain}"
+            />もう一度同じ状況でも、この選択をする</label
+          ><label
+            >過去の自分へのアドバイス（必須）<textarea
+              th:field="*{adviceToPastSelf}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{adviceToPastSelf}"></small></label
+          ><label class="check"
+            ><input type="checkbox" th:field="*{published}" />公開する</label
+          >
+        </section>
+        <div class="form-actions">
+          <a href="/mypage">キャンセル</a
+          ><button
+            type="submit"
+            th:text="${editing ? '変更を保存' : '体験談を投稿'}"
+          ></button>
+        </div>
+      </form>
+    </main>
+    <template id="event-template"
+      ><article class="life-event-editor">
+        <div class="event-head">
+          <strong>出来事</strong
+          ><button type="button" class="text-button remove-event">削除</button>
+        </div>
+        <div class="form-grid">
+          <label
+            >年齢・時期<input
+              data-name="ageLabel"
+              maxlength="20"
+              placeholder="25歳、2年後など" /></label
+          ><label
+            >タイトル（必須）<input data-name="title" maxlength="100"
+          /></label>
+        </div>
+        <label
+          >説明<textarea data-name="description" maxlength="1000"></textarea>
+        </label></article
+    ></template>
+    <script src="/js/experience-form.js" defer></script>
+    <script th:if="${gaMeasurementId != null and !#strings.isEmpty(gaMeasurementId)}">
+      gtag('event', 'experience_form_view');
+    </script>
+  </body>
+</html>

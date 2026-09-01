@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/exradar;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  thymeleaf:
+    cache: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+exradar:
+  admin:
+    email: ${EXRADAR_ADMIN_EMAIL:hibikisohzu@gmail.com}
+  analytics:
+    measurement-id:

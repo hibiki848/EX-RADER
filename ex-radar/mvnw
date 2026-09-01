@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+MVNW_VERSION=3.9.11
+MVNW_HOME="${HOME}/.m2/wrapper/dists/apache-maven-${MVNW_VERSION}"
+MVNW_MAVEN="${MVNW_HOME}/apache-maven-${MVNW_VERSION}/bin/mvn"
+if [ ! -x "$MVNW_MAVEN" ]; then
+  mkdir -p "$MVNW_HOME"
+  ARCHIVE="${TMPDIR:-/tmp}/apache-maven-${MVNW_VERSION}-bin.zip"
+  if command -v curl >/dev/null 2>&1; then curl -fsSL "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MVNW_VERSION}/apache-maven-${MVNW_VERSION}-bin.zip" -o "$ARCHIVE"; else wget -q "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MVNW_VERSION}/apache-maven-${MVNW_VERSION}-bin.zip" -O "$ARCHIVE"; fi
+  unzip -q -o "$ARCHIVE" -d "$MVNW_HOME"
+  rm -f "$ARCHIVE"
+fi
+exec "$MVNW_MAVEN" "$@"

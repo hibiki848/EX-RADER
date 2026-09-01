@@ -1,0 +1,220 @@
+<!doctype html>
+<html
+  lang="ja"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title th:text="${post.title}+' | EXレーダー'"></title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/interactions.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a>
+      <nav>
+        <a href="/experiences">体験談を探す</a><a href="/mypage">マイページ</a>
+      </nav>
+    </header>
+    <main class="detail-page">
+      <p
+        class="success feedback-pop"
+        th:if="${successMessage}"
+        th:text="${successMessage}"
+      ></p>
+      <article>
+        <div class="detail-hero">
+          <p class="eyebrow" th:text="${post.category.name}"></p>
+          <h1 th:text="${post.title}"></h1>
+          <p th:text="${post.author.displayName}+'さんの体験談'"></p>
+          <div class="score-row">
+            <span th:text="'満足度 '+${post.satisfaction}+'/10'"></span
+            ><span th:text="'後悔度 '+${post.regret}+'/10'"></span>
+          </div>
+        </div>
+        <section class="lesson-spotlight">
+          <p class="eyebrow">LESSON FROM EXPERIENCE</p>
+          <h2>この経験から得た教訓</h2>
+          <blockquote
+            th:text="${post.lesson?:post.adviceToPastSelf}"
+          ></blockquote>
+        </section>
+        <section
+          class="story-section wisdom-detail"
+          th:if="${post.learned!=null}"
+        >
+          <h2>経験して分かったこと</h2>
+          <h3>実際に経験して初めて分かったこと</h3>
+          <p th:text="${post.learned}"></p>
+          <h3 th:if="${post.wishKnown}">選ぶ前に知っておきたかったこと</h3>
+          <p th:if="${post.wishKnown}" th:text="${post.wishKnown}"></p>
+          <h3 th:if="${post.unexpectedlyOkay}">意外と大丈夫だったこと</h3>
+          <p
+            th:if="${post.unexpectedlyOkay}"
+            th:text="${post.unexpectedlyOkay}"
+          ></p>
+          <h3 th:if="${post.preparationHelped}">やっておいて良かったこと</h3>
+          <p
+            th:if="${post.preparationHelped}"
+            th:text="${post.preparationHelped}"
+          ></p>
+          <h3 th:if="${post.missedRegret}">やらなくて後悔したこと</h3>
+          <p th:if="${post.missedRegret}" th:text="${post.missedRegret}"></p>
+          <h3 th:if="${post.suitableFor}">向いていると感じる人</h3>
+          <p th:if="${post.suitableFor}" th:text="${post.suitableFor}"></p>
+          <h3 th:if="${post.cautionFor}">慎重に考えてほしい人</h3>
+          <p th:if="${post.cautionFor}" th:text="${post.cautionFor}"></p>
+        </section>
+        <section class="story-section">
+          <h2>選択するまで</h2>
+          <h3>選択前の状況</h3>
+          <p th:text="${post.situationBefore}"></p>
+          <h3>悩んでいたこと</h3>
+          <p th:text="${post.worries}"></p>
+          <h3>検討した選択肢</h3>
+          <p th:text="${post.alternatives}"></p>
+          <h3>選んだこと・理由</h3>
+          <p th:text="${post.choiceMade}"></p>
+          <p th:text="${post.reason}"></p>
+        </section>
+        <section class="story-section">
+          <h2>その後</h2>
+          <h3>結果</h3>
+          <p th:text="${post.outcome}"></p>
+          <h3>良かったこと</h3>
+          <p th:text="${post.goodThings}"></p>
+          <h3>大変だったこと</h3>
+          <p th:text="${post.difficulties}"></p>
+          <blockquote th:text="${post.adviceToPastSelf}"></blockquote>
+        </section>
+        <section
+          id="reactions"
+          class="interaction-panel"
+          th:if="${post.published}"
+        >
+          <h2>この体験談はどうでしたか？</h2>
+          <div
+            class="reaction-grid"
+            sec:authorize="isAuthenticated()"
+            th:if="${canReact}"
+          >
+            <form
+              th:each="type:${T(com.exradar.entity.ReactionType).values()}"
+              th:action="@{/experiences/{id}/reactions/{type}(id=${post.id},type=${type})}"
+              method="post"
+            >
+              <button
+                class="reaction-button"
+                th:classappend="${reactionSummary.selected(type)}?' selected'"
+                th:attr="aria-pressed=${reactionSummary.selected(type)}"
+              >
+                <span
+                  th:text="${type.name()=='HELPFUL'?'参考になった':type.name()=='DISCOVERED'?'知らなかった':type.name()=='SIMILAR'?'自分と似ている':type.name()=='CHANGED_MIND'?'考えるきっかけになった':'自分も同じ経験をした'}"
+                ></span
+                ><b th:text="${reactionSummary.count(type)}"></b>
+              </button>
+            </form>
+          </div>
+          <p sec:authorize="isAuthenticated()" th:if="${!canReact}">
+            自分の体験談にはリアクションできません。
+          </p>
+          <p sec:authorize="isAnonymous()">
+            <a th:href="@{/login}">ログイン</a>するとリアクションできます。
+          </p>
+        </section>
+        <section
+          id="comments"
+          class="interaction-panel"
+          th:if="${post.published}"
+        >
+          <h2>コメント <span th:text="'('+${comments.size()}+')'"></span></h2>
+          <article class="comment-card" th:each="comment:${comments}">
+            <div>
+              <b th:text="${comment.author.displayName}"></b>
+              <p th:text="${comment.body}"></p>
+            </div>
+            <form
+              sec:authorize="isAuthenticated()"
+              th:if="${#authentication.name==comment.author.email or #authorization.expression('hasRole(''ADMIN'')')}"
+              th:action="@{/experiences/{postId}/comments/{id}/delete(postId=${post.id},id=${comment.id})}"
+              method="post"
+            >
+              <button class="text-danger">削除</button>
+            </form>
+          </article>
+          <p th:if="${comments.empty}">まだコメントはありません。</p>
+          <form
+            class="comment-form"
+            sec:authorize="isAuthenticated()"
+            th:action="@{/experiences/{id}/comments(id=${post.id})}"
+            th:object="${commentForm}"
+            method="post"
+          >
+            <label
+              >コメント<textarea
+                th:field="*{body}"
+                maxlength="2000"
+                rows="4"
+              ></textarea>
+            </label>
+            <p
+              class="error"
+              th:if="${#fields.hasErrors('body')}"
+              th:errors="*{body}"
+            ></p>
+            <button>コメントする</button>
+          </form>
+        </section>
+        <details
+          id="report"
+          class="report-panel"
+          sec:authorize="isAuthenticated()"
+          th:if="${post.published}"
+        >
+          <summary>この体験談を通報する</summary>
+          <form th:action="@{/reports}" th:object="${reportForm}" method="post">
+            <input
+              type="hidden"
+              name="targetType"
+              value="EXPERIENCE_POST"
+            /><input
+              type="hidden"
+              name="targetId"
+              th:value="${post.id}"
+            /><label
+              >通報理由<textarea
+                th:field="*{reason}"
+                maxlength="1000"
+                rows="3"
+              ></textarea>
+            </label>
+            <p
+              class="error"
+              th:if="${#fields.hasErrors('reason')}"
+              th:errors="*{reason}"
+            ></p>
+            <button class="danger">通報する</button>
+          </form>
+        </details>
+        <div class="owner-actions" th:if="${canManage}">
+          <a class="button" th:href="@{/experiences/{id}/edit(id=${post.id})}"
+            >編集</a
+          >
+          <form
+            th:action="@{/experiences/{id}/delete(id=${post.id})}"
+            method="post"
+          >
+            <button class="danger">削除</button>
+          </form>
+        </div>
+      </article>
+    </main>
+    <script th:if="${gaMeasurementId != null and !#strings.isEmpty(gaMeasurementId)}" th:inline="javascript">
+      gtag('event', 'experience_detail_view', {post_id: /*[[${post.id}]]*/ ''});
+      if (/*[[${successMessage != null}]]*/ false) gtag('event', 'experience_post_submit');
+    </script>
+  </body>
+</html>

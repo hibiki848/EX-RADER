@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>詳細分析 | EXレーダー</title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/insights.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a><a href="/insights">分析へ戻る</a>
+    </header>
+    <main class="insight-page">
+      <aside class="data-note">
+        以下は投稿データ上の傾向です。母数とともに参考情報としてご覧ください。
+      </aside>
+      <section class="panel" th:if="${detailMode!='routes'}">
+        <h1 th:text="${detailMode=='trends'?'満足・後悔傾向':'詳細統計'}">
+          分析
+        </h1>
+        <p
+          class="sample"
+          th:text="${statistics.postCount}+'件・'+${statistics.contributorCount}+'人が母数'"
+        >
+          0件
+        </p>
+        <div class="metric-row">
+          <div>
+            <span>平均満足</span
+            ><b th:text="${statistics.averageSatisfaction}+'/10'">0</b>
+          </div>
+          <div>
+            <span>平均後悔</span
+            ><b th:text="${statistics.averageRegret}+'/10'">0</b>
+          </div>
+          <div>
+            <span>再選択</span
+            ><b th:text="${statistics.chooseAgainPercentage}+'%'">0</b>
+          </div>
+        </div>
+      </section>
+      <section class="panel" th:if="${detailMode=='routes'}">
+        <h1>次の進路</h1>
+        <ol class="rank-list">
+          <li th:each="v:${routes}">
+            <span th:text="${v.label}">進路</span
+            ><small th:text="${v.count}+'件'">0件</small>
+          </li>
+        </ol>
+        <p th:if="${routes.empty}">人生イベントの投稿がまだありません。</p>
+      </section>
+    </main>
+  </body>
+</html>

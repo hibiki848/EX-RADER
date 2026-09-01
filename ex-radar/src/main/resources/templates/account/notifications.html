@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>通知</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a>
+      <nav><a href="/mypage">マイページ</a></nav>
+    </header>
+    <main class="page">
+      <section class="panel reveal">
+        <div class="section-heading">
+          <h1>通知</h1>
+          <form
+            th:if="${unreadNotificationCount>0}"
+            th:action="@{/mypage/notifications/read-all}"
+            method="post"
+          >
+            <button>すべて既読</button>
+          </form>
+        </div>
+        <p th:if="${#lists.isEmpty(notifications)}">通知はありません。</p>
+        <article
+          class="notice"
+          th:each="n:${notifications}"
+          th:classappend="${!n.readFlag}?' unread'"
+        >
+          <div>
+            <strong th:text="${n.message}"></strong
+            ><small
+              th:text="${#temporals.format(n.createdAt,'yyyy/MM/dd HH:mm')}"
+            ></small>
+          </div>
+          <form
+            th:if="${!n.readFlag}"
+            th:action="@{/mypage/notifications/{id}/read(id=${n.id})}"
+            method="post"
+          >
+            <button>既読にする</button>
+          </form>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

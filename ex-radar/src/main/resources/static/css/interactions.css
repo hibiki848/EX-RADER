@@ -1,0 +1,87 @@
+.interaction-panel,
+.report-panel {
+  max-width: 850px;
+  margin: 24px auto;
+  padding: 24px;
+  background: var(--surface);
+  color: var(--navy);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.reaction-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.reaction-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  background: var(--surface-raised);
+  color: var(--navy);
+  transition: transform 0.16s ease;
+}
+.reaction-button:hover {
+  transform: translateY(-2px);
+}
+.reaction-button.selected {
+  background: var(--teal);
+  color: #fff;
+  animation: feedback-pop 0.24s ease;
+}
+.comment-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.comment-card p {
+  white-space: pre-wrap;
+}
+.comment-form,
+.report-panel form,
+.comment-form label,
+.report-panel label {
+  display: grid;
+  gap: 10px;
+}
+.comment-form textarea,
+.report-panel textarea {
+  font: inherit;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+  color: var(--navy);
+  border-radius: 9px;
+}
+.text-danger {
+  padding: 0.3rem;
+  background: transparent;
+  color: #b42318;
+}
+.danger {
+  background: #b42318;
+}
+.feedback-pop {
+  animation: feedback-pop 0.28s ease;
+}
+@keyframes feedback-pop {
+  50% {
+    transform: scale(1.025);
+  }
+}
+@media (max-width: 720px) {
+  .reaction-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reaction-button {
+    transition: none;
+  }
+  .feedback-pop,
+  .reaction-button.selected {
+    animation: none !important;
+  }
+}
