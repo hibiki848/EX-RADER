@@ -57,9 +57,16 @@ public class GoogleAnalyticsDataService {
               new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       return raw.createScoped(SCOPES);
     } catch (IOException e) {
-      log.warn("GA4サービスアカウントキーの読み込みに失敗しました", e);
+      log.error("GA4サービスアカウントキーの読み込みに失敗しました", e);
       return null;
     }
+  }
+
+  /** Property ID・認証情報の設定有無だけをログに出す(値そのものは秘密情報のため出力しない)。 */
+  private void logConfigurationState(String operation) {
+    log.info("GA4 analytics request started: {}", operation);
+    log.info("GA4 property configured: {}", propertyId != null && !propertyId.isBlank());
+    log.info("GA4 credentials configured: {}", credentials != null);
   }
 
   private String accessToken() {
@@ -73,7 +80,9 @@ public class GoogleAnalyticsDataService {
 
   /** 通常レポート(サマリー・推移・人気ページ・流入元・デバイス・ファネル)をまとめて1回のAPI呼び出しで取得する。 */
   public GoogleAnalyticsStats fetchStats() {
+    logConfigurationState("fetchStats");
     if (!isConfigured()) {
+      log.info("GA4 analytics request skipped: not configured");
       return unavailable("GA4_PROPERTY_ID / GA4_SERVICE_ACCOUNT_KEYが設定されていません");
     }
     try {
@@ -127,6 +136,7 @@ public class GoogleAnalyticsDataService {
                           "fieldName", "eventName",
                           "stringFilter", Map.of("value", "experience_detail_view")))));
 
+      log.info("Calling Google Analytics Data API: batchRunReports");
       JsonNode response =
           restClient
               .post()
@@ -136,6 +146,7 @@ public class GoogleAnalyticsDataService {
               .body(Map.of("requests", requests))
               .retrieve()
               .body(JsonNode.class);
+      log.info("Google Analytics Data API request succeeded: batchRunReports");
 
       JsonNode reports = response.path("reports");
       long todayUsers = metricAt(reports.path(0), 0, 0);
@@ -163,15 +174,20 @@ public class GoogleAnalyticsDataService {
           false,
           null);
     } catch (RuntimeException e) {
-      log.warn("GA4データの取得に失敗しました", e);
+      log.error("Google Analytics Data API request failed: batchRunReports", e);
       return unavailable("Google Analyticsのデータを取得できませんでした");
     }
   }
 
   /** 現在のアクティブユーザー数(リアルタイムAPI)。取得できない場合はnull。 */
   public Long fetchRealtimeActiveUsers() {
-    if (!isConfigured()) return null;
+    logConfigurationState("fetchRealtimeActiveUsers");
+    if (!isConfigured()) {
+      log.info("GA4 realtime request skipped: not configured");
+      return null;
+    }
     try {
+      log.info("Calling Google Analytics Data API: runRealtimeReport");
       JsonNode response =
           restClient
               .post()
@@ -181,9 +197,10 @@ public class GoogleAnalyticsDataService {
               .body(Map.of("metrics", List.of(Map.of("name", "activeUsers"))))
               .retrieve()
               .body(JsonNode.class);
+      log.info("Google Analytics Data API request succeeded: runRealtimeReport");
       return metricAt(response, 0, 0);
     } catch (RuntimeException e) {
-      log.warn("GA4リアルタイムデータの取得に失敗しました", e);
+      log.error("Google Analytics Data API request failed: runRealtimeReport", e);
       return null;
     }
   }
