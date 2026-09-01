@@ -4,6 +4,7 @@ import com.exradar.exception.DuplicateEmailException;
 import com.exradar.form.RegistrationForm;
 import com.exradar.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,7 +20,8 @@ public class AuthController {
   }
 
   @GetMapping("/login")
-  String login() {
+  String login(CsrfToken csrfToken) {
+    csrfToken.getToken();
     return "auth/login";
   }
 
