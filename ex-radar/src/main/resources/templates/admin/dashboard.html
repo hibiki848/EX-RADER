@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
     <header>
       <a class="brand" href="/">EXレーダー</a>
@@ -376,7 +377,7 @@
           });
         }
 
-        fetch('/api/admin/analytics', { headers: { Accept: 'application/json' } })
+        var analyticsRequest = fetch('/api/admin/analytics', { headers: { Accept: 'application/json' } })
           .then(function (response) {
             if (!response.ok) throw new Error('request failed: ' + response.status);
             return response.json();
@@ -421,6 +422,8 @@
             document.getElementById('ga-loading').hidden = true;
             document.getElementById('ga-fetch-error').hidden = false;
           });
+
+        if (window.ExRadarLoader) window.ExRadarLoader.wait(analyticsRequest);
       })();
     </script>
   </body>
