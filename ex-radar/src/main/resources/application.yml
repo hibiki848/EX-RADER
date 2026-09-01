@@ -1,23 +1,19 @@
 spring:
   application:
     name: ex-radar
-  datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/ex_radar?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo}
-    username: ${DB_USERNAME:ex_radar}
-    password: ${DB_PASSWORD:}
   jpa:
-    hibernate:
-      ddl-auto: validate
     open-in-view: false
   flyway:
     enabled: true
   thymeleaf:
     cache: true
+  profiles:
+    default: dev
 server:
+  port: ${PORT:8080}
   error:
     include-message: never
     include-stacktrace: never
-spring.profiles.default: dev
 exradar:
   analytics:
     measurement-id: ${GA4_MEASUREMENT_ID:}

@@ -3,6 +3,9 @@ target/
 .vscode/
 *.iml
 .env
+.env.*
+*.log
+hs_err_pid*.log
 application-local.yml
 src/main/resources/application-local.yml
 data/

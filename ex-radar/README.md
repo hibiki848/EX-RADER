@@ -11,7 +11,7 @@ EXレーダーは、経験者の知恵・教訓・失敗・気づきを借りて
 - Spring MVC / Thymeleaf
 - Spring Data JPA / Spring Security
 - Flyway
-- MySQL 8.4（本番想定）
+- PostgreSQL（本番: Supabase）
 - H2（開発・テスト）
 - Maven Wrapper
 
@@ -117,3 +117,42 @@ macOS / Linux：
 - 価値観との関連度を、単純な語句一致からタグ・文脈を含む検索へ改善
 
 詳細は [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) を参照してください。
+
+## Railway + Supabaseで本番公開する方法
+
+本番はRailway上でSpring Bootアプリのみを動かし、データベースはSupabaseのPostgreSQLを使用します。Supabase Authへの移行は行わず、認証は引き続きSpring Securityが担当します。
+
+### 1. Supabase側の準備
+
+1. [Supabase](https://supabase.com/)でプロジェクトを作成します。
+2. 「Project Settings > Database」から接続情報を確認します。RailwayのようなIPv4のみの環境からはDirect Connectionが利用しづらい場合があるため、その場合は「Connection Pooling」欄の**Session Pooler**の接続文字列を使用してください。
+3. 取得したホスト名・ポート・データベース名・ユーザー名・パスワードから、後述の`DB_URL`（JDBC形式）・`DB_USERNAME`・`DB_PASSWORD`を組み立てます。パスワードやURLはSupabaseの管理画面以外（リポジトリやREADME等）へ書かないでください。
+
+### 2. Railway側の設定
+
+1. [Railway](https://railway.app/)でこのリポジトリからサービスを作成します。
+2. 「Settings > Root Directory」を次の値に設定します。
+
+   ```text
+   /ex-radar
+   ```
+
+3. 「Variables」に以下の環境変数を設定します（値はSupabaseの管理画面等から取得し、Railwayの環境変数機能でのみ設定してください）。
+
+   | 変数名 | 内容 |
+   | --- | --- |
+   | `SPRING_PROFILES_ACTIVE` | `prod` |
+   | `DB_URL` | SupabaseのJDBC接続文字列（例: `jdbc:postgresql://<host>:<port>/postgres?sslmode=require`。Session Poolerを使う場合はそのホスト・ポートを指定） |
+   | `DB_USERNAME` | Supabaseのデータベースユーザー名 |
+   | `DB_PASSWORD` | Supabaseのデータベースパスワード |
+   | `GA4_MEASUREMENT_ID` | GA4の測定ID（例: `G-XXXXXXXXXX`） |
+   | `EXRADAR_ADMIN_EMAIL` | 本番で管理者として扱うユーザーのメールアドレス |
+
+   `PORT`はRailwayが自動的に設定するため、追加設定は不要です（アプリ側は`${PORT:8080}`で待ち受けます）。
+
+4. Railwayが自動的にMaven Wrapperでビルド・起動します（追加のDockerfileは不要です）。起動時にFlywayが本番DBへマイグレーションを適用します。
+5. デプロイ完了後、「Settings > Networking > Generate Domain」からRailwayのドメインを発行すると、そのURLで本番サイトへアクセスできます。
+
+### 3. 動作確認
+
+デプロイ後、発行されたドメインにアクセスし、ユーザー登録・ログイン・投稿・検索などの主要機能が動作することを確認してください。管理者機能を確認する場合は、`EXRADAR_ADMIN_EMAIL`に指定したメールアドレスで登録・ログインしてから`/admin`を開きます。

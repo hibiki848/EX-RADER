@@ -18,7 +18,7 @@ EXレーダーを、人生の選択と「その後」を投稿・検索・比較
 - Java 21 LTS
 - Spring Boot 3.5.16（Java 21と組み合わせやすく、Boot 4移行直後より教材として既存知見を利用しやすい安定系列）
 - Spring MVC / Thymeleaf / Spring Data JPA / Spring Security 6
-- MySQL 8.4 LTS（本番想定）、H2（自動テストと手軽な開発確認）
+- PostgreSQL（本番: Supabase）、H2（自動テストと手軽な開発確認）
 - Maven Wrapper
 - Flywayでスキーマ変更を明示
 - Bootstrap等のUIフレームワークには依存せず、HTML/CSS/小さなJavaScriptで構成
