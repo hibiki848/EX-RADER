@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>失敗から学ぶ記事 | EXレーダー</title>
+    <meta
+      name="description"
+      content="EXレーダーが発信する、判断に迷ったときに役立つ記事の一覧です。失敗や後悔から得られた教訓を、検索から読むことができます。"
+    />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <header>
+      <a class="brand" href="/">EXレーダー</a>
+      <nav>
+        <a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a
+        ><a class="button" sec:authorize="isAuthenticated()" href="/experiences/new">投稿する</a>
+      </nav>
+    </header>
+    <main class="explore-page">
+      <div class="page-heading">
+        <p class="eyebrow">ARTICLES</p>
+        <h1>失敗から学ぶ記事</h1>
+        <p>
+          決める前に知っておきたいポイントを、記事としてまとめています。読んだあとは、あなた自身の経験もEXレーダーに残してみませんか。
+        </p>
+      </div>
+      <div class="card-grid">
+        <article class="experience-card reveal" th:each="a : ${articles}">
+          <span class="eyebrow" th:text="${#temporals.format(a.publishedAt, 'yyyy/MM/dd')}">公開日</span>
+          <h2 th:text="${a.title}">記事タイトル</h2>
+          <p th:text="${a.description}">記事の概要</p>
+          <div class="experience-card-actions">
+            <a th:href="@{/articles/{slug}(slug=${a.slug})}">記事を読む</a>
+          </div>
+        </article>
+      </div>
+      <div class="empty-state" th:if="${#lists.isEmpty(articles)}">
+        <h2>公開中の記事はまだありません</h2>
+        <p>近日公開予定です。</p>
+      </div>
+    </main>
+  </body>
+</html>

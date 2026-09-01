@@ -14,7 +14,7 @@
   <header>
     <a class="brand" href="/">EXレーダー</a>
     <nav>
-      <a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a><a class="button"
+      <a href="/articles">失敗から学ぶ</a><a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a><a class="button"
         sec:authorize="isAuthenticated()" href="/experiences/new">投稿する</a><a sec:authorize="isAuthenticated()"
         href="/mypage">マイページ</a><a class="button admin-nav-button" sec:authorize="hasRole('ADMIN')"
         href="/admin">管理者画面</a>

@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>管理者ダッシュボード | EXレーダー</title>
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
@@ -11,6 +12,7 @@
     <header>
       <a class="brand" href="/">EXレーダー</a>
       <nav>
+        <a href="/admin/articles">記事管理</a>
         <a href="/experiences">体験談</a>
         <a href="/mypage">マイページ</a>
         <form th:action="@{/logout}" method="post">
@@ -23,6 +25,7 @@
         <p class="eyebrow">ADMIN CONSOLE</p>
         <h1>管理者ダッシュボード</h1>
         <p>サービスの状態とアカウントを管理します。</p>
+        <p><a class="button" href="/admin/articles">公開記事を管理する</a></p>
       </div>
       <p class="success" th:if="${success}" th:text="${success}"></p>
       <p class="error" th:if="${error}" th:text="${error}"></p>

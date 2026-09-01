@@ -29,6 +29,10 @@ public class SecurityConfig {
                         "/choices",
                         "/choices/**",
                         "/profiles/**",
+                        "/articles",
+                        "/articles/**",
+                        "/robots.txt",
+                        "/sitemap.xml",
                         "/css/**",
                         "/js/**",
                         "/error")

@@ -1211,3 +1211,32 @@ legend,
     font-size: 0.78rem;
   }
 }
+
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+/* 公開記事(SEO)の本文タイポグラフィ */
+.article-body h2 {
+  margin: 32px 0 12px;
+}
+.article-body h2:first-child {
+  margin-top: 0;
+}
+.article-body p {
+  margin: 0 0 18px;
+}
+.article-body ul {
+  margin: 0 0 18px;
+  padding-left: 1.4em;
+}
+.article-body li {
+  margin-bottom: 8px;
+}
+.article-body strong {
+  color: var(--teal);
+}
