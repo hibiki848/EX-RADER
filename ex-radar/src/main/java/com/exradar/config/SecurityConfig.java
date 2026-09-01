@@ -35,7 +35,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(new RegexRequestMatcher("^/experiences/[0-9]+$", "GET"))
                     .permitAll()
-                    .requestMatchers("/admin/**")
+                    .requestMatchers("/admin/**", "/api/admin/**")
                     .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated())

@@ -2,6 +2,7 @@ package com.exradar.repository;
 
 import com.exradar.entity.Role;
 import com.exradar.entity.User;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
   long countByRole(Role role);
 
   long countBySuspendedTrue();
+
+  long countByCreatedAtAfter(LocalDateTime since);
 
   java.util.List<User> findAllByOrderByCreatedAtDesc();
 }

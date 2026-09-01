@@ -1,5 +1,6 @@
 package com.exradar.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,6 +48,11 @@ public interface ExperiencePostRepository
   boolean existsByAuthorIdAndPublishedTrue(Long authorId);
 
   long countByPublishedTrue();
+
+  long countByCreatedAtAfter(LocalDateTime since);
+
+  @Query("select count(distinct p.author.id) from ExperiencePost p where p.createdAt >= :since")
+  long countDistinctAuthorsSince(@Param("since") LocalDateTime since);
 
   java.util.List<ExperiencePost> findByAuthorId(Long authorId);
 

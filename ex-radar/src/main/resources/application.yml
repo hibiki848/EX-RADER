@@ -17,3 +17,6 @@ server:
 exradar:
   analytics:
     measurement-id: ${GA4_MEASUREMENT_ID:}
+    ga4:
+      property-id: ${GA4_PROPERTY_ID:}
+      service-account-key: ${GA4_SERVICE_ACCOUNT_KEY:}

@@ -26,6 +26,164 @@
       </div>
       <p class="success" th:if="${success}" th:text="${success}"></p>
       <p class="error" th:if="${error}" th:text="${error}"></p>
+
+      <section class="panel reveal ga-dashboard" aria-label="アクセス解析ダッシュボード">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">OPERATIONS DASHBOARD</p>
+            <h2>アクセス解析ダッシュボード</h2>
+            <p>Google Analytics 4とEXレーダー内部データをまとめて確認できます。</p>
+          </div>
+        </div>
+        <p id="ga-loading" class="ga-loading">読み込み中です…</p>
+        <p id="ga-fetch-error" class="error" hidden>
+          ダッシュボードデータの取得に失敗しました。時間をおいて再読み込みしてください。
+        </p>
+
+        <div id="ga-dashboard-body" hidden>
+          <div class="ga-section">
+            <h3>アクセス状況</h3>
+            <p id="ga-unavailable-access" class="ga-unavailable" hidden>
+              Google Analyticsのデータを取得できませんでした。EXレーダー内部データは通常どおり表示しています。
+            </p>
+            <div class="admin-stats ga-stats">
+              <div class="admin-stat panel">
+                <span>今日のユーザー数</span><strong data-field="googleAnalytics.todayUsers">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>過去7日間のユーザー数</span><strong data-field="googleAnalytics.last7DaysUsers">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>過去30日間のユーザー数</span><strong data-field="googleAnalytics.last30DaysUsers">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>今日のページビュー数</span><strong data-field="googleAnalytics.todayPageViews">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>過去7日間のページビュー数</span
+                ><strong data-field="googleAnalytics.last7DaysPageViews">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>新規ユーザー数(過去30日)</span><strong data-field="googleAnalytics.newUsers30d">—</strong>
+              </div>
+            </div>
+            <p class="ga-realtime">
+              現在のアクティブユーザー数:
+              <strong data-field="googleAnalytics.realtimeActiveUsers">—</strong>
+            </p>
+          </div>
+
+          <div class="ga-section">
+            <h3>ユーザー状況<small>(EXレーダー内部データ)</small></h3>
+            <div class="admin-stats">
+              <div class="admin-stat panel">
+                <span>総登録者数</span><strong data-field="database.totalUsers">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>過去7日間の新規登録者数</span><strong data-field="database.newUsers7d">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>過去30日間の新規登録者数</span><strong data-field="database.newUsers30d">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="ga-section">
+            <h3>コンテンツ状況<small>(EXレーダー内部データ)</small></h3>
+            <div class="admin-stats">
+              <div class="admin-stat panel">
+                <span>総体験談投稿数</span><strong data-field="database.totalPosts">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>過去7日間の投稿数</span><strong data-field="database.posts7d">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>コメント数</span><strong data-field="database.commentCount">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>リアクション数</span><strong data-field="database.reactionCount">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>意思決定メモ数</span><strong data-field="database.decisionMemoCount">—</strong>
+              </div>
+              <div class="admin-stat panel">
+                <span>通報数</span><strong data-field="database.reportCount">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="ga-section">
+            <h3>アクセス推移</h3>
+            <div class="ga-chart-toggle" role="group" aria-label="表示期間">
+              <button type="button" class="button-secondary is-active" data-range="7">7日</button>
+              <button type="button" class="button-secondary" data-range="30">30日</button>
+            </div>
+            <div class="ga-chart-legend">
+              <span class="ga-legend-users">ユーザー数</span><span class="ga-legend-pageviews">ページビュー数</span>
+            </div>
+            <div id="ga-chart" class="ga-chart"></div>
+            <p id="ga-chart-empty" class="ga-unavailable" hidden>
+              Google Analyticsのデータを取得できませんでした。
+            </p>
+          </div>
+
+          <div class="ga-section">
+            <h3>人気ページ TOP10</h3>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ページパス</th>
+                    <th>ページタイトル</th>
+                    <th>閲覧数</th>
+                  </tr>
+                </thead>
+                <tbody id="ga-top-pages"></tbody>
+              </table>
+            </div>
+            <p id="ga-top-pages-empty" class="ga-unavailable" hidden>
+              Google Analyticsのデータを取得できませんでした。
+            </p>
+          </div>
+
+          <div class="ga-section ga-two-col">
+            <div>
+              <h3>流入元</h3>
+              <ul id="ga-traffic-sources" class="ga-bar-list"></ul>
+              <p id="ga-traffic-empty" class="ga-unavailable" hidden>
+                Google Analyticsのデータを取得できませんでした。
+              </p>
+            </div>
+            <div>
+              <h3>デバイス</h3>
+              <ul id="ga-devices" class="ga-bar-list"></ul>
+              <p id="ga-devices-empty" class="ga-unavailable" hidden>
+                Google Analyticsのデータを取得できませんでした。
+              </p>
+            </div>
+          </div>
+
+          <div class="ga-section">
+            <h3>EXレーダー利用ファネル<small>(過去30日間)</small></h3>
+            <p class="ga-funnel-note">
+              サイト訪問 → 体験談を見る → ユーザー登録 →
+              体験談を投稿する、の流れです。訪問者数・体験談詳細閲覧数はGoogle
+              Analytics、新規登録者数・投稿者数・投稿数はEXレーダー内部データ(正確な値)です。
+            </p>
+            <ol class="ga-funnel">
+              <li><span>サイト訪問者数</span><strong data-field="funnel.visitors30d">—</strong></li>
+              <li>
+                <span>体験談詳細ページ閲覧数</span
+                ><strong data-field="funnel.experienceDetailViews30d">—</strong>
+              </li>
+              <li><span>新規登録者数</span><strong data-field="funnel.newRegistrations30d">—</strong></li>
+              <li><span>投稿者数</span><strong data-field="funnel.posters30d">—</strong></li>
+              <li><span>投稿数</span><strong data-field="funnel.posts30d">—</strong></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
       <section class="admin-stats" aria-label="サービス統計">
         <a class="admin-stat panel reveal" th:href="@{/admin(filter='all')}" th:classappend="${filter == 'all'} ? ' is-selected' : ''">
           <span>総登録者数</span><strong th:text="${userCount}">0</strong><small>登録済みアカウント</small>
@@ -105,6 +263,162 @@
           if (event.key === 'Enter' || event.key === ' ') window.location.href = row.dataset.url;
         });
       });
+    </script>
+    <script>
+      (function () {
+        var numberFormat = new Intl.NumberFormat('ja-JP');
+
+        function formatValue(value) {
+          return value === null || value === undefined ? '—' : numberFormat.format(value);
+        }
+
+        function readPath(data, path) {
+          return path.split('.').reduce(function (value, key) {
+            return value === null || value === undefined ? undefined : value[key];
+          }, data);
+        }
+
+        function fillFields(root, data) {
+          root.querySelectorAll('[data-field]').forEach(function (el) {
+            el.textContent = formatValue(readPath(data, el.dataset.field));
+          });
+        }
+
+        function renderTopPages(topPages) {
+          var tbody = document.getElementById('ga-top-pages');
+          var empty = document.getElementById('ga-top-pages-empty');
+          tbody.innerHTML = '';
+          if (!topPages || topPages.length === 0) {
+            empty.hidden = false;
+            return;
+          }
+          empty.hidden = true;
+          topPages.forEach(function (page) {
+            var tr = document.createElement('tr');
+            var pathTd = document.createElement('td');
+            pathTd.textContent = page.path;
+            var titleTd = document.createElement('td');
+            titleTd.textContent = page.title;
+            var viewsTd = document.createElement('td');
+            viewsTd.textContent = numberFormat.format(page.pageViews);
+            tr.append(pathTd, titleTd, viewsTd);
+            tbody.appendChild(tr);
+          });
+        }
+
+        function renderBarList(listId, emptyId, items, labelKey, valueKey) {
+          var list = document.getElementById(listId);
+          var empty = document.getElementById(emptyId);
+          list.innerHTML = '';
+          if (!items || items.length === 0) {
+            empty.hidden = false;
+            return;
+          }
+          empty.hidden = true;
+          var total = items.reduce(function (sum, item) {
+            return sum + item[valueKey];
+          }, 0);
+          var max = Math.max.apply(null, items.map(function (item) {
+            return item[valueKey];
+          }));
+          items.forEach(function (item) {
+            var li = document.createElement('li');
+            var percentage = total > 0 ? Math.round((item[valueKey] / total) * 100) : 0;
+            var barWidth = max > 0 ? Math.round((item[valueKey] / max) * 100) : 0;
+            li.innerHTML =
+              '<span class="ga-bar-label">' +
+              (item[labelKey] || '(不明)') +
+              '</span><span class="ga-bar-track"><span class="ga-bar-fill" style="width:' +
+              barWidth +
+              '%"></span></span><span class="ga-bar-value">' +
+              numberFormat.format(item[valueKey]) +
+              '件(' +
+              percentage +
+              '%)</span>';
+            list.appendChild(li);
+          });
+        }
+
+        function renderChart(dailyStats, rangeDays) {
+          var chart = document.getElementById('ga-chart');
+          var empty = document.getElementById('ga-chart-empty');
+          chart.innerHTML = '';
+          if (!dailyStats || dailyStats.length === 0) {
+            empty.hidden = false;
+            return;
+          }
+          empty.hidden = true;
+          var slice = dailyStats.slice(Math.max(0, dailyStats.length - rangeDays));
+          var max = Math.max.apply(null, slice.map(function (d) {
+            return Math.max(d.users, d.pageViews);
+          }).concat([1]));
+          slice.forEach(function (day) {
+            var col = document.createElement('div');
+            col.className = 'ga-chart-col';
+            var bars = document.createElement('div');
+            bars.className = 'ga-chart-bars';
+            var userBar = document.createElement('span');
+            userBar.className = 'ga-bar ga-bar-users';
+            userBar.style.height = Math.round((day.users / max) * 100) + '%';
+            userBar.title = 'ユーザー数: ' + numberFormat.format(day.users);
+            var viewBar = document.createElement('span');
+            viewBar.className = 'ga-bar ga-bar-pageviews';
+            viewBar.style.height = Math.round((day.pageViews / max) * 100) + '%';
+            viewBar.title = 'ページビュー数: ' + numberFormat.format(day.pageViews);
+            bars.append(userBar, viewBar);
+            var label = document.createElement('small');
+            label.textContent = day.date.slice(5);
+            col.append(bars, label);
+            chart.appendChild(col);
+          });
+        }
+
+        fetch('/api/admin/analytics', { headers: { Accept: 'application/json' } })
+          .then(function (response) {
+            if (!response.ok) throw new Error('request failed: ' + response.status);
+            return response.json();
+          })
+          .then(function (data) {
+            document.getElementById('ga-loading').hidden = true;
+            var body = document.getElementById('ga-dashboard-body');
+            body.hidden = false;
+            fillFields(body, data);
+
+            var gaAvailable = data.googleAnalytics && data.googleAnalytics.available;
+            document.getElementById('ga-unavailable-access').hidden = !!gaAvailable;
+
+            var dailyStats = gaAvailable ? data.googleAnalytics.dailyStats : [];
+            var currentRange = 7;
+            renderChart(dailyStats, currentRange);
+            body.querySelectorAll('.ga-chart-toggle button').forEach(function (button) {
+              button.addEventListener('click', function () {
+                body.querySelectorAll('.ga-chart-toggle button').forEach(function (b) {
+                  b.classList.remove('is-active');
+                });
+                button.classList.add('is-active');
+                renderChart(dailyStats, Number(button.dataset.range));
+              });
+            });
+
+            renderTopPages(gaAvailable ? data.googleAnalytics.topPages : []);
+            renderBarList(
+              'ga-traffic-sources',
+              'ga-traffic-empty',
+              gaAvailable ? data.googleAnalytics.trafficSources : [],
+              'source',
+              'sessions');
+            renderBarList(
+              'ga-devices',
+              'ga-devices-empty',
+              gaAvailable ? data.googleAnalytics.devices : [],
+              'category',
+              'activeUsers');
+          })
+          .catch(function () {
+            document.getElementById('ga-loading').hidden = true;
+            document.getElementById('ga-fetch-error').hidden = false;
+          });
+      })();
     </script>
   </body>
 </html>
