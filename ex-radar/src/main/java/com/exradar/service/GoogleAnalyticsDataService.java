@@ -31,6 +31,8 @@ public class GoogleAnalyticsDataService {
   private static final String BASE_URL = "https://analyticsdata.googleapis.com";
   private static final List<String> SCOPES =
       List.of("https://www.googleapis.com/auth/analytics.readonly");
+  /** Google Analytics Data APIのbatchRunReportsは1回あたり最大5件のRunReportRequestまで。 */
+  private static final int MAX_REPORTS_PER_BATCH = 5;
 
   private final String propertyId;
   private final GoogleCredentials credentials;
@@ -136,26 +138,15 @@ public class GoogleAnalyticsDataService {
                           "fieldName", "eventName",
                           "stringFilter", Map.of("value", "experience_detail_view")))));
 
-      log.info("Calling Google Analytics Data API: batchRunReports");
-      JsonNode response =
-          restClient
-              .post()
-              .uri("/v1beta/properties/{id}:batchRunReports", propertyId)
-              .header("Authorization", "Bearer " + accessToken())
-              .contentType(MediaType.APPLICATION_JSON)
-              .body(Map.of("requests", requests))
-              .retrieve()
-              .body(JsonNode.class);
-      log.info("Google Analytics Data API request succeeded: batchRunReports");
+      List<JsonNode> reports = runReportBatches(requests);
 
-      JsonNode reports = response.path("reports");
-      long todayUsers = metricAt(reports.path(0), 0, 0);
-      long todayPageViews = metricAt(reports.path(0), 0, 1);
-      long last7DaysUsers = metricAt(reports.path(1), 0, 0);
-      long last7DaysPageViews = metricAt(reports.path(1), 0, 1);
-      long last30DaysUsers = metricAt(reports.path(2), 0, 0);
-      long newUsers30d = metricAt(reports.path(2), 0, 1);
-      long experienceDetailViews30d = metricAt(reports.path(7), 0, 0);
+      long todayUsers = metricAt(reports.get(0), 0, 0);
+      long todayPageViews = metricAt(reports.get(0), 0, 1);
+      long last7DaysUsers = metricAt(reports.get(1), 0, 0);
+      long last7DaysPageViews = metricAt(reports.get(1), 0, 1);
+      long last30DaysUsers = metricAt(reports.get(2), 0, 0);
+      long newUsers30d = metricAt(reports.get(2), 0, 1);
+      long experienceDetailViews30d = metricAt(reports.get(7), 0, 0);
 
       return new GoogleAnalyticsStats(
           true,
@@ -167,16 +158,53 @@ public class GoogleAnalyticsDataService {
           last7DaysPageViews,
           newUsers30d,
           experienceDetailViews30d,
-          dailyStats(reports.path(3)),
-          topPages(reports.path(4)),
-          trafficSources(reports.path(5)),
-          devices(reports.path(6)),
+          dailyStats(reports.get(3)),
+          topPages(reports.get(4)),
+          trafficSources(reports.get(5)),
+          devices(reports.get(6)),
           false,
           null);
     } catch (RuntimeException e) {
       log.error("Google Analytics Data API request failed: batchRunReports", e);
       return unavailable("Google Analyticsのデータを取得できませんでした");
     }
+  }
+
+  /**
+   * Google Analytics Data APIのbatchRunReportsは1回あたり最大{@value #MAX_REPORTS_PER_BATCH}件までしか
+   * RunReportRequestを受け付けないため、リクエストを分割して複数回呼び出し、結果を元の順序で結合する。
+   * 取得する分析項目(リクエストの内容)自体は変更しない。
+   */
+  private List<JsonNode> runReportBatches(List<Map<String, Object>> requests) {
+    int totalBatches =
+        (int) Math.ceil(requests.size() / (double) MAX_REPORTS_PER_BATCH);
+    List<JsonNode> combined = new java.util.ArrayList<>();
+    int batchNumber = 0;
+    for (int start = 0; start < requests.size(); start += MAX_REPORTS_PER_BATCH) {
+      batchNumber++;
+      List<Map<String, Object>> chunk =
+          requests.subList(start, Math.min(start + MAX_REPORTS_PER_BATCH, requests.size()));
+      String label =
+          "batchRunReports " + batchNumber + "/" + totalBatches + " (" + chunk.size() + " requests)";
+      log.info("Calling Google Analytics Data API: {}", label);
+      try {
+        JsonNode response =
+            restClient
+                .post()
+                .uri("/v1beta/properties/{id}:batchRunReports", propertyId)
+                .header("Authorization", "Bearer " + accessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("requests", chunk))
+                .retrieve()
+                .body(JsonNode.class);
+        response.path("reports").forEach(combined::add);
+        log.info("Google Analytics Data API request succeeded: {}", label);
+      } catch (RuntimeException e) {
+        log.error("Google Analytics Data API request failed: {}", label, e);
+        throw e;
+      }
+    }
+    return combined;
   }
 
   /** 現在のアクティブユーザー数(リアルタイムAPI)。取得できない場合はnull。 */
