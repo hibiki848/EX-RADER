@@ -19,12 +19,8 @@
           メールアドレスまたはパスワードが正しくありません。
         </p>
         <p th:if="${param.logout}" class="success">ログアウトしました。</p>
-        <form action="/login" method="post">
-          <input
-            type="hidden"
-            th:name="${_csrf.parameterName}"
-            th:value="${_csrf.token}"
-          /><label
+        <form th:action="@{/login}" method="post">
+          <label
             >メールアドレス<input
               name="username"
               type="email"
