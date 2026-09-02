@@ -15,7 +15,7 @@
   <header>
     <a class="brand" href="/">EXレーダー</a>
     <nav>
-      <a href="/articles">失敗から学ぶ</a><a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a><a class="button"
+      <a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a><a class="button"
         sec:authorize="isAuthenticated()" href="/experiences/new">投稿する</a><a sec:authorize="isAuthenticated()"
         href="/mypage">マイページ</a><a class="button admin-nav-button" sec:authorize="hasRole('ADMIN')"
         href="/admin">管理者画面</a>
@@ -96,6 +96,27 @@
             <a th:href="@{/experiences/{id}(id=${p.id})}">詳細ページ</a>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section class="home-section" th:if="${not #lists.isEmpty(latestArticles)}">
+      <div class="section-title">
+        <p class="eyebrow">ARTICLES</p>
+        <h2>新着記事</h2>
+      </div>
+
+      <div class="card-grid">
+        <article class="experience-card reveal" th:each="a:${latestArticles}">
+          <span class="eyebrow" th:text="${#temporals.format(a.publishedAt, 'yyyy/MM/dd')}">公開日</span>
+          <h3 th:text="${a.title}">記事タイトル</h3>
+          <p th:text="${a.description}">記事の概要</p>
+          <div class="experience-card-actions">
+            <a th:href="@{/articles/{slug}(slug=${a.slug})}">記事を読む</a>
+          </div>
+        </article>
+      </div>
+      <div class="home-section-more">
+        <a class="button button-secondary" href="/articles">もっと見る</a>
       </div>
     </section>
   </main>

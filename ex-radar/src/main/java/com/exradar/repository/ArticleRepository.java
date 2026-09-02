@@ -13,6 +13,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
   List<Article> findByStatusOrderByPublishedAtDesc(ArticleStatus status);
 
+  List<Article> findTop3ByStatusOrderByPublishedAtDesc(ArticleStatus status);
+
   List<Article> findAllByOrderByUpdatedAtDesc();
 
   boolean existsBySlug(String slug);

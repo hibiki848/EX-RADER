@@ -23,6 +23,12 @@ public class ArticleService {
     return articles.findByStatusOrderByPublishedAtDesc(ArticleStatus.PUBLISHED);
   }
 
+  /** ホームページの「新着記事」向け。公開済みの記事を新しい順に最大3件返す。 */
+  @Transactional(readOnly = true)
+  public List<Article> latest() {
+    return articles.findTop3ByStatusOrderByPublishedAtDesc(ArticleStatus.PUBLISHED);
+  }
+
   @Transactional(readOnly = true)
   public Article publishedBySlug(String slug) {
     return articles
