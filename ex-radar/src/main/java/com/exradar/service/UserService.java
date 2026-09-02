@@ -2,6 +2,7 @@ package com.exradar.service;
 
 import com.exradar.entity.*;
 import com.exradar.exception.DuplicateEmailException;
+import com.exradar.exception.ResourceNotFoundException;
 import com.exradar.form.RegistrationForm;
 import com.exradar.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,5 +30,14 @@ public class UserService {
             encoder.encode(form.getPassword()),
             form.getDisplayName().trim(),
             Role.USER));
+  }
+
+  @Transactional
+  public void completeDisplayNameSetup(String email, String displayName) {
+    User user =
+        users
+            .findByEmailIgnoreCase(email)
+            .orElseThrow(() -> new ResourceNotFoundException("ユーザーが見つかりません"));
+    user.completeDisplayNameSetup(displayName.trim());
   }
 }

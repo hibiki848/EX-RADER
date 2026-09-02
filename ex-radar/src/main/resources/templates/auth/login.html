@@ -16,10 +16,25 @@
         <p th:if="${registered}" class="success">
           登録が完了しました。ログインしてください。
         </p>
-        <p th:if="${param.error}" class="error">
+        <p th:if="${param.logout}" class="success">ログアウトしました。</p>
+        <p th:if="${param.error != null and param.error[0] == 'oauth_account_exists'}" class="error">
+          このメールアドレスは既にEXレーダーに登録されています。メールアドレスとパスワードでログインしてください。
+        </p>
+        <p th:if="${param.error != null and param.error[0] == 'oauth_suspended'}" class="error">
+          このアカウントは利用停止されています。
+        </p>
+        <p th:if="${param.error != null and param.error[0] == 'oauth_email'}" class="error">
+          Googleアカウントの確認済みメールアドレスを取得できませんでした。
+        </p>
+        <p
+          th:if="${param.error != null and (param.error[0] == '' or param.error[0] == 'oauth_failed')}"
+          class="error"
+        >
           メールアドレスまたはパスワードが正しくありません。
         </p>
-        <p th:if="${param.logout}" class="success">ログアウトしました。</p>
+        <th:block th:if="${googleLoginEnabled}">
+          <div th:replace="~{fragments/google-signin :: google-signin}"></div>
+        </th:block>
         <form th:action="@{/login}" method="post">
           <label
             >メールアドレス<input

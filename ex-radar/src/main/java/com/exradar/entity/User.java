@@ -50,6 +50,16 @@ public class User extends BaseEntity {
   @Column(nullable = false)
   private boolean suspended;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "auth_provider", nullable = false, length = 20)
+  private AuthProvider authProvider = AuthProvider.LOCAL;
+
+  @Column(name = "provider_user_id", length = 255)
+  private String providerUserId;
+
+  @Column(name = "display_name_pending", nullable = false)
+  private boolean displayNamePending;
+
   @ManyToMany
   @JoinTable(
       name = "user_values",
@@ -65,6 +75,22 @@ public class User extends BaseEntity {
     this.password = password;
     this.displayName = displayName;
     this.role = role;
+  }
+
+  /**
+   * Googleアカウントでの初回ログイン時にユーザーを作成するための専用コンストラクタ。
+   * Googleの氏名は公開表示名として使わないため、displayNameは仮の値を渡し、
+   * displayNamePending=trueとして「表示名を設定してください」画面へ誘導する。
+   * ログインパスワードは持たないため、他人が推測できないランダムなパスワードハッシュを設定する
+   * (encodedRandomPasswordは呼び出し側でPasswordEncoderにより生成済みのものを渡す)。
+   */
+  public static User forGoogleSignup(
+      String email, String providerUserId, String placeholderDisplayName, String encodedRandomPassword) {
+    User user = new User(email, encodedRandomPassword, placeholderDisplayName, Role.USER);
+    user.authProvider = AuthProvider.GOOGLE;
+    user.providerUserId = providerUserId;
+    user.displayNamePending = true;
+    return user;
   }
 
   public String getEmail() {
@@ -85,6 +111,23 @@ public class User extends BaseEntity {
 
   public boolean isSuspended() {
     return suspended;
+  }
+
+  public AuthProvider getAuthProvider() {
+    return authProvider;
+  }
+
+  public String getProviderUserId() {
+    return providerUserId;
+  }
+
+  public boolean isDisplayNamePending() {
+    return displayNamePending;
+  }
+
+  public void completeDisplayNameSetup(String displayName) {
+    this.displayName = displayName;
+    this.displayNamePending = false;
   }
 
   public String getAgeGroup() {

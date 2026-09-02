@@ -1,5 +1,6 @@
 package com.exradar.repository;
 
+import com.exradar.entity.AuthProvider;
 import com.exradar.entity.Role;
 import com.exradar.entity.User;
 import java.time.LocalDateTime;
@@ -20,6 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
   long countBySuspendedTrue();
 
   long countByCreatedAtAfter(LocalDateTime since);
+
+  Optional<User> findByAuthProviderAndProviderUserId(AuthProvider authProvider, String providerUserId);
 
   java.util.List<User> findAllByOrderByCreatedAtDesc();
 }

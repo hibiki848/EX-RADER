@@ -89,4 +89,18 @@ class AuthControllerTest {
     mvc.perform(formLogin().user("stopped@example.com").password("password123"))
         .andExpect(unauthenticated());
   }
+
+  @Test
+  void googleLoginIsDisabledWithoutClientCredentials() throws Exception {
+    // テスト環境にはGOOGLE_CLIENT_ID/SECRETを設定していないため、Googleボタンは表示されず、
+    // oauth2Login自体もSecurityConfigで組み込まれない(既存のフォームログインのみ)ことを確認する。
+    mvc.perform(get("/login"))
+        .andExpect(status().isOk())
+        .andExpect(model().attribute("googleLoginEnabled", false))
+        .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Googleで続ける"))));
+    mvc.perform(get("/register"))
+        .andExpect(status().isOk())
+        .andExpect(model().attribute("googleLoginEnabled", false));
+    mvc.perform(get("/oauth2/authorization/google")).andExpect(status().isNotFound());
+  }
 }

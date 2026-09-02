@@ -149,6 +149,46 @@ nav a[href="/mypage"] {
   display: grid;
   gap: 18px;
 }
+.google-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 0.75rem 1.2rem;
+  background: #fff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: 0.95rem;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.google-button:hover {
+  background: #f8f9fa;
+  box-shadow: 0 1px 3px #00000026;
+}
+.google-button-icon {
+  flex-shrink: 0;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
 .panel label {
   display: grid;
   gap: 7px;
@@ -1222,10 +1262,14 @@ legend,
   justify-content: center;
   background: var(--paper);
   opacity: 1;
-  transition: opacity 0.25s ease;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.25s ease, visibility 0.25s ease, pointer-events 0.25s ease;
 }
 .page-loader.is-hidden {
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 .page-loader-spinner {
   width: 44px;

@@ -121,6 +121,38 @@ GA4の「レポート > レポートのスナップショット」または「�
 
 これらの環境変数を設定しない場合でも、管理者ダッシュボードのEXレーダー内部データ(ユーザー状況・コンテンツ状況・ファネルの一部)は通常どおり表示され、アプリ全体が停止することはありません。
 
+## Googleログイン(任意)
+
+ログイン・新規登録画面に「Googleで続ける」ボタンを表示し、Google OAuth 2.0 / OpenID Connectでのログイン・新規登録に対応しています。既存のメールアドレス+パスワードでの登録・ログインはそのまま利用できます。`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` を設定しない環境(現在の開発・テスト環境など)では、Googleログイン関連の機能は自動的に無効化され、Googleボタンも表示されません(既存の認証には一切影響しません)。
+
+Googleでの初回ログイン時は、Googleの氏名をそのまま使わず「表示名を設定してください」という専用画面で本人にEXレーダー上の表示名を決めてもらいます。Googleの本名・メールアドレス・ユーザーIDは公開プロフィールや体験談画面には一切表示されません。また、ログインしようとしたGoogleアカウントのメールアドレスと同じメールアドレスのアカウントが既に存在する場合は、自動で統合せずログインを拒否します(乗っ取り防止のため)。
+
+### Google Cloud側で行う作業
+
+1. [Google Cloud Console](https://console.cloud.google.com/)でプロジェクトを作成(または既存のものを使用、GA4連携と共用可)します。
+2. 「APIとサービス > OAuth同意画面」で外部/内部を選択し、アプリ名・サポートメール等を設定します(スコープは既定の`email`・`profile`・`openid`で十分です)。
+3. 「APIとサービス > 認証情報 > 認証情報を作成 > OAuthクライアントID」を選択し、アプリケーションの種類は**ウェブアプリケーション**を選びます。
+4. 「承認済みのJavaScript生成元」「承認済みのリダイレクトURI」に、後述の値を設定します。
+5. 作成後に表示される**クライアントID**と**クライアントシークレット**を控えます。クライアントシークレットは`GOOGLE_CLIENT_SECRET`としてRailwayの環境変数にのみ設定し、コードやREADME等には書かないでください。
+
+### Authorized JavaScript origins(承認済みのJavaScript生成元)
+
+```text
+https://<本番のRailwayドメイン>
+```
+
+### Authorized redirect URIs(承認済みのリダイレクトURI)
+
+```text
+https://<本番のRailwayドメイン>/login/oauth2/code/google
+```
+
+`/login/oauth2/code/google` はSpring Securityが標準で提供するコールバックパスで、独自に実装したものではありません。ローカルでも動作確認する場合は、上記に加えて `http://localhost:8080` / `http://localhost:8080/login/oauth2/code/google` も同じOAuthクライアントに追加登録してください(1つのクライアントIDに複数のオリジン・リダイレクトURIを登録できます)。
+
+### Railwayで行う作業
+
+Railwayの「Variables」に`GOOGLE_CLIENT_ID`と`GOOGLE_CLIENT_SECRET`を追加し、再デプロイしてください。設定後、ログイン画面に「Googleで続ける」ボタンが表示されます。
+
 macOS / Linux：
 
 ```bash
@@ -182,6 +214,8 @@ macOS / Linux：
    | `EXRADAR_ADMIN_EMAIL` | 本番で管理者として扱うユーザーのメールアドレス |
    | `GA4_PROPERTY_ID`（任意） | 管理者ダッシュボードのGA4連携用。プロパティID（数字のみ） |
    | `GA4_SERVICE_ACCOUNT_KEY`（任意） | 管理者ダッシュボードのGA4連携用。サービスアカウントのJSONキーの中身をそのまま設定 |
+   | `GOOGLE_CLIENT_ID`（任意） | Googleログイン用のクライアントID。未設定の場合はGoogleログイン機能自体が無効化され、従来のメール+パスワード認証のみになる |
+   | `GOOGLE_CLIENT_SECRET`（任意） | Googleログイン用のクライアントシークレット |
 
    `PORT`はRailwayが自動的に設定するため、追加設定は不要です（アプリ側は`${PORT:8080}`で待ち受けます）。
 

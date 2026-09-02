@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>表示名の設定 | EXレーダー</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <main class="auth">
+      <a class="brand" href="/">EXレーダー</a>
+      <section class="panel">
+        <h1>表示名を設定してください</h1>
+        <p>
+          EXレーダーで使用する表示名を決めてください。他のユーザーにはこの表示名だけが公開され、Googleアカウントの本名やメールアドレスが公開されることはありません。
+        </p>
+        <form
+          th:action="@{/oauth2/display-name}"
+          th:object="${displayNameForm}"
+          method="post"
+        >
+          <label
+            >表示名<input
+              th:field="*{displayName}"
+              maxlength="50"
+              placeholder="例：れーだー" /><small th:errors="*{displayName}"></small></label
+          ><button class="button" type="submit">この表示名で始める</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
