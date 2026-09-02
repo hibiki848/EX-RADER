@@ -59,7 +59,7 @@
       </a>
     </section>
 
-    <section class="home-section">
+    <section class="home-section home-section-latest">
       <div class="section-title">
         <p class="eyebrow">LATEST</p>
         <h2>新着の体験談</h2>
@@ -69,7 +69,7 @@
         <article class="experience-card reveal" th:each="p:${latestPosts}">
           <span th:text="${p.category}"></span>
           <h3 th:text="${p.title}"></h3>
-          <p th:text="${p.author}+'さん'"></p>
+          <p th:text="${#temporals.format(p.createdAt, 'yyyy年M月d日')}"></p>
           <div class="experience-card-actions" sec:authorize="isAuthenticated()">
             <button class="button" type="button"
               th:attr="data-summary-target=|home-latest-summary-${p.id}|">簡易表示</button>
@@ -88,8 +88,8 @@
       <div class="card-grid">
         <article class="experience-card reveal" th:each="p:${recommendedPosts}">
           <span th:text="${p.category}"></span>
-          <h3 th:text="${p.title}"></h3>
-          <p>一人の経験を判断材料として読む</p>
+          <h3 th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"></h3>
+          <p th:text="${#temporals.format(p.createdAt, 'yyyy年M月d日')}"></p>
           <div class="experience-card-actions" sec:authorize="isAuthenticated()">
             <button class="button" type="button"
               th:attr="data-summary-target=|home-reference-summary-${p.id}|">簡易表示</button>
@@ -107,7 +107,7 @@
 
       <div class="card-grid">
         <article class="experience-card reveal" th:each="a:${latestArticles}">
-          <span class="eyebrow" th:text="${#temporals.format(a.publishedAt, 'yyyy/MM/dd')}">公開日</span>
+          <span class="eyebrow" th:text="${#temporals.format(a.publishedAt, 'yyyy年M月d日')}">公開日</span>
           <h3 th:text="${a.title}">記事タイトル</h3>
           <p th:text="${a.description}">記事の概要</p>
           <div class="experience-card-actions">
