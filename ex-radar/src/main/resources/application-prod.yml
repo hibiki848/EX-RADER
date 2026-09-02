@@ -7,3 +7,12 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
+# 本番環境でDEBUGログが大量に出続けないよう明示的に指定する
+# (Spring Bootのデフォルトも root=INFO のため実質的な挙動は変わらないが、
+# 誤って開発用のDEBUG設定が持ち込まれても本番へは影響しないようにする)
+logging:
+  level:
+    root: INFO
+    com.exradar: INFO
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO

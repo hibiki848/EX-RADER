@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>エラーが発生しました | EXレーダー</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <main class="panel page">
+      <p class="eyebrow">500</p>
+      <h1>処理中にエラーが発生しました</h1>
+      <p th:text="${message} ?: 'サーバーで問題が発生しました。しばらくしてからもう一度お試しください。'">
+        サーバーで問題が発生しました。しばらくしてからもう一度お試しください。
+      </p>
+      <a class="button" href="/">トップへ戻る</a>
+    </main>
+  </body>
+</html>
