@@ -71,7 +71,7 @@ class ExperiencePostSearchRepositoryTest {
       boolean again,
       String... tagNames) {
     var p = new ExperiencePost(author);
-    p.update(
+    p.updateContent(
         category,
         title,
         age,
@@ -90,8 +90,8 @@ class ExperiencePostSearchRepositoryTest {
         satisfaction,
         regret,
         again,
-        "助言",
-        published);
+        "助言");
+    if (published) p.publish();
     var values = new LinkedHashSet<com.exradar.entity.Tag>();
     for (String name : tagNames)
       values.add(

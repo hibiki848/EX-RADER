@@ -40,7 +40,9 @@ public class ChoiceGuideController {
       return "redirect:/experiences/unlock";
     var category =
         categories.findBySlug(slug).orElseThrow(() -> new ResourceNotFoundException("選択肢が見つかりません"));
-    var experiences = posts.findByCategorySlugAndPublishedTrueOrderByCreatedAtDesc(slug);
+    var experiences =
+        posts.findByCategorySlugAndStatusOrderByCreatedAtDesc(
+            slug, com.exradar.entity.PostStatus.PUBLISHED);
     if (principal != null) {
       var names =
           users

@@ -24,6 +24,7 @@ public class AccountController {
     var u = service.current(p.getName());
     m.addAttribute("user", u);
     m.addAttribute("posts", service.posts(p.getName()));
+    m.addAttribute("drafts", service.drafts(p.getName()));
     m.addAttribute("reactions", service.reactions(p.getName()));
     return "mypage";
   }

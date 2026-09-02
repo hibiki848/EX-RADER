@@ -6,123 +6,191 @@ import jakarta.validation.constraints.*;
 import java.util.*;
 
 public class ExperiencePostForm {
-  @NotNull(message = "カテゴリを選択してください")
+  @NotNull(message = "カテゴリを選択してください", groups = PublishValidation.class)
   private Long categoryId;
 
-  @NotBlank(message = "タイトルを入力してください")
-  @Size(max = 150, message = "タイトルは150文字以内で入力してください")
+  @NotBlank(message = "タイトルを入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 150,
+      message = "タイトルは150文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String title;
 
-  @Min(value = 0, message = "選択時の年齢は0以上で入力してください")
-  @Max(value = 120, message = "選択時の年齢は120以下で入力してください")
+  @Min(
+      value = 0,
+      message = "選択時の年齢は0以上で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
+  @Max(
+      value = 120,
+      message = "選択時の年齢は120以下で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private Integer ageAtChoice;
 
-  @Size(max = 100, message = "当時の立場は100文字以内で入力してください")
+  @Size(
+      max = 100,
+      message = "当時の立場は100文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String statusAtChoice;
 
-  @Size(max = 20, message = "現在の年代は20文字以内で入力してください")
+  @Size(
+      max = 20,
+      message = "現在の年代は20文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String currentAgeGroup;
 
-  @Min(value = 0, message = "経過年数は0以上で入力してください")
-  @Max(value = 100, message = "経過年数は100以下で入力してください")
+  @Min(
+      value = 0,
+      message = "経過年数は0以上で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
+  @Max(
+      value = 100,
+      message = "経過年数は100以下で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private Integer yearsElapsed;
 
-  @NotBlank(message = "選択前の状況を入力してください")
-  @Size(max = 3000, message = "選択前の状況は3000文字以内で入力してください")
+  @NotBlank(message = "選択前の状況を入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "選択前の状況は3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String situationBefore;
 
-  @NotBlank(message = "当時の悩みを入力してください")
-  @Size(max = 3000, message = "当時の悩みは3000文字以内で入力してください")
+  @NotBlank(message = "当時の悩みを入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "当時の悩みは3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String worries;
 
-  @NotBlank(message = "検討した選択肢を入力してください")
-  @Size(max = 3000, message = "検討した選択肢は3000文字以内で入力してください")
+  @NotBlank(message = "検討した選択肢を入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "検討した選択肢は3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String alternatives;
 
-  @NotBlank(message = "実際に選んだことを入力してください")
-  @Size(max = 3000, message = "実際に選んだことは3000文字以内で入力してください")
+  @NotBlank(message = "実際に選んだことを入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "実際に選んだことは3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String choiceMade;
 
-  @NotBlank(message = "選んだ理由を入力してください")
-  @Size(max = 3000, message = "選んだ理由は3000文字以内で入力してください")
+  @NotBlank(message = "選んだ理由を入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "選んだ理由は3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String reason;
 
-  @NotBlank(message = "その後の結果を入力してください")
-  @Size(max = 5000, message = "その後の結果は5000文字以内で入力してください")
+  @NotBlank(message = "その後の結果を入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 5000,
+      message = "その後の結果は5000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String outcome;
 
-  @NotBlank(message = "良かったことを入力してください")
-  @Size(max = 3000, message = "良かったことは3000文字以内で入力してください")
+  @NotBlank(message = "良かったことを入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "良かったことは3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String goodThings;
 
-  @NotBlank(message = "大変だったことを入力してください")
-  @Size(max = 3000, message = "大変だったことは3000文字以内で入力してください")
+  @NotBlank(message = "大変だったことを入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "大変だったことは3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String difficulties;
 
-  @NotBlank(message = "想定外だったことを入力してください")
-  @Size(max = 3000, message = "想定外だったことは3000文字以内で入力してください")
+  @NotBlank(message = "想定外だったことを入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "想定外だったことは3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String unexpectedThings;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String decisionCriteria;
 
-  @Size(max = 5000)
+  @Size(max = 5000, groups = {DraftValidation.class, PublishValidation.class})
   private String learned;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String wishKnown;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String unexpectedlyOkay;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String preparationHelped;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String missedRegret;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String lesson;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String suitableFor;
 
-  @Size(max = 3000)
+  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String cautionFor;
 
   private Set<Long> valueIds = new LinkedHashSet<>();
 
-  @NotNull(message = "満足度を選択してください")
-  @Min(value = 1, message = "満足度は1〜10で選択してください")
-  @Max(value = 10, message = "満足度は1〜10で選択してください")
+  @NotNull(message = "満足度を選択してください", groups = PublishValidation.class)
+  @Min(
+      value = 1,
+      message = "満足度は1〜10で選択してください",
+      groups = {DraftValidation.class, PublishValidation.class})
+  @Max(
+      value = 10,
+      message = "満足度は1〜10で選択してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private Integer satisfaction;
 
-  @NotNull(message = "後悔度を選択してください")
-  @Min(value = 1, message = "後悔度は1〜10で選択してください")
-  @Max(value = 10, message = "後悔度は1〜10で選択してください")
+  @NotNull(message = "後悔度を選択してください", groups = PublishValidation.class)
+  @Min(
+      value = 1,
+      message = "後悔度は1〜10で選択してください",
+      groups = {DraftValidation.class, PublishValidation.class})
+  @Max(
+      value = 10,
+      message = "後悔度は1〜10で選択してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private Integer regret;
 
   private boolean chooseAgain;
 
-  @NotBlank(message = "過去の自分へのアドバイスを入力してください")
-  @Size(max = 3000, message = "アドバイスは3000文字以内で入力してください")
+  @NotBlank(message = "過去の自分へのアドバイスを入力してください", groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "アドバイスは3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String adviceToPastSelf;
 
-  private boolean published = true;
-
-  @Size(max = 300, message = "タグは合計300文字以内で入力してください")
+  @Size(
+      max = 300,
+      message = "タグは合計300文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   @Pattern(
       regexp = "^$|^(\\s*#?[^,、]{1,50}\\s*)([,、]\\s*#?[^,、]{1,50}\\s*){0,9}$",
-      message = "タグは1個50文字以内、10個までカンマ区切りで入力してください")
+      message = "タグは1個50文字以内、10個までカンマ区切りで入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String tagNames;
 
   @Valid
-  @Size(max = 20, message = "人生イベントは20件以内で入力してください")
+  @Size(
+      max = 20,
+      message = "人生イベントは20件以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private List<LifeEventForm> lifeEvents = new ArrayList<>();
 
   public static ExperiencePostForm from(ExperiencePost p) {
     var f = new ExperiencePostForm();
-    f.categoryId = p.getCategory().getId();
+    f.categoryId = p.getCategory() == null ? null : p.getCategory().getId();
     f.title = p.getTitle();
     f.ageAtChoice = p.getAgeAtChoice();
     f.statusAtChoice = p.getStatusAtChoice();
@@ -151,7 +219,6 @@ public class ExperiencePostForm {
     f.regret = p.getRegret();
     f.chooseAgain = p.isChooseAgain();
     f.adviceToPastSelf = p.getAdviceToPastSelf();
-    f.published = p.isPublished();
     for (var e : p.getLifeEvents()) {
       var le = new LifeEventForm();
       le.setAgeLabel(e.getAgeLabel());
@@ -392,14 +459,6 @@ public class ExperiencePostForm {
 
   public void setAdviceToPastSelf(String v) {
     adviceToPastSelf = v;
-  }
-
-  public boolean isPublished() {
-    return published;
-  }
-
-  public void setPublished(boolean v) {
-    published = v;
   }
 
   public List<LifeEventForm> getLifeEvents() {

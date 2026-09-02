@@ -57,10 +57,17 @@ class ExperiencePostServiceTest {
   @Test
   void japaneseValidationRejectsMissingRequiredFields() {
     var f = new ExperiencePostForm();
-    var violations = validator.validate(f);
+    var violations = validator.validate(f, PublishValidation.class);
     assertThat(violations)
         .anyMatch(v -> v.getMessage().equals("タイトルを入力してください"))
         .anyMatch(v -> v.getMessage().equals("カテゴリを選択してください"));
+  }
+
+  @Test
+  void draftValidationAllowsNearEmptyForm() {
+    var f = new ExperiencePostForm();
+    var violations = validator.validate(f, DraftValidation.class);
+    assertThat(violations).isEmpty();
   }
 
   @Test
@@ -83,8 +90,7 @@ class ExperiencePostServiceTest {
     service.create(published, owner.getEmail());
     var draft = valid();
     draft.setTitle("非公開");
-    draft.setPublished(false);
-    service.create(draft, owner.getEmail());
+    service.createDraft(draft, owner.getEmail());
     var criteria =
         new com.exradar.dto.ExperienceSearchCriteria(
             "未経験", category.getId(), "IT", null, null, null, null, null, 8, 3, null, null, true);
@@ -102,13 +108,84 @@ class ExperiencePostServiceTest {
     assertThat(service.canReadExperiences(null)).isFalse();
 
     var draft = valid();
-    draft.setPublished(false);
-    service.create(draft, owner.getEmail());
+    service.createDraft(draft, owner.getEmail());
     assertThat(service.canReadExperiences(owner.getEmail())).isFalse();
 
     service.create(valid(), owner.getEmail());
     assertThat(service.canReadExperiences(owner.getEmail())).isTrue();
     assertThat(service.canReadExperiences(other.getEmail())).isFalse();
+  }
+
+  @Test
+  void createDraftAllowsNearEmptyContentAndStaysDraft() {
+    var f = new ExperiencePostForm();
+    f.setTitle("下書きタイトルだけ");
+    var saved = service.createDraft(f, owner.getEmail());
+    assertThat(saved.getStatus()).isEqualTo(PostStatus.DRAFT);
+    assertThat(saved.isPublished()).isFalse();
+    assertThat(saved.getCategory()).isNull();
+  }
+
+  @Test
+  void updateDraftReusesSameRecordAndNeverCreatesDuplicate() {
+    var f = new ExperiencePostForm();
+    f.setTitle("最初の下書き");
+    var saved = service.createDraft(f, owner.getEmail());
+    long countBefore = posts.count();
+
+    var second = new ExperiencePostForm();
+    second.setTitle("更新後の下書き");
+    service.updateDraft(saved.getId(), second, owner.getEmail());
+
+    assertThat(posts.count()).isEqualTo(countBefore);
+    assertThat(service.getManageable(saved.getId(), owner.getEmail()).getTitle())
+        .isEqualTo("更新後の下書き");
+    assertThat(service.getManageable(saved.getId(), owner.getEmail()).getStatus())
+        .isEqualTo(PostStatus.DRAFT);
+  }
+
+  @Test
+  void publishingDraftUpdatesSameRecordToPublished() {
+    var f = new ExperiencePostForm();
+    f.setTitle("公開前の下書き");
+    var saved = service.createDraft(f, owner.getEmail());
+    long countBefore = posts.count();
+
+    service.update(saved.getId(), valid(), owner.getEmail());
+
+    assertThat(posts.count()).isEqualTo(countBefore);
+    var published = service.getVisible(saved.getId(), null);
+    assertThat(published.getStatus()).isEqualTo(PostStatus.PUBLISHED);
+    assertThat(published.getTitle()).isEqualTo("未経験転職のその後");
+  }
+
+  @Test
+  void lateDraftSaveNeverRevertsPublishedBackToDraft() {
+    var saved = service.create(valid(), owner.getEmail());
+    assertThat(saved.getStatus()).isEqualTo(PostStatus.PUBLISHED);
+
+    var lateAutosave = valid();
+    lateAutosave.setTitle("遅延到着の自動保存");
+    assertThatThrownBy(() -> service.updateDraft(saved.getId(), lateAutosave, owner.getEmail()))
+        .isInstanceOf(ForbiddenOperationException.class);
+
+    var stillPublished = service.getVisible(saved.getId(), null);
+    assertThat(stillPublished.getStatus()).isEqualTo(PostStatus.PUBLISHED);
+    assertThat(stillPublished.getTitle()).isEqualTo("未経験転職のその後");
+  }
+
+  @Test
+  void draftIsInvisibleAndUnmanageableToOtherUsers() {
+    var f = new ExperiencePostForm();
+    f.setTitle("他人には見えない下書き");
+    var saved = service.createDraft(f, owner.getEmail());
+
+    assertThatThrownBy(() -> service.getVisible(saved.getId(), other.getEmail()))
+        .isInstanceOf(com.exradar.exception.ResourceNotFoundException.class);
+    assertThatThrownBy(() -> service.getManageable(saved.getId(), other.getEmail()))
+        .isInstanceOf(ForbiddenOperationException.class);
+    assertThatThrownBy(() -> service.updateDraft(saved.getId(), f, other.getEmail()))
+        .isInstanceOf(ForbiddenOperationException.class);
   }
 
   private LifeEventForm event(String age, String title) {
@@ -140,7 +217,6 @@ class ExperiencePostServiceTest {
     f.setRegret(2);
     f.setChooseAgain(true);
     f.setAdviceToPastSelf("小さく学習を始めよう");
-    f.setPublished(true);
     return f;
   }
 }

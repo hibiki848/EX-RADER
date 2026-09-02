@@ -338,6 +338,25 @@ nav a[href="/mypage"] {
   margin-top: 28px;
   padding: 22px 0;
 }
+.autosave-status {
+  font-size: 0.8rem;
+  color: #607581;
+}
+.draft-restore-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #fff6e5;
+  border: 1px solid #f0c674;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+.draft-restore-banner button {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
 .search-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

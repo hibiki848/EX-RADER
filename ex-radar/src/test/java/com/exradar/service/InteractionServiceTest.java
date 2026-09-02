@@ -43,9 +43,10 @@ class InteractionServiceTest {
                 "interaction-admin@example.com", encoder.encode("password"), "管理者", Role.ADMIN));
     var category = categories.save(new Category("交流テスト", "interaction-test", 99));
     post = new ExperiencePost(owner);
-    post.update(
+    post.updateContent(
         category, "体験談", 25, "会社員", "30代", 5, "状況", "悩み", "選択肢", "選択", "理由", "結果", "良かった", "大変",
-        "想定外", 8, 2, true, "助言", true);
+        "想定外", 8, 2, true, "助言");
+    post.publish();
     post = posts.save(post);
   }
 

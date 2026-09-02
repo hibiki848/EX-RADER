@@ -9,7 +9,8 @@ public class ExperiencePost extends BaseEntity {
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   private User author;
 
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  // 下書きはカテゴリ未選択のまま自動保存されうるため、公開済みと異なりnullを許容する。
+  @ManyToOne(fetch = FetchType.LAZY)
   private Category category;
 
   @Column(nullable = false, length = 150)
@@ -79,11 +80,11 @@ public class ExperiencePost extends BaseEntity {
   @Column(length = 3000)
   private String cautionFor;
 
-  @Column(nullable = false)
-  private int satisfaction;
+  // 下書きは評価未入力のまま保存されうるためnull許容(CHECK(satisfaction BETWEEN 1 AND 10)は
+  // SQLの三値論理によりnullではUNKNOWNとなり違反にならない)。公開済みは常に非null。
+  private Integer satisfaction;
 
-  @Column(nullable = false)
-  private int regret;
+  private Integer regret;
 
   @Column(nullable = false)
   private boolean chooseAgain;
@@ -91,8 +92,9 @@ public class ExperiencePost extends BaseEntity {
   @Column(nullable = false, length = 3000)
   private String adviceToPastSelf;
 
-  @Column(nullable = false)
-  private boolean published = true;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private PostStatus status = PostStatus.DRAFT;
 
   @ManyToMany
   @JoinTable(
@@ -118,7 +120,12 @@ public class ExperiencePost extends BaseEntity {
     this.author = author;
   }
 
-  public void update(
+  /**
+   * 本文フィールドのみを更新する。公開状態(status)はここでは一切変更しない。
+   * 下書き保存(自動保存含む)がこのメソッドを使うことで、公開済み投稿が
+   * 遅延到着したリクエストによって誤ってDRAFTへ戻ることは構造的に起こりえない。
+   */
+  public void updateContent(
       Category category,
       String title,
       Integer ageAtChoice,
@@ -134,11 +141,10 @@ public class ExperiencePost extends BaseEntity {
       String goodThings,
       String difficulties,
       String unexpectedThings,
-      int satisfaction,
-      int regret,
+      Integer satisfaction,
+      Integer regret,
       boolean chooseAgain,
-      String adviceToPastSelf,
-      boolean published) {
+      String adviceToPastSelf) {
     this.category = category;
     this.title = title;
     this.ageAtChoice = ageAtChoice;
@@ -158,7 +164,10 @@ public class ExperiencePost extends BaseEntity {
     this.regret = regret;
     this.chooseAgain = chooseAgain;
     this.adviceToPastSelf = adviceToPastSelf;
-    this.published = published;
+  }
+
+  public void publish() {
+    this.status = PostStatus.PUBLISHED;
   }
 
   public void replaceLifeEvents(List<LifeEvent> events) {
@@ -302,11 +311,11 @@ public class ExperiencePost extends BaseEntity {
     return values;
   }
 
-  public int getSatisfaction() {
+  public Integer getSatisfaction() {
     return satisfaction;
   }
 
-  public int getRegret() {
+  public Integer getRegret() {
     return regret;
   }
 
@@ -318,8 +327,16 @@ public class ExperiencePost extends BaseEntity {
     return adviceToPastSelf;
   }
 
+  public PostStatus getStatus() {
+    return status;
+  }
+
   public boolean isPublished() {
-    return published;
+    return status == PostStatus.PUBLISHED;
+  }
+
+  public boolean isDraft() {
+    return status == PostStatus.DRAFT;
   }
 
   public Set<Tag> getTags() {

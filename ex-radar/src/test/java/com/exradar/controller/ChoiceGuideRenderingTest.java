@@ -43,7 +43,8 @@ class ChoiceGuideRenderingTest {
         .findByEmailIgnoreCase("choice@example.com")
         .ifPresent(
             user -> {
-              postRepository.deleteAll(postRepository.findByAuthorIdAndPublishedTrue(user.getId()));
+              postRepository.deleteAll(
+                  postRepository.findByAuthorIdAndStatus(user.getId(), PostStatus.PUBLISHED));
               users.delete(user);
             });
     categories.findBySlug("choice-rendering").ifPresent(categories::delete);
@@ -75,7 +76,6 @@ class ChoiceGuideRenderingTest {
     f.setSatisfaction(7);
     f.setRegret(3);
     f.setAdviceToPastSelf("過去の自分への言葉");
-    f.setPublished(true);
     return f;
   }
 }

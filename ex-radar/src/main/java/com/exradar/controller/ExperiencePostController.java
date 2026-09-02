@@ -1,15 +1,17 @@
 package com.exradar.controller;
 
 import com.exradar.dto.ExperienceSearchCriteria;
+import com.exradar.entity.PostStatus;
 import com.exradar.form.*;
 import com.exradar.repository.CategoryRepository;
 import com.exradar.repository.PersonalValueRepository;
 import com.exradar.service.*;
-import jakarta.validation.Valid;
 import java.security.Principal;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -54,6 +56,7 @@ public class ExperiencePostController {
     if (!model.containsAttribute("experiencePostForm"))
       model.addAttribute("experiencePostForm", new ExperiencePostForm());
     model.addAttribute("editing", false);
+    model.addAttribute("isDraft", true);
     return "experiences/form";
   }
 
@@ -75,14 +78,47 @@ public class ExperiencePostController {
 
   @PostMapping
   String create(
-      @Valid @ModelAttribute ExperiencePostForm form,
+      @Validated(PublishValidation.class) @ModelAttribute ExperiencePostForm form,
       BindingResult result,
       Principal principal,
+      Model model,
       RedirectAttributes redirect) {
-    if (result.hasErrors()) return "experiences/form";
+    if (result.hasErrors()) {
+      model.addAttribute("editing", false);
+      model.addAttribute("isDraft", true);
+      return "experiences/form";
+    }
     var post = service.create(form, principal.getName());
-    redirect.addFlashAttribute("successMessage", "体験談を投稿しました");
+    redirect.addFlashAttribute("successMessage", "経験談を投稿しました");
     return "redirect:/experiences/" + post.getId();
+  }
+
+  @PostMapping("/draft")
+  String createDraft(
+      @Validated(DraftValidation.class) @ModelAttribute ExperiencePostForm form,
+      BindingResult result,
+      Principal principal,
+      Model model,
+      RedirectAttributes redirect) {
+    if (result.hasErrors()) {
+      model.addAttribute("editing", false);
+      model.addAttribute("isDraft", true);
+      return "experiences/form";
+    }
+    var post = service.createDraft(form, principal.getName());
+    redirect.addFlashAttribute("successMessage", "下書きを保存しました");
+    return "redirect:/experiences/" + post.getId() + "/edit";
+  }
+
+  @PostMapping(value = "/draft/autosave", produces = "application/json")
+  @ResponseBody
+  ResponseEntity<DraftSaveResult> autosaveCreate(
+      @Validated(DraftValidation.class) @ModelAttribute ExperiencePostForm form,
+      BindingResult result,
+      Principal principal) {
+    if (result.hasErrors()) return ResponseEntity.unprocessableEntity().build();
+    var post = service.createDraft(form, principal.getName());
+    return ResponseEntity.ok(new DraftSaveResult(post.getId(), post.getStatus().name()));
   }
 
   @GetMapping("/{id}")
@@ -122,13 +158,14 @@ public class ExperiencePostController {
     model.addAttribute("experiencePostForm", form);
     model.addAttribute("postId", id);
     model.addAttribute("editing", true);
+    model.addAttribute("isDraft", post.getStatus() == PostStatus.DRAFT);
     return "experiences/form";
   }
 
   @PostMapping("/{id}")
   String update(
       @PathVariable Long id,
-      @Valid @ModelAttribute ExperiencePostForm form,
+      @Validated(PublishValidation.class) @ModelAttribute ExperiencePostForm form,
       BindingResult result,
       Principal principal,
       Model model,
@@ -136,11 +173,43 @@ public class ExperiencePostController {
     if (result.hasErrors()) {
       model.addAttribute("postId", id);
       model.addAttribute("editing", true);
+      model.addAttribute("isDraft", false);
       return "experiences/form";
     }
     service.update(id, form, principal.getName());
     redirect.addFlashAttribute("successMessage", "体験談を更新しました");
     return "redirect:/experiences/" + id;
+  }
+
+  @PostMapping("/{id}/draft")
+  String updateDraft(
+      @PathVariable Long id,
+      @Validated(DraftValidation.class) @ModelAttribute ExperiencePostForm form,
+      BindingResult result,
+      Principal principal,
+      Model model,
+      RedirectAttributes redirect) {
+    if (result.hasErrors()) {
+      model.addAttribute("postId", id);
+      model.addAttribute("editing", true);
+      model.addAttribute("isDraft", true);
+      return "experiences/form";
+    }
+    service.updateDraft(id, form, principal.getName());
+    redirect.addFlashAttribute("successMessage", "下書きを保存しました");
+    return "redirect:/experiences/" + id + "/edit";
+  }
+
+  @PostMapping(value = "/{id}/draft/autosave", produces = "application/json")
+  @ResponseBody
+  ResponseEntity<DraftSaveResult> autosaveUpdate(
+      @PathVariable Long id,
+      @Validated(DraftValidation.class) @ModelAttribute ExperiencePostForm form,
+      BindingResult result,
+      Principal principal) {
+    if (result.hasErrors()) return ResponseEntity.unprocessableEntity().build();
+    var post = service.updateDraft(id, form, principal.getName());
+    return ResponseEntity.ok(new DraftSaveResult(post.getId(), post.getStatus().name()));
   }
 
   @PostMapping("/{id}/delete")
@@ -149,4 +218,6 @@ public class ExperiencePostController {
     redirect.addFlashAttribute("successMessage", "体験談を削除しました");
     return "redirect:/mypage";
   }
+
+  record DraftSaveResult(Long id, String status) {}
 }

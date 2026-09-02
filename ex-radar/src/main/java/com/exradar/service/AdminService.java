@@ -33,7 +33,7 @@ public class AdminService {
   }
 
   public long publishedPostCount() {
-    return posts.countByPublishedTrue();
+    return posts.countByStatus(com.exradar.entity.PostStatus.PUBLISHED);
   }
 
   public List<User> users() {

@@ -6,6 +6,8 @@
     <title
       th:text="${editing ? '体験談を編集 | EXレーダー' : '体験談を投稿 | EXレーダー'}"
     ></title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" href="/css/app.css" defer />
   </head>
   <body>
@@ -28,6 +30,10 @@
         th:object="${experiencePostForm}"
         th:action="${editing ? '/experiences/'+postId : '/experiences'}"
         method="post"
+        th:data-autosave-enabled="${!editing or isDraft}"
+        th:data-post-id="${editing ? postId : ''}"
+        th:data-autosave-create-url="@{/experiences/draft/autosave}"
+        th:data-autosave-update-url="${editing ? '/experiences/'+postId+'/draft/autosave' : ''}"
       >
         <div
           class="error-summary"
@@ -294,16 +300,34 @@
               maxlength="3000"
             ></textarea
             ><small th:errors="*{adviceToPastSelf}"></small></label
-          ><label class="check"
-            ><input type="checkbox" th:field="*{published}" />公開する</label
           >
         </section>
+        <div
+          id="draft-restore-banner"
+          class="draft-restore-banner"
+          hidden
+        >
+          <span>保存されていない入力内容があります</span>
+          <button type="button" id="draft-restore-apply">復元する</button>
+          <button type="button" id="draft-restore-dismiss">閉じる</button>
+        </div>
         <div class="form-actions">
           <a href="/mypage">キャンセル</a
           ><button
             type="submit"
-            th:text="${editing ? '変更を保存' : '体験談を投稿'}"
+            class="button button-secondary"
+            formnovalidate
+            th:if="${!editing or isDraft}"
+            th:formaction="${editing ? '/experiences/'+postId+'/draft' : '/experiences/draft'}"
+          >
+            下書き保存
+          </button>
+          <button
+            type="submit"
+            id="publish-submit"
+            th:text="${(!editing or isDraft) ? '投稿する' : '変更を保存'}"
           ></button>
+          <span id="autosave-status" class="autosave-status" aria-live="polite"></span>
         </div>
       </form>
     </main>
@@ -328,6 +352,7 @@
         </label></article
     ></template>
     <script src="/js/experience-form.js" defer></script>
+    <script src="/js/experience-autosave.js" defer></script>
     <script th:if="${gaMeasurementId != null and !#strings.isEmpty(gaMeasurementId)}">
       gtag('event', 'experience_form_view');
     </script>

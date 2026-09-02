@@ -46,14 +46,14 @@ public class ExperiencePostService {
 
   @Transactional(readOnly = true)
   public List<ExperienceCardDto> latest() {
-    return posts.findTop6ByPublishedTrueOrderByCreatedAtDesc().stream()
+    return posts.findTop6ByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED).stream()
         .map(ExperienceCardDto::from)
         .toList();
   }
 
   @Transactional(readOnly = true)
   public List<ExperienceCardDto> recommended() {
-    return posts.findTop6ByPublishedTrueOrderByCreatedAtDesc().stream()
+    return posts.findTop6ByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED).stream()
         .map(ExperienceCardDto::from)
         .toList();
   }
@@ -64,7 +64,10 @@ public class ExperiencePostService {
     return users
         .findByEmailIgnoreCase(email)
         .filter(u -> !u.isSuspended())
-      .map(u -> u.getRole() == Role.ADMIN || posts.existsByAuthorIdAndPublishedTrue(u.getId()))
+        .map(
+            u ->
+                u.getRole() == Role.ADMIN
+                    || posts.existsByAuthorIdAndStatus(u.getId(), PostStatus.PUBLISHED))
         .orElse(false);
   }
 
@@ -94,8 +97,9 @@ public class ExperiencePostService {
   @Transactional(readOnly = true)
   public Page<ExperienceCardDto> byAuthor(Long userId, int page) {
     return posts
-        .findByAuthorIdAndPublishedTrue(
+        .findByAuthorIdAndStatus(
             userId,
+            PostStatus.PUBLISHED,
             PageRequest.of(Math.max(page, 0), 12, Sort.by(Sort.Direction.DESC, "createdAt")))
         .map(ExperienceCardDto::from);
   }
@@ -104,8 +108,33 @@ public class ExperiencePostService {
   public ExperiencePost create(ExperiencePostForm form, String email) {
     var user = user(email);
     var post = new ExperiencePost(user);
-    apply(post, form);
+    applyContent(post, form);
+    post.publish();
     return posts.save(post);
+  }
+
+  /** 新規の下書きを作成する。手動の「下書き保存」ボタンと自動保存の初回呼び出しの両方から使う。 */
+  @Transactional
+  public ExperiencePost createDraft(ExperiencePostForm form, String email) {
+    var user = user(email);
+    var post = new ExperiencePost(user);
+    applyContent(post, form);
+    return posts.save(post);
+  }
+
+  /**
+   * 既存の下書きの本文を更新する。statusには一切触れないため、公開済み投稿に対して
+   * 誤って呼び出された場合は例外を投げて何も変更しない(公開済み投稿の内容が
+   * 緩いバリデーションで上書きされることも、DRAFTへ戻ることも構造的に起こらない)。
+   */
+  @Transactional
+  public ExperiencePost updateDraft(Long id, ExperiencePostForm form, String email) {
+    var post = find(id);
+    requireManage(post, email);
+    if (post.getStatus() != PostStatus.DRAFT)
+      throw new ForbiddenOperationException("公開済みの投稿は下書き保存できません");
+    applyContent(post, form);
+    return post;
   }
 
   @Transactional(readOnly = true)
@@ -123,11 +152,13 @@ public class ExperiencePostService {
     return post;
   }
 
+  /** 「投稿する」「変更を保存」の両方から使う厳格な保存。DRAFT→PUBLISHEDへの遷移もこれで行う。 */
   @Transactional
   public ExperiencePost update(Long id, ExperiencePostForm form, String email) {
     var post = find(id);
     requireManage(post, email);
-    apply(post, form);
+    applyContent(post, form);
+    post.publish();
     return post;
   }
 
@@ -167,33 +198,44 @@ public class ExperiencePostService {
     if (!mayManage(p, email)) throw new ForbiddenOperationException("この体験談を編集・削除する権限がありません");
   }
 
-  private void apply(ExperiencePost p, ExperiencePostForm f) {
-    var category =
-        categories
-            .findById(f.getCategoryId())
-            .filter(Category::isActive)
-            .orElseThrow(() -> new ResourceNotFoundException("カテゴリが見つかりません"));
-    p.update(
+  private String nullToEmpty(String v) {
+    return v == null ? "" : v;
+  }
+
+  private void applyContent(ExperiencePost p, ExperiencePostForm f) {
+    // 下書きはカテゴリ未選択のまま保存されうるため、未選択(null)はそのまま許容する。
+    // 選択されている場合は既存どおり実在・有効なカテゴリであることを検証する。
+    Category category = null;
+    if (f.getCategoryId() != null) {
+      category =
+          categories
+              .findById(f.getCategoryId())
+              .filter(Category::isActive)
+              .orElseThrow(() -> new ResourceNotFoundException("カテゴリが見つかりません"));
+    }
+    // これらはDB上NOT NULLのため、下書きで未入力(Java側でnull)でも空文字として保存する。
+    // 実際のフォーム送信では空のtextarea/inputは常に""として届くが、
+    // プログラムから直接Formを組み立てる呼び出し元(テスト等)にも安全なようにここで正規化する。
+    p.updateContent(
         category,
-        f.getTitle(),
+        nullToEmpty(f.getTitle()),
         f.getAgeAtChoice(),
         f.getStatusAtChoice(),
         f.getCurrentAgeGroup(),
         f.getYearsElapsed(),
-        f.getSituationBefore(),
-        f.getWorries(),
-        f.getAlternatives(),
-        f.getChoiceMade(),
-        f.getReason(),
-        f.getOutcome(),
-        f.getGoodThings(),
-        f.getDifficulties(),
-        f.getUnexpectedThings(),
+        nullToEmpty(f.getSituationBefore()),
+        nullToEmpty(f.getWorries()),
+        nullToEmpty(f.getAlternatives()),
+        nullToEmpty(f.getChoiceMade()),
+        nullToEmpty(f.getReason()),
+        nullToEmpty(f.getOutcome()),
+        nullToEmpty(f.getGoodThings()),
+        nullToEmpty(f.getDifficulties()),
+        nullToEmpty(f.getUnexpectedThings()),
         f.getSatisfaction(),
         f.getRegret(),
         f.isChooseAgain(),
-        f.getAdviceToPastSelf(),
-        f.isPublished());
+        nullToEmpty(f.getAdviceToPastSelf()));
     var events = new ArrayList<LifeEvent>();
     int order = 0;
     for (var e : f.getLifeEvents()) {

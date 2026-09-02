@@ -47,7 +47,7 @@ public class InsightService {
   @Transactional(readOnly = true)
   public GiveToGetDto dashboard(String email) {
     User me = requireUser(email);
-    var mine = posts.findByAuthorIdAndPublishedTrue(me.getId());
+    var mine = posts.findByAuthorIdAndStatus(me.getId(), PostStatus.PUBLISHED);
     int count = mine.size();
     int level = Math.min(count, 5);
     var all = insightPosts();
@@ -83,7 +83,7 @@ public class InsightService {
   @Transactional(readOnly = true)
   public LifeReportDto lifeReport(String email) {
     User me = requireUser(email);
-    var mine = posts.findByAuthorIdAndPublishedTrue(me.getId());
+    var mine = posts.findByAuthorIdAndStatus(me.getId(), PostStatus.PUBLISHED);
     var all = insightPosts();
     var categories = top(mine.stream().map(p -> p.getCategory().getName()).toList(), 8);
     var route =
@@ -199,7 +199,7 @@ public class InsightService {
 
   private void requireContribution(String email, int requiredCount) {
     var me = requireUser(email);
-    if (posts.findByAuthorIdAndPublishedTrue(me.getId()).size() < requiredCount)
+    if (posts.findByAuthorIdAndStatus(me.getId(), PostStatus.PUBLISHED).size() < requiredCount)
       throw new ForbiddenOperationException(
           "この分析は公開した体験談が" + requiredCount + "件になると利用できます");
   }
@@ -212,7 +212,7 @@ public class InsightService {
   }
 
   private List<ExperiencePost> insightPosts() {
-    return posts.findTop500ByPublishedTrueOrderByCreatedAtDesc().stream()
+    return posts.findTop500ByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED).stream()
         .filter(p -> !p.getAuthor().isSuspended())
         .toList();
   }

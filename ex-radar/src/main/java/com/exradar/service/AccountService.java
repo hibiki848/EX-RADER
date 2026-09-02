@@ -75,7 +75,12 @@ public class AccountService {
 
   @Transactional(readOnly = true)
   public List<ExperiencePost> posts(String email) {
-    return posts.findByAuthorIdAndPublishedTrue(current(email).getId());
+    return posts.findByAuthorIdAndStatus(current(email).getId(), PostStatus.PUBLISHED);
+  }
+
+  @Transactional(readOnly = true)
+  public List<ExperiencePost> drafts(String email) {
+    return posts.findByAuthorIdAndStatusOrderByUpdatedAtDesc(current(email).getId(), PostStatus.DRAFT);
   }
 
   @Transactional(readOnly = true)

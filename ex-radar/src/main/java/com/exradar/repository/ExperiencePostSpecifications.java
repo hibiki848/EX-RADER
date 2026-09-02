@@ -2,6 +2,7 @@ package com.exradar.repository;
 
 import com.exradar.dto.ExperienceSearchCriteria;
 import com.exradar.entity.ExperiencePost;
+import com.exradar.entity.PostStatus;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -11,7 +12,7 @@ public final class ExperiencePostSpecifications {
   public static Specification<ExperiencePost> publicSearch(ExperienceSearchCriteria c) {
     return (root, q, cb) -> {
       q.distinct(true);
-      Predicate p = cb.isTrue(root.get("published"));
+      Predicate p = cb.equal(root.get("status"), PostStatus.PUBLISHED);
       if (text(c.keyword())) {
         String k = "%" + c.keyword().trim().toLowerCase() + "%";
         p =

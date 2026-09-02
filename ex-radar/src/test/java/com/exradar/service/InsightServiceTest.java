@@ -104,8 +104,7 @@ class InsightServiceTest {
   void publicStatisticsExcludeDraftsAndSuspendedAuthors() {
     postService.create(form(8, 3, true), one.getEmail());
     var draft = form(10, 1, true);
-    draft.setPublished(false);
-    postService.create(draft, one.getEmail());
+    postService.createDraft(draft, one.getEmail());
     postService.create(form(1, 10, false), two.getEmail());
     two.setSuspended(true);
     var s = insights.publicStatistics().getFirst();
@@ -135,7 +134,6 @@ class InsightServiceTest {
     f.setRegret(regret);
     f.setChooseAgain(again);
     f.setAdviceToPastSelf("比較して決めよう");
-    f.setPublished(true);
     return f;
   }
 }

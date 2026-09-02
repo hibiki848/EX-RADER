@@ -1,28 +1,27 @@
 package com.exradar.repository;
 
+import com.exradar.entity.ExperiencePost;
+import com.exradar.entity.PostStatus;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.exradar.entity.ExperiencePost;
-
-import jakarta.persistence.LockModeType;
 
 public interface ExperiencePostRepository
     extends JpaRepository<ExperiencePost, Long>, JpaSpecificationExecutor<ExperiencePost> {
+  // カテゴリは下書きでは未選択(null)のことがあるため、通常のjoin fetchだと除外されてしまう。
+  // left join fetchに変更し、カテゴリ未選択の下書きも取得できるようにする。
   @Query(
-      "select distinct p from ExperiencePost p join fetch p.author join fetch p.category left join"
-          + " fetch p.lifeEvents left join fetch p.tags left join fetch p.values where p.id=:id")
+      "select distinct p from ExperiencePost p join fetch p.author left join fetch p.category left join fetch p.lifeEvents left join fetch p.tags left join fetch p.values where p.id=:id")
   Optional<ExperiencePost> findDetailedById(@Param("id") Long id);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -34,33 +33,36 @@ public interface ExperiencePostRepository
   Page<ExperiencePost> findAll(Specification<ExperiencePost> specification, Pageable pageable);
 
   @EntityGraph(attributePaths = {"author", "category", "tags"})
-  List<ExperiencePost> findTop6ByPublishedTrueOrderByCreatedAtDesc();
+  List<ExperiencePost> findTop6ByStatusOrderByCreatedAtDesc(PostStatus status);
 
   @EntityGraph(attributePaths = {"author", "category", "tags"})
-  List<ExperiencePost> findTop6ByPublishedTrueOrderBySatisfactionDescCreatedAtDesc();
+  List<ExperiencePost> findTop6ByStatusOrderBySatisfactionDescCreatedAtDesc(PostStatus status);
 
   @EntityGraph(attributePaths = {"author", "category", "tags"})
-  Page<ExperiencePost> findByAuthorIdAndPublishedTrue(Long authorId, Pageable pageable);
+  Page<ExperiencePost> findByAuthorIdAndStatus(Long authorId, PostStatus status, Pageable pageable);
 
   @EntityGraph(attributePaths = {"category", "tags"})
-  List<ExperiencePost> findByAuthorIdAndPublishedTrue(Long authorId);
+  List<ExperiencePost> findByAuthorIdAndStatus(Long authorId, PostStatus status);
 
-  boolean existsByAuthorIdAndPublishedTrue(Long authorId);
+  @EntityGraph(attributePaths = {"category"})
+  List<ExperiencePost> findByAuthorIdAndStatusOrderByUpdatedAtDesc(Long authorId, PostStatus status);
 
-  long countByPublishedTrue();
+  boolean existsByAuthorIdAndStatus(Long authorId, PostStatus status);
+
+  long countByStatus(PostStatus status);
 
   long countByCreatedAtAfter(LocalDateTime since);
 
   @Query("select count(distinct p.author.id) from ExperiencePost p where p.createdAt >= :since")
   long countDistinctAuthorsSince(@Param("since") LocalDateTime since);
 
-  java.util.List<ExperiencePost> findByAuthorId(Long authorId);
+  List<ExperiencePost> findByAuthorId(Long authorId);
 
   List<ExperiencePost> findByAuthorIdOrderByCreatedAtDesc(Long authorId);
 
   @EntityGraph(attributePaths = {"author", "category", "tags", "lifeEvents"})
-  List<ExperiencePost> findTop500ByPublishedTrueOrderByCreatedAtDesc();
+  List<ExperiencePost> findTop500ByStatusOrderByCreatedAtDesc(PostStatus status);
 
   @EntityGraph(attributePaths = {"author", "category", "tags", "values"})
-  List<ExperiencePost> findByCategorySlugAndPublishedTrueOrderByCreatedAtDesc(String slug);
+  List<ExperiencePost> findByCategorySlugAndStatusOrderByCreatedAtDesc(String slug, PostStatus status);
 }

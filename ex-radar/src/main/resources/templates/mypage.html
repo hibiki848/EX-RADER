@@ -52,6 +52,27 @@
           </ul>
         </article>
         <article class="panel reveal">
+          <h2>下書き</h2>
+          <p th:if="${#lists.isEmpty(drafts)}">下書きはまだありません。</p>
+          <ul>
+            <li th:each="d:${drafts}">
+              <a
+                th:href="@{/experiences/{id}/edit(id=${d.id})}"
+                th:text="${#strings.isEmpty(d.title) ? '無題の下書き' : d.title}"
+              ></a>
+              <small th:text="${#temporals.format(d.updatedAt, 'yyyy/MM/dd HH:mm')}"></small>
+              <form
+                th:action="@{/experiences/{id}/delete(id=${d.id})}"
+                method="post"
+                style="display:inline"
+                onsubmit="return confirm('この下書きを削除しますか？');"
+              >
+                <button type="submit" class="text-button">削除</button>
+              </form>
+            </li>
+          </ul>
+        </article>
+        <article class="panel reveal">
           <h2>リアクション履歴</h2>
           <p th:if="${#lists.isEmpty(reactions)}">
             リアクションはまだありません。
