@@ -1,12 +1,10 @@
 package com.exradar.config;
 
-import com.exradar.security.CustomOidcUserService;
-import com.exradar.security.OAuth2LoginFailureHandler;
-import com.exradar.security.OAuth2LoginSuccessHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +14,10 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
+
+import com.exradar.security.CustomOidcUserService;
+import com.exradar.security.OAuth2LoginFailureHandler;
+import com.exradar.security.OAuth2LoginSuccessHandler;
 
 @Configuration
 public class SecurityConfig {
@@ -47,6 +49,7 @@ public class SecurityConfig {
             a ->
                 a.requestMatchers(
                         "/",
+                        "/images/**",
                         "/register",
                         "/login",
                         "/oauth2/authorization/**",
