@@ -4,16 +4,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <th:block th:replace="~{fragments/favicon :: links}"></th:block>
   <title>EXレーダー | 他人の失敗・後悔から学び、判断材料にする</title>
-  <th:block
-    th:replace="~{fragments/seo :: meta(
+  <th:block th:replace="~{fragments/seo :: meta(
       title='EXレーダー | 他人の失敗・後悔から学び、判断材料にする',
-      description='EXレーダーは、他人の失敗や後悔から得た教訓を判断材料にできるサービスです。自分の経験を投稿すれば、思考を整理し、これからの判断基準にも変えられます。',
+      description='悔いのない人生などない。学びのない人生などない。自分と他人の失敗を「学び」に変え、あなたの人生を賢く導く。',
       canonicalUrl=${baseUrl}+'/',
-      ogType='website')}"
-  ></th:block>
+      ogType='website')}"></th:block>
   <link rel="stylesheet" href="/css/app.css" />
   <meta name="google-site-verification" content="gu1E4eGhr_zvKD5381R12mgnoelnWYYH0pFppVbKWvc" />
+  <!--
+    WebSite/Organizationの構造化データ。Googleがサイト名・URLを正しく認識できるよう
+    最低限のプロパティのみを出力する。logoは実在するfavicon(正方形・ブランドアイコン)の
+    URLを使う(存在しない専用ロゴ画像URLを新たに作り出すことはしない)。
+  -->
+  <script type="application/ld+json" th:inline="javascript">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "EXレーダー",
+        "url": /*[[${baseUrl} + '/']]*/ "https://example.com/"
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "EXレーダー",
+        "url": /*[[${baseUrl} + '/']]*/ "https://example.com/",
+        "logo": /*[[${baseUrl} + '/images/favicon/favicon.png']]*/ "https://example.com/images/favicon/favicon.png"
+      }
+    ]
+  </script>
 </head>
 
 <body>
@@ -42,6 +63,10 @@
         <form class="hero-search" sec:authorize="isAuthenticated()" action="/experiences">
           <input name="keyword" aria-label="体験談のキーワード" placeholder="今悩んでいることを検索" /><button>判断材料を探す</button>
         </form>
+        <div class="hero-links">
+          <a class="button" href="/experiences">体験談を探す</a>
+          <a class="button button-secondary" href="/articles">記事を読む</a>
+        </div>
       </div>
       <div class="radar" aria-hidden="true">
         <i></i>
@@ -95,14 +120,8 @@
       <div class="card-grid">
         <article class="experience-card reveal" th:each="p:${recommendedPosts}">
           <span th:text="${p.category}"></span>
-          <h3
-            th:if="${wisdomUnlocked}"
-            th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"
-          ></h3>
-          <h3
-            th:unless="${wisdomUnlocked}"
-            th:text="${p.difficulties ?: (p.outcome ?: 'この経験には学びがあります')}"
-          ></h3>
+          <h3 th:if="${wisdomUnlocked}" th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"></h3>
+          <h3 th:unless="${wisdomUnlocked}" th:text="${p.difficulties ?: (p.outcome ?: 'この経験には学びがあります')}"></h3>
           <p th:unless="${wisdomUnlocked}" class="wisdom-teaser-note">
             🔒 体験談を投稿すると、この経験から得られた教訓を読めます
           </p>
