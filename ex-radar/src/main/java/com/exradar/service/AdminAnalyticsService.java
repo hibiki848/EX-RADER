@@ -4,6 +4,7 @@ import com.exradar.dto.AdminAnalyticsDto;
 import com.exradar.dto.AdminAnalyticsDto.DatabaseStats;
 import com.exradar.dto.AdminAnalyticsDto.GoogleAnalyticsStats;
 import com.exradar.dto.AdminAnalyticsDto.UsageFunnel;
+import com.exradar.entity.Role;
 import com.exradar.repository.CommentRepository;
 import com.exradar.repository.DecisionMemoRepository;
 import com.exradar.repository.ExperiencePostRepository;
@@ -66,11 +67,13 @@ public class AdminAnalyticsService {
     LocalDateTime since7d = now.minusDays(7);
     LocalDateTime since30d = now.minusDays(30);
 
+    // 管理者・analyticsExcluded=trueのアカウント(運営者の動作確認用など)は
+    // 「実際の利用者」ではないため、アクセス解析上のユーザー数には含めない。
     DatabaseStats db =
         new DatabaseStats(
-            users.count(),
-            users.countByCreatedAtAfter(since7d),
-            users.countByCreatedAtAfter(since30d),
+            users.countAnalyticsEligible(Role.ADMIN),
+            users.countAnalyticsEligibleSince(Role.ADMIN, since7d),
+            users.countAnalyticsEligibleSince(Role.ADMIN, since30d),
             posts.count(),
             posts.countByCreatedAtAfter(since7d),
             comments.count(),

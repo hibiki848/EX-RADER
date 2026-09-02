@@ -60,6 +60,12 @@ public class User extends BaseEntity {
   @Column(name = "display_name_pending", nullable = false)
   private boolean displayNamePending;
 
+  // 管理者アカウントや運営者が動作確認用に使う一般アカウントなど、実際の利用者ではない
+  // アクセスをGA4・EXレーダー内部のアクセス解析の両方から除外するためのフラグ。
+  // ROLE_ADMINは常に除外されるため、このフラグは主にADMIN以外のアカウント向け。
+  @Column(name = "analytics_excluded", nullable = false)
+  private boolean analyticsExcluded;
+
   @ManyToMany
   @JoinTable(
       name = "user_values",
@@ -123,6 +129,19 @@ public class User extends BaseEntity {
 
   public boolean isDisplayNamePending() {
     return displayNamePending;
+  }
+
+  public boolean isAnalyticsExcluded() {
+    return analyticsExcluded;
+  }
+
+  /** GA4・EXレーダー内部のアクセス解析、どちらでも計測対象から除外すべきかどうか。 */
+  public boolean isExcludedFromAnalytics() {
+    return role == Role.ADMIN || analyticsExcluded;
+  }
+
+  public void setAnalyticsExcluded(boolean analyticsExcluded) {
+    this.analyticsExcluded = analyticsExcluded;
   }
 
   public void completeDisplayNameSetup(String displayName) {

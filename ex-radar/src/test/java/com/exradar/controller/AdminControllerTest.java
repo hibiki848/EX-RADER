@@ -54,6 +54,33 @@ class AdminControllerTest {
   }
 
   @Test
+  void adminCanToggleAnalyticsExclusionForRegularUser() throws Exception {
+    User admin =
+        users.save(new User("admin-ga@example.com", encoder.encode("password123"), "Admin", Role.ADMIN));
+    User target =
+        users.save(new User("operator-account@example.com", encoder.encode("password123"), "Operator", Role.USER));
+    assertThat(target.isAnalyticsExcluded()).isFalse();
+
+    mvc.perform(
+            post("/admin/users/{id}/analytics-exclusion", target.getId())
+                .with(user(admin.getEmail()).roles("ADMIN"))
+                .with(csrf())
+                .param("excluded", "true"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/admin"));
+    assertThat(users.findById(target.getId()).orElseThrow().isAnalyticsExcluded()).isTrue();
+
+    // 通常ユーザーへ戻すと再びfalseになる
+    mvc.perform(
+            post("/admin/users/{id}/analytics-exclusion", target.getId())
+                .with(user(admin.getEmail()).roles("ADMIN"))
+                .with(csrf())
+                .param("excluded", "false"))
+        .andExpect(status().is3xxRedirection());
+    assertThat(users.findById(target.getId()).orElseThrow().isAnalyticsExcluded()).isFalse();
+  }
+
+  @Test
   void adminCanOpenSelectedUsersPosts() throws Exception {
     User admin = users.save(new User("admin-detail@example.com", encoder.encode("password123"), "Admin", Role.ADMIN));
     User target = users.save(new User("target-detail@example.com", encoder.encode("password123"), "Target", Role.USER));

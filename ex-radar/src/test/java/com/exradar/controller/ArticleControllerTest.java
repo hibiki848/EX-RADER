@@ -50,6 +50,17 @@ class ArticleControllerTest {
   }
 
   @Test
+  void testProfileNeverEmitsGa4TagRegardlessOfConfiguredMeasurementId() throws Exception {
+    // testプロファイルではNavigationAdvice.gaMeasurementId()がprod以外を常に除外するため、
+    // GA4_MEASUREMENT_IDがローカル環境変数にたまたま設定されていても本番GA4へは送信されない。
+    mvc.perform(get("/articles"))
+        .andExpect(status().isOk())
+        .andExpect(
+            content()
+                .string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("googletagmanager.com"))));
+  }
+
+  @Test
   void seoTitleIsUsedInTitleTagButNotAsPageHeading() throws Exception {
     var article =
         new Article(

@@ -77,6 +77,15 @@ public class AdminController {
         suspended ? "ユーザーを停止しました" : "ユーザーを利用可能に戻しました");
   }
 
+  @PostMapping("/users/{id}/analytics-exclusion")
+  public String changeAnalyticsExclusion(
+      @PathVariable Long id, @RequestParam boolean excluded, RedirectAttributes redirect) {
+    return perform(
+        redirect,
+        () -> service.setAnalyticsExcluded(id, excluded),
+        excluded ? "アクセス解析の対象から除外しました" : "アクセス解析の対象に戻しました");
+  }
+
   private String perform(RedirectAttributes redirect, Runnable action, String success) {
     try {
       action.run();

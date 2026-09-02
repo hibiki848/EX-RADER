@@ -80,6 +80,17 @@ public class AdminService {
     target.setSuspended(suspended);
   }
 
+  /**
+   * 「アクセス解析から除外する」フラグの切り替え。管理者アカウントは
+   * ROLE_ADMINの判定で常にGA4・内部アクセス解析から除外されるため、
+   * このフラグの対象は主に運営者が動作確認に使う一般アカウント向け。
+   * 権限や利用停止と異なり閲覧・投稿に影響しないため、自分自身への設定も許可する。
+   */
+  @Transactional
+  public void setAnalyticsExcluded(Long userId, boolean excluded) {
+    find(userId).setAnalyticsExcluded(excluded);
+  }
+
   private User find(String email) {
     return users.findByEmailIgnoreCase(email)
         .orElseThrow(() -> new IllegalArgumentException("ユーザーが見つかりません"));
