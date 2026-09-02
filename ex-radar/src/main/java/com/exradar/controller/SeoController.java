@@ -6,6 +6,7 @@ import com.exradar.repository.CategoryRepository;
 import com.exradar.repository.ExperiencePostRepository;
 import com.exradar.service.ArticleService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -17,12 +18,20 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  * URLはDB(記事・体験談・カテゴリ)に応じて変わるため、静的ファイルではなく動的生成が
  * この構成に適している。sitemapには公開状態のコンテンツのみを含め、下書き・非公開投稿・
  * ログイン後専用ページは一切含めない。
+ *
+ * 環境変数SEO_INDEXABLE(exradar.seo.indexable、デフォルトtrue)がfalseの場合は、
+ * staging等の非公開検索環境として扱い、robots.txtは全面Disallowのみを返す
+ * (hostnameでの判定は行わない。本番で未設定の場合に誤ってnoindexにならないよう、
+ * 未設定時は必ずtrue=既存仕様のまま)。
  */
 @RestController
 public class SeoController {
   private final ArticleService articles;
   private final ExperiencePostRepository posts;
   private final CategoryRepository categories;
+
+  @Value("${exradar.seo.indexable:true}")
+  private boolean indexable;
 
   public SeoController(
       ArticleService articles, ExperiencePostRepository posts, CategoryRepository categories) {
@@ -34,6 +43,9 @@ public class SeoController {
   @GetMapping(value = "/robots.txt", produces = MediaType.TEXT_PLAIN_VALUE)
   @ResponseBody
   String robots(HttpServletRequest request) {
+    if (!indexable) {
+      return "User-agent: *\nDisallow: /\n";
+    }
     String base = baseUrl(request);
     return "User-agent: *\n"
         + "Disallow: /admin\n"

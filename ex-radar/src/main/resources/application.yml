@@ -23,3 +23,6 @@ exradar:
       service-account-key: ${GA4_SERVICE_ACCOUNT_KEY:}
   seo:
     default-og-image: ${OG_DEFAULT_IMAGE_URL:}
+    # staging等、検索エンジンに一切載せたくない環境でのみ明示的にfalseを設定する。
+    # 未設定時はtrue(=本番のSEO仕様)になるため、設定し忘れても誤ってnoindexにはならない。
+    indexable: ${SEO_INDEXABLE:true}

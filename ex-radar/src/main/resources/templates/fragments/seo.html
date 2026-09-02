@@ -9,6 +9,11 @@
     -->
     <th:block th:fragment="meta(title, description, canonicalUrl, ogType)">
       <meta
+        th:if="${seoIndexable == false}"
+        name="robots"
+        content="noindex,nofollow,noarchive"
+      />
+      <meta
         th:if="${description != null and !#strings.isEmpty(description)}"
         name="description"
         th:content="${description}"
