@@ -83,27 +83,42 @@ class HomeControllerTest {
         .andExpect(content().string(containsString("href=\"/articles\"")));
   }
 
+  /**
+   * give to get: 「経験から得られた教訓」カードの教訓本文(learned/lesson)は、
+   * 自分自身の公開体験談を1件以上投稿した閲覧者にのみ表示される。
+   * 匿名・未投稿の閲覧者には教訓本文の代わりに、公開情報(大変だったこと)を使った
+   * 見出しとロック表示を出す(教訓本文そのものはHTMLへ一切出力しない)。
+   */
   @Test
-  void referenceCardShowsLearnedTextInsteadOfTitle() throws Exception {
+  void referenceCardShowsLearnedTextOnlyToUsersWhoHavePublishedTheirOwn() throws Exception {
     var owner =
         users.save(new User("home-lesson-user@example.com", encoder.encode("password"), "教訓投稿者", Role.USER));
     var category = categories.save(new Category("転職", "home-lesson-category", 1));
     var f = validForm(category.getId());
     f.setTitle("タイトルはカードのメインテキストには使われないはず");
     f.setLearned("資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった");
+    f.setDifficulties("勉強時間の確保に苦労した");
     postService.create(f, owner.getEmail());
 
-    var result = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    var anonymousBody =
+        mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    org.assertj.core.api.Assertions.assertThat(anonymousBody)
+        .doesNotContain("資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった")
+        .contains("勉強時間の確保に苦労した")
+        .contains("体験談を投稿すると、この経験から得られた教訓を読めます");
 
-    // 「経験から得られた教訓」カードには教訓本文がメインテキストとして表示される
-    // (「新着の体験談」カードには従来どおりタイトルが表示されるため、タイトル自体は
-    // ページ上に残るが、教訓表示位置にタイトルがそのまま出ていないことを確認する)
-    org.assertj.core.api.Assertions.assertThat(result)
-        .contains("<h3>資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった</h3>");
-    int occurrences = result.split("タイトルはカードのメインテキストには使われないはず", -1).length - 1;
-    org.assertj.core.api.Assertions.assertThat(occurrences)
-        .as("タイトルは新着の体験談カードにのみ表示され、教訓カードには表示されない")
-        .isEqualTo(1);
+    var contributor =
+        users.save(new User("home-lesson-reader@example.com", encoder.encode("password"), "貢献者", Role.USER));
+    postService.create(validForm(category.getId()), contributor.getEmail());
+    var contributorBody =
+        mvc.perform(get("/").with(org.springframework.security.test.web.servlet.request
+                .SecurityMockMvcRequestPostProcessors.user(contributor.getEmail())))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    org.assertj.core.api.Assertions.assertThat(contributorBody)
+        .contains("資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった");
   }
 
   @Test
@@ -132,6 +147,61 @@ class HomeControllerTest {
     var expected =
         java.time.format.DateTimeFormatter.ofPattern("yyyy年M月d日").format(java.time.LocalDate.now());
     org.assertj.core.api.Assertions.assertThat(result).contains(expected);
+  }
+
+  /**
+   * トップページのレスポンス本文全体に、未解放の学び本文が一切含まれないことを確認する。
+   * CSSでの非表示ではなくサーバー側でModelへ渡していないことを保証したいので、
+   * カード見出し・簡易表示モーダルを含むレスポンス全文に対して文字列不在をassertする。
+   */
+  @Test
+  void anonymousHomeResponseNeverContainsWisdomTextAnywhereInBody() throws Exception {
+    var owner =
+        users.save(new User("home-leak-check@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "home-leak-check-category", 1));
+    var f = validForm(category.getId());
+    f.setLearned("特徴的な学びテキストAAAA111");
+    f.setLesson("特徴的な教訓テキストBBBB222");
+    postService.create(f, owner.getEmail());
+
+    var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+    org.assertj.core.api.Assertions.assertThat(body)
+        .doesNotContain("特徴的な学びテキストAAAA111", "特徴的な教訓テキストBBBB222");
+    // 匿名は未認証のため「簡易表示」モーダル自体(sec:authorize="isAuthenticated()")が
+    // レンダリングされず、開くボタンも表示されないことも合わせて確認する
+    org.assertj.core.api.Assertions.assertThat(body).doesNotContain("簡易表示");
+  }
+
+  /**
+   * ログイン済みだが自分の体験談を投稿していない閲覧者にも、簡易表示モーダルの
+   * 学び部分(経験して分かったこと)は表示されず、投稿導線のみが表示される。
+   */
+  @Test
+  void loggedInButNotPostedUserSeesLockedTeaserInHomeSummaryModal() throws Exception {
+    var owner =
+        users.save(new User("home-locked-modal-author@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var reader =
+        users.save(new User("home-locked-modal-reader@example.com", encoder.encode("password"), "未貢献者", Role.USER));
+    var category = categories.save(new Category("転職", "home-locked-modal-category", 1));
+    var f = validForm(category.getId());
+    f.setLearned("未貢献者には見せない学び本文");
+    postService.create(f, owner.getEmail());
+
+    var body =
+        mvc.perform(
+                get("/")
+                    .with(
+                        org.springframework.security.test.web.servlet.request
+                            .SecurityMockMvcRequestPostProcessors.user(reader.getEmail())))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    org.assertj.core.api.Assertions.assertThat(body)
+        .doesNotContain("未貢献者には見せない学び本文")
+        .contains("あなたの経験を1つ投稿すると読めます");
   }
 
   private ExperiencePostForm validForm(Long categoryId) {

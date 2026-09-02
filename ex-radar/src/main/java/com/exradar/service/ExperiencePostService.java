@@ -31,8 +31,15 @@ public class ExperiencePostService {
     this.values = values;
   }
 
+  /**
+   * wisdomUnlockedは呼び出し側(Controller)がcanReadExperiences(email)で判定した結果を渡す。
+   * 検索結果は必ずPUBLISHED投稿のみを含むため(publicSearch参照)、「自分自身の公開投稿が
+   * 1件以上ある」ことと「この一覧中の自分の投稿を持っている」ことは常に同値になり、
+   * カード単位でcanReadWisdom(post,email)を呼び直す必要はない。
+   */
   @Transactional(readOnly = true)
-  public Page<ExperienceCardDto> search(ExperienceSearchCriteria criteria, int page, String sort) {
+  public Page<ExperienceCardDto> search(
+      ExperienceSearchCriteria criteria, int page, String sort, boolean wisdomUnlocked) {
     var order =
         "helpful".equals(sort)
             ? Sort.by(Sort.Order.desc("createdAt"))
@@ -41,20 +48,20 @@ public class ExperiencePostService {
         .findAll(
             ExperiencePostSpecifications.publicSearch(criteria),
             PageRequest.of(Math.max(0, page), 12, order))
-        .map(ExperienceCardDto::from);
+        .map(p -> ExperienceCardDto.from(p, wisdomUnlocked));
   }
 
   @Transactional(readOnly = true)
-  public List<ExperienceCardDto> latest() {
+  public List<ExperienceCardDto> latest(boolean wisdomUnlocked) {
     return posts.findTop6ByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED).stream()
-        .map(ExperienceCardDto::from)
+        .map(p -> ExperienceCardDto.from(p, wisdomUnlocked))
         .toList();
   }
 
   @Transactional(readOnly = true)
-  public List<ExperienceCardDto> recommended() {
+  public List<ExperienceCardDto> recommended(boolean wisdomUnlocked) {
     return posts.findTop6ByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED).stream()
-        .map(ExperienceCardDto::from)
+        .map(p -> ExperienceCardDto.from(p, wisdomUnlocked))
         .toList();
   }
 
@@ -72,7 +79,7 @@ public class ExperiencePostService {
   }
 
   @Transactional(readOnly = true)
-  public List<ExperienceCardDto> similar(ExperiencePost source) {
+  public List<ExperienceCardDto> similar(ExperiencePost source, boolean wisdomUnlocked) {
     var c =
         new ExperienceSearchCriteria(
             null,
@@ -88,20 +95,20 @@ public class ExperiencePostService {
             null,
             null,
             null);
-    return search(c, 0, "latest").stream()
+    return search(c, 0, "latest", wisdomUnlocked).stream()
         .filter(p -> !p.id().equals(source.getId()))
         .limit(4)
         .toList();
   }
 
   @Transactional(readOnly = true)
-  public Page<ExperienceCardDto> byAuthor(Long userId, int page) {
+  public Page<ExperienceCardDto> byAuthor(Long userId, int page, boolean wisdomUnlocked) {
     return posts
         .findByAuthorIdAndStatus(
             userId,
             PostStatus.PUBLISHED,
             PageRequest.of(Math.max(page, 0), 12, Sort.by(Sort.Direction.DESC, "createdAt")))
-        .map(ExperienceCardDto::from);
+        .map(p -> ExperienceCardDto.from(p, wisdomUnlocked));
   }
 
   @Transactional
@@ -169,9 +176,27 @@ public class ExperiencePostService {
     posts.delete(post);
   }
 
+  /** 通報対応の「非公開対応」専用。管理者のみ実行できる(投稿者本人には開放しない)。 */
+  @Transactional
+  public void hideByModeration(Long id, String adminEmail) {
+    var admin = user(adminEmail);
+    if (admin.getRole() != Role.ADMIN) throw new ForbiddenOperationException("この操作には管理者権限が必要です");
+    find(id).hideByModeration();
+  }
+
   @Transactional(readOnly = true)
   public boolean canManage(ExperiencePost post, String email) {
     return mayManage(post, email);
+  }
+
+  /**
+   * 体験談の「学び」部分(振り返り)を閲覧できるかどうか。投稿者本人・管理者は常に自分の
+   * 投稿の学びを閲覧できる。それ以外は、既存のgive to get判定(canReadExperiences)を
+   * そのまま再利用し、自分自身の公開体験談を1件以上投稿しているユーザーにのみ許可する。
+   */
+  @Transactional(readOnly = true)
+  public boolean canReadWisdom(ExperiencePost post, String email) {
+    return mayManage(post, email) || canReadExperiences(email);
   }
 
   private ExperiencePost find(Long id) {

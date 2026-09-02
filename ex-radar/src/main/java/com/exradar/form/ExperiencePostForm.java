@@ -55,14 +55,12 @@ public class ExperiencePostForm {
       groups = {DraftValidation.class, PublishValidation.class})
   private String situationBefore;
 
-  @NotBlank(message = "当時の悩みを入力してください", groups = PublishValidation.class)
   @Size(
       max = 3000,
       message = "当時の悩みは3000文字以内で入力してください",
       groups = {DraftValidation.class, PublishValidation.class})
   private String worries;
 
-  @NotBlank(message = "検討した選択肢を入力してください", groups = PublishValidation.class)
   @Size(
       max = 3000,
       message = "検討した選択肢は3000文字以内で入力してください",
@@ -76,7 +74,6 @@ public class ExperiencePostForm {
       groups = {DraftValidation.class, PublishValidation.class})
   private String choiceMade;
 
-  @NotBlank(message = "選んだ理由を入力してください", groups = PublishValidation.class)
   @Size(
       max = 3000,
       message = "選んだ理由は3000文字以内で入力してください",
@@ -90,21 +87,18 @@ public class ExperiencePostForm {
       groups = {DraftValidation.class, PublishValidation.class})
   private String outcome;
 
-  @NotBlank(message = "良かったことを入力してください", groups = PublishValidation.class)
   @Size(
       max = 3000,
       message = "良かったことは3000文字以内で入力してください",
       groups = {DraftValidation.class, PublishValidation.class})
   private String goodThings;
 
-  @NotBlank(message = "大変だったことを入力してください", groups = PublishValidation.class)
   @Size(
       max = 3000,
       message = "大変だったことは3000文字以内で入力してください",
       groups = {DraftValidation.class, PublishValidation.class})
   private String difficulties;
 
-  @NotBlank(message = "想定外だったことを入力してください", groups = PublishValidation.class)
   @Size(
       max = 3000,
       message = "想定外だったことは3000文字以内で入力してください",
@@ -164,7 +158,6 @@ public class ExperiencePostForm {
 
   private boolean chooseAgain;
 
-  @NotBlank(message = "過去の自分へのアドバイスを入力してください", groups = PublishValidation.class)
   @Size(
       max = 3000,
       message = "アドバイスは3000文字以内で入力してください",

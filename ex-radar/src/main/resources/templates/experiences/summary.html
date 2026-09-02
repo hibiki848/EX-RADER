@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
     <title th:text="${post.title} + ' | 簡易表示'">簡易表示 | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
   </head>
@@ -26,8 +27,13 @@
           <div class="summary-item"><h3>選択前の状況</h3><p th:text="${post.situationBefore}">内容</p></div>
           <div class="summary-item"><h3>選んだこと</h3><p th:text="${post.choiceMade}">内容</p></div>
           <div class="summary-item"><h3>その後の結果</h3><p th:text="${post.outcome}">内容</p></div>
-          <div class="summary-item"><h3>経験して分かったこと</h3><p th:text="${post.learned ?: post.lesson ?: post.adviceToPastSelf}">内容</p></div>
-          <div class="summary-item"><h3>過去の自分へのアドバイス</h3><p th:text="${post.adviceToPastSelf}">内容</p></div>
+          <div class="summary-item" th:if="${wisdomUnlocked}"><h3>経験して分かったこと</h3><p th:text="${wisdom.learned ?: wisdom.lesson ?: wisdom.adviceToPastSelf}">内容</p></div>
+          <div class="summary-item" th:if="${wisdomUnlocked}"><h3>今ならどうするか</h3><p th:text="${wisdom.adviceToPastSelf}">内容</p></div>
+          <div class="summary-item wisdom-gate" th:unless="${wisdomUnlocked}">
+            <h3>この経験から得た教訓</h3>
+            <p>🔒 あなたの経験を1つ投稿すると読めます。</p>
+            <a class="button" href="/experiences/new">体験談を投稿する</a>
+          </div>
         </section>
         <div class="summary-actions">
           <a class="button" th:href="@{/experiences/{id}(id=${post.id})}">詳細ページで読む</a>

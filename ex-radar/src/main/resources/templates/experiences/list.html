@@ -3,7 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>体験談を探す | EXレーダー</title>
+    <title
+      th:text="${categoryPageName != null ? categoryPageName+'の体験談を探す | EXレーダー' : '体験談を探す | EXレーダー'}"
+    >体験談を探す | EXレーダー</title>
+    <th:block
+      th:replace="~{fragments/seo :: meta(
+        title=${categoryPageName != null ? categoryPageName+'の体験談を探す | EXレーダー' : '体験談を探す | EXレーダー'},
+        description=${categoryPageName != null ? categoryPageName+'に関する体験談・失敗談・後悔と、そこから得られた教訓をEXレーダーで探せます。' : '経験者の教訓や、選ぶ前に知っておきたかったことを判断材料として探せます。'},
+        canonicalUrl=${baseUrl}+(${listCanonicalPath} ?: '/experiences'),
+        ogType='website')}"
+    ></th:block>
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
@@ -154,7 +163,13 @@
           <div class="summary-item"><h3>選択前の状況</h3><p th:text="${p.situationBefore}">内容</p></div>
           <div class="summary-item"><h3>選んだこと</h3><p th:text="${p.choiceMade}">内容</p></div>
           <div class="summary-item"><h3>その後の結果</h3><p th:text="${p.outcome}">内容</p></div>
-          <div class="summary-item"><h3>経験して分かったこと</h3><p th:text="${p.learned ?: p.lesson}">内容</p></div>
+          <div class="summary-item" th:if="${p.difficulties}"><h3>大変だったこと・失敗したこと</h3><p th:text="${p.difficulties}">内容</p></div>
+          <div class="summary-item" th:if="${wisdomUnlocked}"><h3>経験して分かったこと</h3><p th:text="${p.learned ?: p.lesson}">内容</p></div>
+          <div class="summary-item wisdom-gate" th:unless="${wisdomUnlocked}">
+            <h3>この経験から得た教訓</h3>
+            <p>🔒 あなたの経験を1つ投稿すると読めます。</p>
+            <a class="button" href="/experiences/new">体験談を投稿する</a>
+          </div>
         </div>
         <div class="summary-actions"><a class="button" th:href="@{/experiences/{id}(id=${p.id})}">詳細ページで読む</a></div>
       </section>

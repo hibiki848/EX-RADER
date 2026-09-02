@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title th:text="${article.effectiveSeoTitle} + ' | EXレーダー'">記事タイトル | EXレーダー</title>
-    <meta
-      name="description"
-      th:if="${article.effectiveMetaDescription != null}"
-      th:content="${article.effectiveMetaDescription}"
-    />
-    <link rel="canonical" th:href="${canonicalUrl}" />
+    <th:block
+      th:replace="~{fragments/seo :: meta(
+        title=${article.effectiveSeoTitle},
+        description=${article.effectiveMetaDescription},
+        canonicalUrl=${canonicalUrl},
+        ogType='article')}"
+    ></th:block>
     <meta name="robots" content="index, follow" />
     <link rel="stylesheet" href="/css/app.css" />
   </head>

@@ -73,6 +73,12 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(new RegexRequestMatcher("^/experiences/[0-9]+$", "GET"))
                     .permitAll()
+                    // 体験談詳細の簡易表示(要点)・表示方法選択も、詳細ページ本体と同じ公開範囲にする
+                    // (同じ内容の別表示形式に過ぎないため、詳細ページだけ公開して片方だけ
+                    // ログイン必須のままにすると閲覧制限として一貫しない)。GET以外は含めない。
+                    .requestMatchers(
+                        new RegexRequestMatcher("^/experiences/[0-9]+/(view-options|summary)$", "GET"))
+                    .permitAll()
                     .requestMatchers("/admin/**", "/api/admin/**")
                     .hasRole("ADMIN")
                     .anyRequest()

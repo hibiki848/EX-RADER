@@ -38,7 +38,7 @@ class ExperienceFormRenderingTest {
     mvc.perform(get("/experiences/new").with(user("form@example.com")))
         .andExpect(status().isOk())
         .andExpect(view().name("experiences/form"))
-        .andExpect(content().string(org.hamcrest.Matchers.containsString("経験して分かったこと・教訓")));
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("振り返り")));
   }
 
   /** 「下書き復元」のサーバー側部分: 保存済みの下書きを編集画面で開くと、内容がフォームへ復元されること。 */

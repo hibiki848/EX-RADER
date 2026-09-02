@@ -4,10 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>失敗から学ぶ記事 | EXレーダー</title>
-    <meta
-      name="description"
-      content="EXレーダーが発信する、判断に迷ったときに役立つ記事の一覧です。失敗や後悔から得られた教訓を、検索から読むことができます。"
-    />
+    <th:block
+      th:replace="~{fragments/seo :: meta(
+        title='失敗から学ぶ記事 | EXレーダー',
+        description='EXレーダーが発信する、判断に迷ったときに役立つ記事の一覧です。失敗や後悔から得られた教訓を、検索から読むことができます。',
+        canonicalUrl=${baseUrl}+'/articles',
+        ogType='website')}"
+    ></th:block>
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>

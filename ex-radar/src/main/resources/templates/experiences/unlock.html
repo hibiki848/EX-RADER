@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>経験を分けて、知恵を読む | EXレーダー</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <title>選択肢ガイドを使う | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
@@ -15,10 +16,10 @@
     </header>
     <main class="page">
       <section class="panel unlock-message">
-        <p class="eyebrow">GIVE TO GET</p>
-        <h1>経験をひとつ分けると、経験者の知恵を読めます</h1>
+        <p class="eyebrow">CHOICE GUIDE</p>
+        <h1>経験をひとつ分けると、選択肢ガイドが使えます</h1>
         <p>
-          EXレーダーは、一人ひとりが経験から得た教訓を持ち寄る場所です。公開された体験談を1件投稿すると、ほかの人の体験談・教訓・選ぶ前に知っておきたかったことを読めるようになります。
+          体験談そのものは、どなたでも自由に読むことができます。この「選択肢ガイド」は、あなたが大切にしたい価値観に合わせて経験者の知恵を絞り込んで表示する機能で、公開された体験談を1件投稿すると使えるようになります。
         </p>
         <aside class="data-note">
           投稿するのは成功談でなくても構いません。失敗、想定外だったこと、今なら伝えたいことも、誰かが自分で考えるための大切な判断材料になります。
@@ -34,7 +35,7 @@
           <a href="/login">ログイン</a>
         </div>
         <div th:if="${alreadyUnlocked}">
-          <a class="button" href="/experiences">体験談を探す</a>
+          <a class="button" href="/choices">選択肢ガイドを見る</a>
         </div>
       </section>
     </main>

@@ -20,7 +20,7 @@ public class Report extends BaseEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
-  private ReportStatus status = ReportStatus.OPEN;
+  private ReportStatus status = ReportStatus.PENDING;
 
   protected Report() {}
 
@@ -29,5 +29,29 @@ public class Report extends BaseEntity {
     this.targetType = type;
     this.targetId = targetId;
     this.reason = reason;
+  }
+
+  public User getReporter() {
+    return reporter;
+  }
+
+  public ReportTargetType getTargetType() {
+    return targetType;
+  }
+
+  public Long getTargetId() {
+    return targetId;
+  }
+
+  public String getReason() {
+    return reason;
+  }
+
+  public ReportStatus getStatus() {
+    return status;
+  }
+
+  public void changeStatus(ReportStatus status) {
+    this.status = status;
   }
 }

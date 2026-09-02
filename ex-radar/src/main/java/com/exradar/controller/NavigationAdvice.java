@@ -2,11 +2,13 @@ package com.exradar.controller;
 
 import com.exradar.repository.UserRepository;
 import com.exradar.service.AccountService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @ControllerAdvice
 public class NavigationAdvice {
@@ -16,6 +18,11 @@ public class NavigationAdvice {
 
   @Value("${exradar.analytics.measurement-id:}")
   private String gaMeasurementId;
+
+  // og:image用の共通デフォルト画像URL。未設定(空文字)の間はfragments/seo.htmlが
+  // og:imageタグ自体を出力しないため、存在しない画像URLを生成することはない。
+  @Value("${exradar.seo.default-og-image:}")
+  private String defaultOgImage;
 
   public NavigationAdvice(
       ObjectProvider<AccountService> s, ObjectProvider<UserRepository> users, Environment environment) {
@@ -54,5 +61,16 @@ public class NavigationAdvice {
       if (excluded) return "";
     }
     return gaMeasurementId;
+  }
+
+  @ModelAttribute("defaultOgImage")
+  public String defaultOgImage() {
+    return defaultOgImage;
+  }
+
+  /** canonical・OGPのog:url組み立て用。末尾スラッシュなしのスキーム+ホスト(+ポート)。 */
+  @ModelAttribute("baseUrl")
+  public String baseUrl(HttpServletRequest request) {
+    return ServletUriComponentsBuilder.fromContextPath(request).build().toUriString();
   }
 }

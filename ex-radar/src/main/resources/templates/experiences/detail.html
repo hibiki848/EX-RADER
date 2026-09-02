@@ -8,6 +8,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title th:text="${post.title}+' | EXレーダー'"></title>
+    <th:block
+      th:replace="~{fragments/seo :: meta(
+        title=${post.title}+' | EXレーダー',
+        description=${metaDescription},
+        canonicalUrl=${baseUrl}+'/experiences/'+${post.id},
+        ogType='article')}"
+    ></th:block>
+    <meta th:unless="${post.published}" name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="stylesheet" href="/css/interactions.css" />
   </head>
@@ -30,45 +38,14 @@
         <div class="detail-hero">
           <p class="eyebrow" th:text="${post.category.name}"></p>
           <h1 th:text="${post.title}"></h1>
-          <p th:text="${post.author.displayName}+'さんの体験談'"></p>
+          <p
+            th:text="${post.author.displayName}+'さんの体験談 ・ '+${#temporals.format(post.createdAt,'yyyy年M月d日')}"
+          ></p>
           <div class="score-row">
             <span th:text="'満足度 '+${post.satisfaction}+'/10'"></span
             ><span th:text="'後悔度 '+${post.regret}+'/10'"></span>
           </div>
         </div>
-        <section class="lesson-spotlight">
-          <p class="eyebrow">LESSON FROM EXPERIENCE</p>
-          <h2>この経験から得た教訓</h2>
-          <blockquote
-            th:text="${post.lesson?:post.adviceToPastSelf}"
-          ></blockquote>
-        </section>
-        <section
-          class="story-section wisdom-detail"
-          th:if="${post.learned!=null}"
-        >
-          <h2>経験して分かったこと</h2>
-          <h3>実際に経験して初めて分かったこと</h3>
-          <p th:text="${post.learned}"></p>
-          <h3 th:if="${post.wishKnown}">選ぶ前に知っておきたかったこと</h3>
-          <p th:if="${post.wishKnown}" th:text="${post.wishKnown}"></p>
-          <h3 th:if="${post.unexpectedlyOkay}">意外と大丈夫だったこと</h3>
-          <p
-            th:if="${post.unexpectedlyOkay}"
-            th:text="${post.unexpectedlyOkay}"
-          ></p>
-          <h3 th:if="${post.preparationHelped}">やっておいて良かったこと</h3>
-          <p
-            th:if="${post.preparationHelped}"
-            th:text="${post.preparationHelped}"
-          ></p>
-          <h3 th:if="${post.missedRegret}">やらなくて後悔したこと</h3>
-          <p th:if="${post.missedRegret}" th:text="${post.missedRegret}"></p>
-          <h3 th:if="${post.suitableFor}">向いていると感じる人</h3>
-          <p th:if="${post.suitableFor}" th:text="${post.suitableFor}"></p>
-          <h3 th:if="${post.cautionFor}">慎重に考えてほしい人</h3>
-          <p th:if="${post.cautionFor}" th:text="${post.cautionFor}"></p>
-        </section>
         <section class="story-section">
           <h2>選択するまで</h2>
           <h3>選択前の状況</h3>
@@ -87,9 +64,76 @@
           <p th:text="${post.outcome}"></p>
           <h3>良かったこと</h3>
           <p th:text="${post.goodThings}"></p>
-          <h3>大変だったこと</h3>
+          <h3>大変だったこと・失敗したこと</h3>
           <p th:text="${post.difficulties}"></p>
-          <blockquote th:text="${post.adviceToPastSelf}"></blockquote>
+        </section>
+        <section class="story-section wisdom-gate" th:if="${!wisdomUnlocked}">
+          <h2>この失敗から、何を学べる？</h2>
+          <ul class="wisdom-locked-list">
+            <li>🔒 なぜこの選択を後悔したのか</li>
+            <li>🔒 この経験から得た教訓</li>
+            <li>🔒 次に同じ状況になったら何を判断基準にするか</li>
+            <li>🔒 今の自分ならどうするか</li>
+          </ul>
+          <div sec:authorize="isAnonymous()">
+            <p>あなたの経験を1つ教訓に変えると、他の経験者の学びも読めます。</p>
+            <div class="account-actions">
+              <a class="button" href="/register">新規登録して投稿する</a>
+              <a href="/login">ログイン</a>
+              <a th:href="@{/experiences/new}">体験談を投稿する</a>
+            </div>
+          </div>
+          <div sec:authorize="isAuthenticated()">
+            <p>あなたの経験を1つ投稿すると、この経験から得られた教訓を読めます。</p>
+            <a class="button" th:href="@{/experiences/new}">体験談を投稿する</a>
+          </div>
+        </section>
+        <section
+          class="story-section wisdom-detail"
+          th:if="${wisdomUnlocked}"
+        >
+          <h2>この失敗から、何を学べる？</h2>
+          <h3 th:if="${wisdom.missedRegret}">なぜこの選択を後悔したのか</h3>
+          <p
+            th:if="${wisdom.missedRegret}"
+            th:text="${wisdom.missedRegret}"
+          ></p>
+          <h3 th:if="${wisdom.decisionCriteria}">
+            次に同じ状況になったときの判断基準
+          </h3>
+          <p
+            th:if="${wisdom.decisionCriteria}"
+            th:text="${wisdom.decisionCriteria}"
+          ></p>
+          <h3 th:if="${wisdom.learned}">実際に経験して初めて分かったこと</h3>
+          <p th:if="${wisdom.learned}" th:text="${wisdom.learned}"></p>
+          <h3 th:if="${wisdom.wishKnown}">選ぶ前に知っておきたかったこと</h3>
+          <p th:if="${wisdom.wishKnown}" th:text="${wisdom.wishKnown}"></p>
+          <h3 th:if="${wisdom.unexpectedlyOkay}">意外と大丈夫だったこと</h3>
+          <p
+            th:if="${wisdom.unexpectedlyOkay}"
+            th:text="${wisdom.unexpectedlyOkay}"
+          ></p>
+          <h3 th:if="${wisdom.preparationHelped}">やっておいて良かったこと</h3>
+          <p
+            th:if="${wisdom.preparationHelped}"
+            th:text="${wisdom.preparationHelped}"
+          ></p>
+          <h3 th:if="${wisdom.suitableFor}">向いていると感じる人</h3>
+          <p th:if="${wisdom.suitableFor}" th:text="${wisdom.suitableFor}"></p>
+          <h3 th:if="${wisdom.cautionFor}">慎重に考えてほしい人</h3>
+          <p th:if="${wisdom.cautionFor}" th:text="${wisdom.cautionFor}"></p>
+        </section>
+        <section class="lesson-spotlight" th:if="${wisdomUnlocked}">
+          <p class="eyebrow">LESSON FROM EXPERIENCE</p>
+          <h2>この経験から得た教訓</h2>
+          <blockquote
+            th:text="${wisdom.lesson?:wisdom.adviceToPastSelf}"
+          ></blockquote>
+          <th:block th:if="${wisdom.adviceToPastSelf}">
+            <h3>今ならどうするか</h3>
+            <p th:text="${wisdom.adviceToPastSelf}"></p>
+          </th:block>
         </section>
         <section
           id="reactions"

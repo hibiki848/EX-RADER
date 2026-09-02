@@ -30,6 +30,23 @@ public record ExperienceSearchCriteria(
         && chooseAgain == null;
   }
 
+  /** カテゴリのみで絞り込んでいる状態か(SEO上「カテゴリページ」として自己canonicalにしてよいか判定用)。 */
+  public boolean categoryOnly() {
+    return categoryId != null
+        && blank(keyword)
+        && blank(tag)
+        && ageFrom == null
+        && ageTo == null
+        && blank(currentAgeGroup)
+        && blank(education)
+        && blank(occupation)
+        && satisfactionMin == null
+        && regretMax == null
+        && yearsMin == null
+        && yearsMax == null
+        && chooseAgain == null;
+  }
+
   private static boolean blank(String v) {
     return v == null || v.isBlank();
   }

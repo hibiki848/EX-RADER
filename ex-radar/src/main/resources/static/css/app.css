@@ -314,6 +314,23 @@ nav a[href="/mypage"] {
   display: grid;
   gap: 20px;
 }
+.lesson-field textarea {
+  border-color: var(--teal);
+  border-width: 2px;
+}
+.form-more {
+  display: grid;
+  gap: 20px;
+}
+.form-more summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 4px;
+}
+.form-more[open] summary {
+  margin-bottom: 20px;
+}
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -332,8 +349,11 @@ nav a[href="/mypage"] {
   background: #fff;
 }
 .experience-form textarea {
-  min-height: 120px;
+  min-height: 160px;
   resize: vertical;
+}
+.experience-form .lesson-field textarea {
+  min-height: 180px;
 }
 .experience-form label.check {
   display: inline-flex;
@@ -352,11 +372,26 @@ nav a[href="/mypage"] {
 }
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: 16px;
   margin-top: 28px;
   padding: 22px 0;
+}
+@media (max-width: 480px) {
+  .form-actions {
+    justify-content: stretch;
+  }
+  .form-actions a,
+  .form-actions button {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .form-actions .autosave-status {
+    flex-basis: 100%;
+    text-align: center;
+  }
 }
 .autosave-status {
   font-size: 0.8rem;
@@ -364,6 +399,7 @@ nav a[href="/mypage"] {
 }
 .draft-restore-banner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-top: 20px;
@@ -551,6 +587,33 @@ nav a[href="/mypage"] {
 .lesson-spotlight {
   border: 2px solid var(--teal);
   background: #f0fbfa;
+}
+.wisdom-gate {
+  border: 2px dashed #b9d3d8;
+  background: #f7fbfb;
+}
+.wisdom-locked-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
+}
+.wisdom-locked-list li {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  color: #5b7480;
+}
+.summary-item.wisdom-gate {
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+.wisdom-teaser-note {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: #5b7480;
 }
 .lesson-spotlight {
   margin: 28px 0;

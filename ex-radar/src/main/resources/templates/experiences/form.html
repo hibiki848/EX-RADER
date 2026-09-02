@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
     <title
       th:text="${editing ? '体験談を編集 | EXレーダー' : '体験談を投稿 | EXレーダー'}"
     ></title>
@@ -91,112 +92,177 @@
           </div>
         </section>
         <section class="panel form-section">
-          <h2>選択するまで</h2>
+          <p class="eyebrow">YOUR EXPERIENCE</p>
+          <h2>経験</h2>
+          <p>状況・選択・結果の流れが伝われば十分です。空欄があっても投稿できます。</p>
           <label
-            >選択前の状況（必須）<textarea
+            >当時の状況（必須）<textarea
               th:field="*{situationBefore}"
               maxlength="3000"
+              placeholder="そのとき、どんな状況でしたか？"
             ></textarea
             ><small th:errors="*{situationBefore}"></small></label
           ><label
-            >当時の悩み（必須）<textarea
+            >当時の悩み<textarea
               th:field="*{worries}"
               maxlength="3000"
+              placeholder="何に迷っていましたか？"
             ></textarea
             ><small th:errors="*{worries}"></small></label
           ><label
-            >検討した選択肢（必須）<textarea
+            >検討した選択肢<textarea
               th:field="*{alternatives}"
               maxlength="3000"
+              placeholder="他にどんな選択肢がありましたか？"
             ></textarea
             ><small th:errors="*{alternatives}"></small></label
           ><label
-            >実際に選んだこと（必須）<textarea
+            >選択・行動（必須）<textarea
               th:field="*{choiceMade}"
               maxlength="3000"
+              placeholder="そのとき、どんな選択や行動をしましたか？"
             ></textarea
             ><small th:errors="*{choiceMade}"></small></label
           ><label
-            >選んだ理由（必須）<textarea
+            >選んだ理由<textarea
               th:field="*{reason}"
               maxlength="3000"
+              placeholder="なぜその選択をしましたか？"
             ></textarea
-            ><small th:errors="*{reason}"></small
+            ><small th:errors="*{reason}"></small></label
+          ><label
+            >結果（必須）<textarea
+              th:field="*{outcome}"
+              maxlength="5000"
+              placeholder="その後、実際にどうなりましたか？"
+            ></textarea
+            ><small th:errors="*{outcome}"></small></label
+          ><label
+            >良かったこと<textarea
+              th:field="*{goodThings}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{goodThings}"></small></label
+          ><label
+            >大変だったこと<textarea
+              th:field="*{difficulties}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{difficulties}"></small></label
+          ><label
+            >想定外だったこと<textarea
+              th:field="*{unexpectedThings}"
+              maxlength="3000"
+            ></textarea
+            ><small th:errors="*{unexpectedThings}"></small
           ></label>
         </section>
         <section class="panel form-section wisdom-form">
           <p class="eyebrow">CORE OF YOUR EXPERIENCE</p>
-          <h2>経験して分かったこと・教訓</h2>
+          <h2>振り返り</h2>
           <p>
-            結果の良し悪しより、経験したからこそ伝えられる判断材料を残してください。
+            ここが一番大切な部分です。経験を通して見えてきた教訓を言葉にすることで、自分の判断基準を整理でき、同じ状況にある誰かの助けにもなります。
           </p>
-          <label
-            >決めるときに重視したこと<textarea
-              th:field="*{decisionCriteria}"
-              maxlength="3000"
-            ></textarea>
-          </label>
-          <label
-            >実際に経験して初めて分かったこと<textarea
-              th:field="*{learned}"
-              maxlength="5000"
-              required
-            ></textarea>
-          </label>
-          <label
-            >選ぶ前に知っておきたかったこと<textarea
-              th:field="*{wishKnown}"
-              maxlength="3000"
-            ></textarea>
-          </label>
-          <label
-            >意外と大丈夫だったこと<textarea
-              th:field="*{unexpectedlyOkay}"
-              maxlength="3000"
-            ></textarea>
-          </label>
-          <label
-            >やっておいて良かったこと<textarea
-              th:field="*{preparationHelped}"
-              maxlength="3000"
-            ></textarea>
-          </label>
-          <label
-            >やらなくて後悔したこと<textarea
-              th:field="*{missedRegret}"
-              maxlength="3000"
-            ></textarea>
-          </label>
-          <label
+          <label class="lesson-field"
             >この経験から得た教訓<textarea
               th:field="*{lesson}"
               maxlength="3000"
-              required
+              placeholder="この経験から得た教訓は何ですか？　次に同じ状況になったら、何を判断基準にしますか？"
             ></textarea>
           </label>
           <label
-            >どんな人には向いていると感じるか<textarea
-              th:field="*{suitableFor}"
+            >今ならどうするか<textarea
+              th:field="*{adviceToPastSelf}"
               maxlength="3000"
+              placeholder="今の自分なら、どう行動しますか？"
+            ></textarea
+            ><small th:errors="*{adviceToPastSelf}"></small></label
+          ><label
+            >後悔・失敗<textarea
+              th:field="*{missedRegret}"
+              maxlength="3000"
+              placeholder="今振り返ると、どこを後悔していますか？"
             ></textarea>
           </label>
-          <label
-            >どんな人には慎重に考えてほしいか<textarea
-              th:field="*{cautionFor}"
-              maxlength="3000"
-            ></textarea>
-          </label>
-          <fieldset>
-            <legend>この経験で関係した価値観</legend>
-            <div class="value-grid">
-              <label class="value-choice" th:each="v:${personalValues}"
-                ><input
-                  type="checkbox"
-                  th:field="*{valueIds}"
-                  th:value="${v.id}" /><span th:text="${v.name}"></span
-              ></label>
-            </div>
-          </fieldset>
+          <div class="form-grid">
+            <label
+              >満足度 1〜10（必須）<input
+                type="number"
+                min="1"
+                max="10"
+                th:field="*{satisfaction}" /><small
+                th:errors="*{satisfaction}"
+              ></small></label
+            ><label
+              >後悔度 1〜10（必須）<input
+                type="number"
+                min="1"
+                max="10"
+                th:field="*{regret}" /><small th:errors="*{regret}"></small
+            ></label>
+          </div>
+          <label class="check"
+            ><input
+              type="checkbox"
+              th:field="*{chooseAgain}"
+            />もう一度同じ状況でも、この選択をする</label
+          >
+          <details class="form-more" th:attr="open=${editing} ? 'open' : null">
+            <summary>さらに深掘りする（任意）</summary>
+            <label
+              >決めるときに重視したこと<textarea
+                th:field="*{decisionCriteria}"
+                maxlength="3000"
+              ></textarea>
+            </label>
+            <label
+              >実際に経験して初めて分かったこと<textarea
+                th:field="*{learned}"
+                maxlength="5000"
+              ></textarea>
+            </label>
+            <label
+              >選ぶ前に知っておきたかったこと<textarea
+                th:field="*{wishKnown}"
+                maxlength="3000"
+              ></textarea>
+            </label>
+            <label
+              >意外と大丈夫だったこと<textarea
+                th:field="*{unexpectedlyOkay}"
+                maxlength="3000"
+              ></textarea>
+            </label>
+            <label
+              >やっておいて良かったこと<textarea
+                th:field="*{preparationHelped}"
+                maxlength="3000"
+              ></textarea>
+            </label>
+            <label
+              >どんな人には向いていると感じるか<textarea
+                th:field="*{suitableFor}"
+                maxlength="3000"
+              ></textarea>
+            </label>
+            <label
+              >どんな人には慎重に考えてほしいか<textarea
+                th:field="*{cautionFor}"
+                maxlength="3000"
+              ></textarea>
+            </label>
+            <fieldset>
+              <legend>この経験で関係した価値観</legend>
+              <div class="value-grid">
+                <label class="value-choice" th:each="v:${personalValues}"
+                  ><input
+                    type="checkbox"
+                    th:field="*{valueIds}"
+                    th:value="${v.id}" /><span th:text="${v.name}"></span
+                ></label>
+              </div>
+            </fieldset>
+          </details>
         </section>
         <section class="panel form-section">
           <div class="section-title">
@@ -241,66 +307,6 @@
               </label>
             </article>
           </div>
-        </section>
-        <section class="panel form-section">
-          <h2>補助情報：選択した、その後</h2>
-          <p>
-            満足度や後悔度は、選択の正解を示すものではなく、一人の経験を理解するための補助情報です。
-          </p>
-          <label
-            >その後の結果（必須）<textarea
-              th:field="*{outcome}"
-              maxlength="5000"
-            ></textarea
-            ><small th:errors="*{outcome}"></small></label
-          ><label
-            >良かったこと（必須）<textarea
-              th:field="*{goodThings}"
-              maxlength="3000"
-            ></textarea
-            ><small th:errors="*{goodThings}"></small></label
-          ><label
-            >大変だったこと（必須）<textarea
-              th:field="*{difficulties}"
-              maxlength="3000"
-            ></textarea
-            ><small th:errors="*{difficulties}"></small></label
-          ><label
-            >想定外だったこと（必須）<textarea
-              th:field="*{unexpectedThings}"
-              maxlength="3000"
-            ></textarea
-            ><small th:errors="*{unexpectedThings}"></small
-          ></label>
-          <div class="form-grid">
-            <label
-              >満足度 1〜10（必須）<input
-                type="number"
-                min="1"
-                max="10"
-                th:field="*{satisfaction}" /><small
-                th:errors="*{satisfaction}"
-              ></small></label
-            ><label
-              >後悔度 1〜10（必須）<input
-                type="number"
-                min="1"
-                max="10"
-                th:field="*{regret}" /><small th:errors="*{regret}"></small
-            ></label>
-          </div>
-          <label class="check"
-            ><input
-              type="checkbox"
-              th:field="*{chooseAgain}"
-            />もう一度同じ状況でも、この選択をする</label
-          ><label
-            >過去の自分へのアドバイス（必須）<textarea
-              th:field="*{adviceToPastSelf}"
-              maxlength="3000"
-            ></textarea
-            ><small th:errors="*{adviceToPastSelf}"></small></label
-          >
         </section>
         <div
           id="draft-restore-banner"

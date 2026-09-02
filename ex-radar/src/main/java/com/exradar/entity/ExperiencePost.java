@@ -170,6 +170,15 @@ public class ExperiencePost extends BaseEntity {
     this.status = PostStatus.PUBLISHED;
   }
 
+  /**
+   * 管理者による通報対応「非公開対応」専用。既存のDRAFT/PUBLISHEDの仕組みをそのまま再利用し、
+   * 投稿者の下書きへ戻す(削除はしない)。通常のユーザー操作(自動保存等)からは
+   * 呼び出されない、管理者専用の状態遷移。
+   */
+  public void hideByModeration() {
+    this.status = PostStatus.DRAFT;
+  }
+
   public void replaceLifeEvents(List<LifeEvent> events) {
     lifeEvents.clear();
     for (var event : events) {

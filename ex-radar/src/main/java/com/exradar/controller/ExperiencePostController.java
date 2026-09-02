@@ -1,6 +1,8 @@
 package com.exradar.controller;
 
 import com.exradar.dto.ExperienceSearchCriteria;
+import com.exradar.dto.ExperienceWisdomView;
+import com.exradar.entity.ExperiencePost;
 import com.exradar.entity.PostStatus;
 import com.exradar.form.*;
 import com.exradar.repository.CategoryRepository;
@@ -45,9 +47,26 @@ public class ExperiencePostController {
       @ModelAttribute ExperienceSearchCriteria criteria,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "latest") String sort,
+      Principal principal,
       Model model) {
-    model.addAttribute("result", service.search(criteria, page, sort));
+    var email = principal == null ? null : principal.getName();
+    boolean wisdomUnlocked = service.canReadExperiences(email);
+    model.addAttribute("result", service.search(criteria, page, sort, wisdomUnlocked));
+    model.addAttribute("wisdomUnlocked", wisdomUnlocked);
     model.addAttribute("sort", sort);
+    // カテゴリのみで絞り込んでいる場合は「カテゴリページ」として自己canonical+専用の
+    // タイトル・説明文を設定する。それ以外(キーワード検索やその他条件つき)は
+    // 重複コンテンツを避けるため一覧の正規URL(/experiences)へcanonicalを寄せる。
+    if (criteria.categoryOnly()) {
+      categories
+          .findById(criteria.categoryId())
+          .ifPresent(
+              c -> {
+                model.addAttribute("categoryPageName", c.getName());
+                model.addAttribute(
+                    "listCanonicalPath", "/experiences?categoryId=" + c.getId());
+              });
+    }
     return "experiences/list";
   }
 
@@ -63,16 +82,18 @@ public class ExperiencePostController {
   @GetMapping("/{id}/view-options")
   String viewOptions(@PathVariable Long id, Principal principal, Model model) {
     var email = principal == null ? null : principal.getName();
-    if (!service.canReadExperiences(email)) return "redirect:/experiences/unlock";
-    model.addAttribute("post", service.getVisible(id, email));
+    var post = service.getVisible(id, email);
+    model.addAttribute("post", post);
+    addWisdom(model, post, email);
     return "experiences/view-options";
   }
 
   @GetMapping("/{id}/summary")
   String summary(@PathVariable Long id, Principal principal, Model model) {
     var email = principal == null ? null : principal.getName();
-    if (!service.canReadExperiences(email)) return "redirect:/experiences/unlock";
-    model.addAttribute("post", service.getVisible(id, email));
+    var post = service.getVisible(id, email);
+    model.addAttribute("post", post);
+    addWisdom(model, post, email);
     return "experiences/summary";
   }
 
@@ -123,15 +144,22 @@ public class ExperiencePostController {
 
   @GetMapping("/{id}")
   String detail(@PathVariable Long id, Principal principal, Model model) {
+    // 「体験談全体のgive to get」は廃止。公開済み(PUBLISHED)の体験談は、誰でも
+    // 「経験・失敗」部分を全文閲覧できる(SEO流入のため匿名アクセスも許可)。
+    // 下書き・非公開・管理者による非公開対応(HIDDEN=DRAFT)はgetVisible内部で
+    // 引き続き本人・管理者以外には404として扱われるため、閲覧制限自体はサーバー側で維持される。
+    // 一方、「学び」(教訓・判断基準・今ならどうするか等)は、自分自身の公開体験談を
+    // 1件以上投稿しているユーザーにのみ引き続き開放する(addWisdom参照)。
     var email = principal == null ? null : principal.getName();
-    if (!service.canReadExperiences(email)) return "redirect:/experiences/unlock";
     var post = service.getVisible(id, email);
     model.addAttribute("post", post);
+    boolean wisdomUnlocked = addWisdom(model, post, email);
+    model.addAttribute("metaDescription", SeoText.excerpt(publicSummary(post), 120));
     model.addAttribute("canManage", service.canManage(post, email));
     model.addAttribute(
         "canReact",
         email != null && !post.getAuthor().getEmail().equalsIgnoreCase(email));
-    model.addAttribute("similarPosts", service.similar(post));
+    model.addAttribute("similarPosts", service.similar(post, wisdomUnlocked));
     if (post.isPublished()) {
       model.addAttribute("reactionSummary", interactions.reactions(id, email));
       model.addAttribute("comments", interactions.comments(id));
@@ -217,6 +245,33 @@ public class ExperiencePostController {
     service.delete(id, principal.getName());
     redirect.addFlashAttribute("successMessage", "体験談を削除しました");
     return "redirect:/mypage";
+  }
+
+  /**
+   * 「学び」部分をModelへ追加する。閲覧権限がない場合はwisdomUnlocked=falseのみ設定し、
+   * wisdom属性自体をModelへ入れない(nullのまま)。学び本文をサーバー側で一切渡さない
+   * ことで、テンプレート側の実装ミスによる漏えいを構造的に防ぐ。
+   */
+  private boolean addWisdom(Model model, ExperiencePost post, String email) {
+    boolean unlocked = service.canReadWisdom(post, email);
+    model.addAttribute("wisdomUnlocked", unlocked);
+    model.addAttribute("wisdom", unlocked ? ExperienceWisdomView.from(post) : null);
+    return unlocked;
+  }
+
+  /**
+   * meta descriptionに使う本文は、匿名ユーザーにも実際に公開している「経験・失敗」部分
+   * (結果・大変だったこと)のみから生成する。「学び」(教訓・今ならどうするか等)は
+   * 未解放の読者には読めないため、検索結果と実際に読める内容が食い違わないよう含めない。
+   */
+  private String publicSummary(ExperiencePost post) {
+    var parts = new StringBuilder();
+    if (post.getOutcome() != null && !post.getOutcome().isBlank()) parts.append(post.getOutcome());
+    if (post.getDifficulties() != null && !post.getDifficulties().isBlank()) {
+      if (!parts.isEmpty()) parts.append(' ');
+      parts.append(post.getDifficulties());
+    }
+    return !parts.isEmpty() ? parts.toString() : post.getSituationBefore();
   }
 
   record DraftSaveResult(Long id, String status) {}

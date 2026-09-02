@@ -21,3 +21,5 @@ exradar:
     ga4:
       property-id: ${GA4_PROPERTY_ID:}
       service-account-key: ${GA4_SERVICE_ACCOUNT_KEY:}
+  seo:
+    default-og-image: ${OG_DEFAULT_IMAGE_URL:}
