@@ -133,6 +133,22 @@ nav a[href="/mypage"] {
   box-shadow: 0 0 0 8px #f4a26122;
   animation: pulse 2s ease-in-out infinite;
 }
+.radar b:nth-of-type(2) {
+  left: 27%;
+  top: 62%;
+  width: 9px;
+  height: 9px;
+  animation-delay: 0.6s;
+}
+.radar b:nth-of-type(3) {
+  left: 48%;
+  top: 22%;
+  width: 8px;
+  height: 8px;
+  background: var(--teal);
+  box-shadow: 0 0 0 8px #0e7c7b22;
+  animation-delay: 1.2s;
+}
 .auth {
   max-width: 480px;
   margin: 7vh auto;
