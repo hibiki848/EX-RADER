@@ -24,6 +24,11 @@ public class NavigationAdvice {
   @Value("${exradar.seo.default-og-image:}")
   private String defaultOgImage;
 
+  // staging等でfalseにすると、fragments/seo.htmlがmeta robots(noindex等)を追加出力する。
+  // 未設定時はtrue(=既存の本番仕様のまま)。
+  @Value("${exradar.seo.indexable:true}")
+  private boolean seoIndexable;
+
   public NavigationAdvice(
       ObjectProvider<AccountService> s, ObjectProvider<UserRepository> users, Environment environment) {
     service = s;
@@ -66,6 +71,11 @@ public class NavigationAdvice {
   @ModelAttribute("defaultOgImage")
   public String defaultOgImage() {
     return defaultOgImage;
+  }
+
+  @ModelAttribute("seoIndexable")
+  public boolean seoIndexable() {
+    return seoIndexable;
   }
 
   /** canonical・OGPのog:url組み立て用。末尾スラッシュなしのスキーム+ホスト(+ポート)。 */

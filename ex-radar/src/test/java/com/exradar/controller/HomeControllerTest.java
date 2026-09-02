@@ -43,6 +43,66 @@ class HomeControllerTest {
         .andExpect(content().string(not(containsString("失敗から学ぶ"))));
   }
 
+  /**
+   * トップページのmeta description/og:descriptionを、現在のヒーロー部分のコンセプト文言
+   * (「悔いのない人生などない。学びのない人生などない。...」)と統一したことを確認する。
+   * titleは維持されていること、canonicalが出力されることも合わせて確認する。
+   */
+  @Test
+  void homeMetaDescriptionMatchesCurrentHeroConceptAndTitleIsUnchanged() throws Exception {
+    var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+    org.assertj.core.api.Assertions.assertThat(body)
+        .contains("<title>EXレーダー | 他人の失敗・後悔から学び、判断材料にする</title>")
+        .contains("EXレーダー | 他人の失敗・後悔から学び、判断材料にする\" />")
+        .contains(
+            "悔いのない人生などない。学びのない人生などない。自分と他人の失敗を「学び」に変え、あなたの人生を賢く導く。")
+        .contains("rel=\"canonical\"")
+        .doesNotContain("EX-RADER");
+
+    // description(name="description")とog:descriptionの両方に同じ新しい文言が出ていること
+    int occurrences =
+        body.split(
+                    "悔いのない人生などない。学びのない人生などない。自分と他人の失敗を「学び」に変え、あなたの人生を賢く導く。",
+                    -1)
+                .length
+            - 1;
+    org.assertj.core.api.Assertions.assertThat(occurrences).isEqualTo(2);
+  }
+
+  @Test
+  void homeHasFaviconLinkInHead() throws Exception {
+    var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    org.assertj.core.api.Assertions.assertThat(body)
+        .contains("rel=\"icon\"", "/images/favicon/favicon.svg")
+        .contains("apple-touch-icon");
+  }
+
+  /** WebSite構造化データ(JSON-LD)がname/urlを正しく含んで描画されることを確認する。 */
+  @Test
+  void homeRendersWebSiteStructuredDataWithNameAndUrl() throws Exception {
+    var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    org.assertj.core.api.Assertions.assertThat(body)
+        .contains("application/ld+json")
+        .contains("\"@type\": \"WebSite\"")
+        .contains("\"@type\": \"Organization\"")
+        .contains("\"name\": \"EXレーダー\"")
+        .contains("http:\\/\\/localhost\\/");
+  }
+
+  /**
+   * サイトリンク候補の土台として、トップページから未ログインでも/experiences・/articlesへ
+   * 通常のaタグ(href属性)で辿れることを確認する(JSクリックイベントだけの遷移ではない)。
+   * アンカーテキストも「体験談を探す」「記事を読む」など内容が分かる表現になっていること。
+   */
+  @Test
+  void homeHasNormalAnchorLinksToExperiencesAndArticlesForAnonymousUsers() throws Exception {
+    var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    org.assertj.core.api.Assertions.assertThat(body)
+        .contains("<a class=\"button\" href=\"/experiences\">体験談を探す</a>")
+        .contains("href=\"/articles\">記事を読む</a>");
+  }
+
   @Test
   void homeShowsOnlyLatestThreePublishedArticlesAndNeverDrafts() throws Exception {
     // 公開記事を古い順に4件、下書き記事を1件用意する

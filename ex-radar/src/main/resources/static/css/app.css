@@ -93,6 +93,12 @@ nav a[href="/mypage"] {
 .hero h1 span {
   color: var(--teal);
 }
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 20px;
+}
 
 .home-section {
   max-width: 1100px;
