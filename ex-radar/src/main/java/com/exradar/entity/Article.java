@@ -31,6 +31,14 @@ public class Article extends BaseEntity {
 
   private LocalDateTime publishedAt;
 
+  // どちらも未入力を許容する。画面上の記事タイトル(title)とは役割が異なり、
+  // HTMLのtitleタグ・meta descriptionにのみ使う(本文中の見出し表示には使わない)。
+  @Column(name = "seo_title", length = 120)
+  private String seoTitle;
+
+  @Column(name = "meta_description", length = 300)
+  private String metaDescription;
+
   protected Article() {}
 
   public Article(String title, String slug, String description, String content) {
@@ -68,11 +76,42 @@ public class Article extends BaseEntity {
     return publishedAt;
   }
 
+  public String getSeoTitle() {
+    return seoTitle;
+  }
+
+  public String getMetaDescription() {
+    return metaDescription;
+  }
+
+  /** titleタグ用。SEOタイトルが未入力の場合は通常の記事タイトルにフォールバックする。 */
+  public String getEffectiveSeoTitle() {
+    return isBlank(seoTitle) ? title : seoTitle;
+  }
+
+  /**
+   * meta description用。SEO用descriptionが未入力の場合は既存の概要欄(description)に
+   * フォールバックする。どちらも空ならnullを返し、呼び出し側で空のmetaタグを出力しない。
+   */
+  public String getEffectiveMetaDescription() {
+    if (!isBlank(metaDescription)) return metaDescription;
+    return isBlank(description) ? null : description;
+  }
+
+  private static boolean isBlank(String v) {
+    return v == null || v.isBlank();
+  }
+
   public void update(String title, String slug, String description, String content) {
     this.title = title;
     this.slug = slug;
     this.description = description;
     this.content = content;
+  }
+
+  public void updateSeo(String seoTitle, String metaDescription) {
+    this.seoTitle = seoTitle;
+    this.metaDescription = metaDescription;
   }
 
   public void publish() {

@@ -43,8 +43,10 @@ public class ArticleService {
   @Transactional
   public Article create(ArticleForm form) {
     if (articles.existsBySlug(form.getSlug())) throw new DuplicateSlugException();
-    return articles.save(
-        new Article(form.getTitle(), form.getSlug(), form.getDescription(), form.getContent()));
+    var article =
+        new Article(form.getTitle(), form.getSlug(), form.getDescription(), form.getContent());
+    article.updateSeo(form.getSeoTitle(), form.getMetaDescription());
+    return articles.save(article);
   }
 
   @Transactional
@@ -52,6 +54,7 @@ public class ArticleService {
     if (articles.existsBySlugAndIdNot(form.getSlug(), id)) throw new DuplicateSlugException();
     Article article = find(id);
     article.update(form.getTitle(), form.getSlug(), form.getDescription(), form.getContent());
+    article.updateSeo(form.getSeoTitle(), form.getMetaDescription());
   }
 
   @Transactional

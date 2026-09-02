@@ -25,12 +25,20 @@ public class ArticleForm {
   @Size(max = 20000, message = "本文は20000文字以内で入力してください")
   private String content;
 
+  @Size(max = 120, message = "SEOタイトルは120文字以内で入力してください")
+  private String seoTitle;
+
+  @Size(max = 300, message = "meta descriptionは300文字以内で入力してください")
+  private String metaDescription;
+
   public static ArticleForm from(Article article) {
     var form = new ArticleForm();
     form.title = article.getTitle();
     form.slug = article.getSlug();
     form.description = article.getDescription();
     form.content = article.getContent();
+    form.seoTitle = article.getSeoTitle();
+    form.metaDescription = article.getMetaDescription();
     return form;
   }
 
@@ -64,5 +72,21 @@ public class ArticleForm {
 
   public void setContent(String v) {
     content = v;
+  }
+
+  public String getSeoTitle() {
+    return seoTitle;
+  }
+
+  public void setSeoTitle(String v) {
+    seoTitle = v;
+  }
+
+  public String getMetaDescription() {
+    return metaDescription;
+  }
+
+  public void setMetaDescription(String v) {
+    metaDescription = v;
   }
 }

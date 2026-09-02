@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ArticleRepository extends JpaRepository<Article, Long> {
   Optional<Article> findBySlugAndStatus(String slug, ArticleStatus status);
 
+  Optional<Article> findBySlug(String slug);
+
   List<Article> findByStatusOrderByPublishedAtDesc(ArticleStatus status);
 
   List<Article> findAllByOrderByUpdatedAtDesc();

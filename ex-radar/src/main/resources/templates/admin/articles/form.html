@@ -59,6 +59,19 @@
             ><small th:errors="*{content}"></small
           ></label>
         </section>
+        <section class="panel form-section">
+          <h2>SEO設定</h2>
+          <label
+            >SEOタイトル<input th:field="*{seoTitle}" maxlength="120" /><span class="field-hint"
+              >Google検索結果やブラウザのタブに使用されます。未入力の場合は記事タイトルを使用します。</span
+            ><small th:errors="*{seoTitle}"></small
+          ></label>
+          <label
+            >meta description<textarea th:field="*{metaDescription}" maxlength="300" rows="3"></textarea
+            ><span class="field-hint">Google検索結果などで使用される記事の説明文です。</span
+            ><small th:errors="*{metaDescription}"></small
+          ></label>
+        </section>
         <div class="owner-actions">
           <button class="button" type="submit" th:text="${editing} ? '変更を保存' : '下書きとして作成'">保存</button>
           <a class="button button-secondary" href="/admin/articles">キャンセル</a>

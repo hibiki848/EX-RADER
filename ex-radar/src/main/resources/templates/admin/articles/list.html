@@ -50,7 +50,13 @@
             </thead>
             <tbody>
               <tr th:each="a : ${articles}">
-                <td><a th:href="@{/admin/articles/{id}/edit(id=${a.id})}" th:text="${a.title}">タイトル</a></td>
+                <td>
+                  <a th:href="@{/admin/articles/{id}/edit(id=${a.id})}" th:text="${a.title}">タイトル</a>
+                  <small
+                    th:if="${a.seoTitle != null and !#strings.isEmpty(a.seoTitle)}"
+                    th:text="'SEO: '+${a.seoTitle}"
+                  ></small>
+                </td>
                 <td><small th:text="'/articles/'+${a.slug}">/articles/slug</small></td>
                 <td>
                   <span

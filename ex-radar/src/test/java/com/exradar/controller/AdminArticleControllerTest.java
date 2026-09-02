@@ -90,6 +90,70 @@ class AdminArticleControllerTest {
   }
 
   @Test
+  void adminCanSetAndUpdateSeoTitleAndMetaDescription() throws Exception {
+    User admin =
+        users.save(
+            new User("article-seo-admin@example.com", encoder.encode("password123"), "Admin", Role.ADMIN));
+
+    mvc.perform(
+            post("/admin/articles")
+                .with(user(admin.getEmail()).roles("ADMIN"))
+                .with(csrf())
+                .param("title", "成功談だけを見ても、良い選択ができるとは限らない")
+                .param("slug", "seo-fields-test")
+                .param("description", "概要文")
+                .param("content", "本文")
+                .param("seoTitle", "成功談だけを参考にしてはいけない理由｜EXレーダー")
+                .param("metaDescription", "検索結果に表示される説明文です。"))
+        .andExpect(status().is3xxRedirection());
+
+    Article created = articles.findBySlug("seo-fields-test").orElseThrow();
+    assertThat(created.getSeoTitle()).isEqualTo("成功談だけを参考にしてはいけない理由｜EXレーダー");
+    assertThat(created.getMetaDescription()).isEqualTo("検索結果に表示される説明文です。");
+    assertThat(created.getEffectiveSeoTitle()).isEqualTo("成功談だけを参考にしてはいけない理由｜EXレーダー");
+
+    mvc.perform(
+            post("/admin/articles/{id}", created.getId())
+                .with(user(admin.getEmail()).roles("ADMIN"))
+                .with(csrf())
+                .param("title", created.getTitle())
+                .param("slug", created.getSlug())
+                .param("description", "概要文")
+                .param("content", "本文")
+                .param("seoTitle", "更新後のSEOタイトル")
+                .param("metaDescription", ""))
+        .andExpect(status().is3xxRedirection());
+
+    Article updated = articles.findById(created.getId()).orElseThrow();
+    assertThat(updated.getSeoTitle()).isEqualTo("更新後のSEOタイトル");
+    assertThat(updated.getMetaDescription()).isBlank();
+    // meta descriptionが空でも、概要欄(description)にフォールバックする
+    assertThat(updated.getEffectiveMetaDescription()).isEqualTo("概要文");
+  }
+
+  @Test
+  void seoFieldsAreOptionalAndArticleTitleIsUsedAsFallback() throws Exception {
+    User admin =
+        users.save(
+            new User("article-seo-fallback@example.com", encoder.encode("password123"), "Admin", Role.ADMIN));
+
+    mvc.perform(
+            post("/admin/articles")
+                .with(user(admin.getEmail()).roles("ADMIN"))
+                .with(csrf())
+                .param("title", "SEOタイトル未入力の記事")
+                .param("slug", "seo-fallback-test")
+                .param("description", "概要のみ")
+                .param("content", "本文"))
+        .andExpect(status().is3xxRedirection());
+
+    Article created = articles.findBySlug("seo-fallback-test").orElseThrow();
+    assertThat(created.getSeoTitle()).isNullOrEmpty();
+    assertThat(created.getEffectiveSeoTitle()).isEqualTo("SEOタイトル未入力の記事");
+    assertThat(created.getEffectiveMetaDescription()).isEqualTo("概要のみ");
+  }
+
+  @Test
   void duplicateSlugIsRejectedWithFriendlyError() throws Exception {
     User admin =
         users.save(
