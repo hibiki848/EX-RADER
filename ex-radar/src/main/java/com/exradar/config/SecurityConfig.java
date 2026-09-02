@@ -5,6 +5,8 @@ import com.exradar.security.OAuth2LoginFailureHandler;
 import com.exradar.security.OAuth2LoginSuccessHandler;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,15 @@ public class SecurityConfig {
   @Bean
   PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  /**
+   * Google連携時のパスワード確認(AccountLinkController)で、既存のUserDetailsService+
+   * PasswordEncoderによる標準の認証処理を再利用するために公開する。
+   */
+  @Bean
+  AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    return config.getAuthenticationManager();
   }
 
   @Bean
@@ -35,6 +46,7 @@ public class SecurityConfig {
                         "/login",
                         "/oauth2/authorization/**",
                         "/login/oauth2/code/**",
+                        "/oauth2/link-account",
                         "/experiences",
                         "/experiences/unlock",
                         "/statistics",

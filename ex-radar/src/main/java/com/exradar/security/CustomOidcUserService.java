@@ -1,6 +1,5 @@
 package com.exradar.security;
 
-import com.exradar.entity.AuthProvider;
 import com.exradar.entity.User;
 import com.exradar.repository.UserRepository;
 import java.util.List;
@@ -27,8 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * 重要な設計判断:
  * - 突合キーはメールアドレスではなくOIDCの sub(Google側の一意ID)。メールアドレスは変更され得るため。
- * - 同じメールアドレスのLOCALアカウントが既に存在する場合は自動統合せず、ログインを拒否する
- *   (アカウント乗っ取り防止。「同じメールアドレスのアカウントが既に存在します」として案内する)。
+ * - 同じメールアドレスの既存アカウント(通常はLOCAL)が既に存在する場合、メールアドレスが
+ *   一致しただけでは自動連携しない。AccountLinkRequiredExceptionをスローし、
+ *   OAuth2LoginFailureHandler経由で「既存アカウントのパスワードを確認してから連携する」
+ *   画面(/oauth2/link-account)へ誘導する(アカウント乗っ取り防止)。
  * - 返すOidcUserのname属性キーを"email"に固定することで、Authentication#getName()が
  *   既存のフォームログイン(ExRadarUserDetailsService)と同じくメールアドレスを返すようにしている。
  *   これにより既存コントローラーのPrincipal#getName()利用箇所は一切変更不要になる。
@@ -82,15 +83,15 @@ public class CustomOidcUserService extends OidcUserService {
   }
 
   private User findOrCreateUser(String sub, String email) {
-    var existingByProvider = users.findByAuthProviderAndProviderUserId(AuthProvider.GOOGLE, sub);
+    var existingByProvider = users.findByProviderUserId(sub);
     if (existingByProvider.isPresent()) {
       return existingByProvider.get();
     }
 
     if (users.existsByEmailIgnoreCase(email)) {
-      // 既存のLOCAL(またはメール変更後に衝突した別)アカウントが存在する。
-      // 乗っ取り防止のため自動統合はせず、明示的にログインを拒否する。
-      throw error("account_exists", "このメールアドレスは既にEXレーダーに登録されています");
+      // 既存アカウント(通常はLOCAL)が存在する。メールアドレスが一致しただけでは自動連携せず、
+      // パスワード確認を挟む連携フローへ誘導する(OAuth2LoginFailureHandlerが処理する)。
+      throw new AccountLinkRequiredException(sub, email);
     }
 
     try {

@@ -17,9 +17,6 @@
           登録が完了しました。ログインしてください。
         </p>
         <p th:if="${param.logout}" class="success">ログアウトしました。</p>
-        <p th:if="${param.error != null and param.error[0] == 'oauth_account_exists'}" class="error">
-          このメールアドレスは既にEXレーダーに登録されています。メールアドレスとパスワードでログインしてください。
-        </p>
         <p th:if="${param.error != null and param.error[0] == 'oauth_suspended'}" class="error">
           このアカウントは利用停止されています。
         </p>

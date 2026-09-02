@@ -130,6 +130,15 @@ public class User extends BaseEntity {
     this.displayNamePending = false;
   }
 
+  /**
+   * 既存アカウント(通常はLOCAL)へGoogleアカウントを連携する。
+   * authProviderは変更しない(元のログイン方法の情報として残す)ため、
+   * 連携後もメールアドレス+パスワードでのログインは引き続き利用できる。
+   */
+  public void linkGoogleAccount(String providerUserId) {
+    this.providerUserId = providerUserId;
+  }
+
   public String getAgeGroup() {
     return ageGroup;
   }

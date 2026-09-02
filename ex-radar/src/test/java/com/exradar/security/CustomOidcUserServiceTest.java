@@ -48,8 +48,7 @@ class CustomOidcUserServiceTest {
 
   @Test
   void createsNewUserOnFirstGoogleLogin() {
-    when(users.findByAuthProviderAndProviderUserId(AuthProvider.GOOGLE, "sub-123"))
-        .thenReturn(Optional.empty());
+    when(users.findByProviderUserId("sub-123")).thenReturn(Optional.empty());
     when(users.existsByEmailIgnoreCase("new-google-user@example.com")).thenReturn(false);
     when(encoder.encode(anyString())).thenReturn("encoded-random-password");
     when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -72,8 +71,7 @@ class CustomOidcUserServiceTest {
   @Test
   void returnsExistingUserOnRepeatGoogleLogin() {
     User existing = new User("returning@example.com", "hash", "表示名", Role.USER);
-    when(users.findByAuthProviderAndProviderUserId(AuthProvider.GOOGLE, "sub-456"))
-        .thenReturn(Optional.of(existing));
+    when(users.findByProviderUserId("sub-456")).thenReturn(Optional.of(existing));
 
     OidcUser result = service.process(oidcUser("sub-456", "returning@example.com", true));
 
@@ -82,17 +80,18 @@ class CustomOidcUserServiceTest {
   }
 
   @Test
-  void rejectsLoginWhenEmailAlreadyRegisteredLocally() {
-    when(users.findByAuthProviderAndProviderUserId(AuthProvider.GOOGLE, "sub-789"))
-        .thenReturn(Optional.empty());
+  void requiresAccountLinkConfirmationWhenEmailAlreadyRegisteredLocally() {
+    when(users.findByProviderUserId("sub-789")).thenReturn(Optional.empty());
     when(users.existsByEmailIgnoreCase("existing-local@example.com")).thenReturn(true);
 
     assertThatThrownBy(() -> service.process(oidcUser("sub-789", "existing-local@example.com", true)))
-        .isInstanceOf(OAuth2AuthenticationException.class)
+        .isInstanceOf(AccountLinkRequiredException.class)
         .satisfies(
-            e ->
-                assertThat(((OAuth2AuthenticationException) e).getError().getErrorCode())
-                    .isEqualTo("account_exists"));
+            e -> {
+              AccountLinkRequiredException linkException = (AccountLinkRequiredException) e;
+              assertThat(linkException.getGoogleSub()).isEqualTo("sub-789");
+              assertThat(linkException.getEmail()).isEqualTo("existing-local@example.com");
+            });
     verify(users, org.mockito.Mockito.never()).save(any());
   }
 
@@ -120,8 +119,7 @@ class CustomOidcUserServiceTest {
   void rejectsSuspendedGoogleAccount() {
     User suspended = new User("suspended@example.com", "hash", "表示名", Role.USER);
     suspended.setSuspended(true);
-    when(users.findByAuthProviderAndProviderUserId(AuthProvider.GOOGLE, "sub-111"))
-        .thenReturn(Optional.of(suspended));
+    when(users.findByProviderUserId("sub-111")).thenReturn(Optional.of(suspended));
 
     assertThatThrownBy(() -> service.process(oidcUser("sub-111", "suspended@example.com", true)))
         .isInstanceOf(OAuth2AuthenticationException.class)
