@@ -26,10 +26,10 @@ class DatabaseConstraintTest {
             })
         .isInstanceOfAny(DataIntegrityViolationException.class, RuntimeException.class);
     em.clear();
-    categories.saveAndFlush(new Category("大学進学", "university", 1));
+    categories.saveAndFlush(new Category("制約確認用", "db-constraint-test", 1));
     assertThatThrownBy(
             () -> {
-              categories.saveAndFlush(new Category("別名", "university", 2));
+              categories.saveAndFlush(new Category("別名", "db-constraint-test", 2));
             })
         .isInstanceOfAny(DataIntegrityViolationException.class, RuntimeException.class);
     em.clear();
