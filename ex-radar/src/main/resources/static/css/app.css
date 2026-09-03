@@ -2216,6 +2216,108 @@ input[type="radio"] {
   font-size: 0.8rem;
   min-height: 36px;
 }
+
+/* 管理者ユーザー検索フォームのプラン複数選択(チェックボックス)。 */
+.admin-user-search-form fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 0;
+  border: none;
+  margin: 0;
+}
+.admin-user-search-form legend {
+  width: 100%;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+.checkbox-inline {
+  display: inline-flex !important;
+  grid-template-columns: none !important;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.checkbox-inline input {
+  width: auto;
+}
+
+.admin-selection-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+#admin-selection-count {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.admin-user-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cyan);
+}
+
+/* スマホでは横スクロール表ではなく、各行を「ラベル: 値」のカード形式に切り替える。 */
+@media (max-width: 720px) {
+  .admin-user-table,
+  .admin-user-table thead,
+  .admin-user-table tbody,
+  .admin-user-table th,
+  .admin-user-table td,
+  .admin-user-table tr {
+    display: block;
+  }
+  .admin-user-table {
+    min-width: 0;
+  }
+  .admin-user-table thead {
+    position: absolute;
+    left: -9999px;
+  }
+  .admin-user-table tbody tr {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+  }
+  .admin-user-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .admin-user-table td:last-child {
+    border-bottom: none;
+  }
+  .admin-user-table td::before {
+    content: attr(data-label);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .admin-user-table td[data-label="ユーザー"] {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .admin-user-table td[data-label="ユーザー"]::before {
+    margin-bottom: 4px;
+  }
+  .admin-user-table td.admin-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-user-table td.admin-actions::before {
+    margin-bottom: 6px;
+  }
+}
 .admin-post-list {
   display: grid;
   gap: 14px;
