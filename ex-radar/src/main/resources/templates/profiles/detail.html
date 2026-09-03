@@ -7,14 +7,12 @@
     <title th:text="${profile.displayName}+'さん | EXレーダー'"></title>
     <link rel="canonical" th:href="${baseUrl}+'/profiles/'+${profile.id}" />
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav><a href="/experiences">体験談を探す</a></nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="explore-page">
       <section class="profile-head">
         <p class="eyebrow">CONTRIBUTOR</p>
@@ -42,5 +40,6 @@
         公開中の体験談はありません。
       </div>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

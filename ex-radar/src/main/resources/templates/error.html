@@ -9,6 +9,7 @@
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/header :: siteHeaderMinimal}"></div>
     <main class="panel page" th:switch="${status}">
       <p class="eyebrow" th:text="${status}">エラー</p>
       <h1 th:case="400">リクエストの内容に誤りがあります</h1>

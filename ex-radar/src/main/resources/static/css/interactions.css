@@ -3,10 +3,6 @@
   max-width: 850px;
   margin: 24px auto;
   padding: 24px;
-  background: var(--surface);
-  color: var(--navy);
-  border: 1px solid var(--line);
-  border-radius: 18px;
 }
 .reaction-grid {
   display: grid;
@@ -17,16 +13,19 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  background: var(--surface-raised);
-  color: var(--navy);
-  transition: transform 0.16s ease;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  transition: transform 0.16s ease, border-color 0.16s ease;
 }
 .reaction-button:hover {
   transform: translateY(-2px);
+  border-color: var(--border-light);
 }
 .reaction-button.selected {
-  background: var(--teal);
-  color: #fff;
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: var(--on-bright);
   animation: feedback-pop 0.24s ease;
 }
 .comment-card {
@@ -34,7 +33,8 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-secondary);
 }
 .comment-card p {
   white-space: pre-wrap;
@@ -45,23 +45,6 @@
 .report-panel label {
   display: grid;
   gap: 10px;
-}
-.comment-form textarea,
-.report-panel textarea {
-  font: inherit;
-  padding: 0.8rem;
-  border: 1px solid var(--line);
-  background: var(--surface-raised);
-  color: var(--navy);
-  border-radius: 9px;
-}
-.text-danger {
-  padding: 0.3rem;
-  background: transparent;
-  color: #b42318;
-}
-.danger {
-  background: #b42318;
 }
 .feedback-pop {
   animation: feedback-pop 0.28s ease;

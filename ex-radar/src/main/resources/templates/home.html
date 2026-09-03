@@ -12,6 +12,7 @@
       canonicalUrl=${baseUrl}+'/',
       ogType='website')}"></th:block>
   <link rel="stylesheet" href="/css/app.css" />
+  <script src="/js/site-nav.js" defer></script>
   <meta name="google-site-verification" content="gu1E4eGhr_zvKD5381R12mgnoelnWYYH0pFppVbKWvc" />
   <!--
     WebSite/Organizationの構造化データ。Googleがサイト名・URLを正しく認識できるよう
@@ -40,39 +41,40 @@
 <body>
   <div th:replace="~{fragments/loading :: loading}"></div>
   <div th:replace="~{fragments/analytics :: analytics}"></div>
-  <header>
-    <a class="brand" href="/">EXレーダー</a>
-    <nav>
-      <a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a><a class="button"
-        sec:authorize="isAuthenticated()" href="/experiences/new">投稿する</a><a sec:authorize="isAuthenticated()"
-        href="/mypage">マイページ</a><a class="button admin-nav-button" sec:authorize="hasRole('ADMIN')"
-        href="/admin">管理者画面</a>
-      <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post">
-        <button class="header-logout" type="submit">ログアウト</button>
-      </form>
-    </nav>
-  </header>
+  <div th:replace="~{fragments/header :: siteHeader}"></div>
   <main>
     <section class="hero" sec:authorize="isAnonymous()">
       <div>
         <p class="eyebrow">EXPERIENCE AS A RADAR</p>
-        <h1>悔いのない人生などない<br /><span>学びのない人生などない</span></h1>
-        <p>
-          自分と他人の失敗を「学び」に変え、あなたの人生を賢く導く。
+        <h1>悔いのない人生などない、<br /><span>学びのない人生などない。</span></h1>
+        <p class="hero-sub">
+          EXレーダーは、リアルな体験談と教訓を集めた学びのプラットフォーム。あなたや誰かの経験が、未来の選択を変えるヒントになります。
         </p>
-        <form class="hero-search" sec:authorize="isAuthenticated()" action="/experiences">
-          <input name="keyword" aria-label="体験談のキーワード" placeholder="今悩んでいることを検索" /><button>判断材料を探す</button>
+        <form class="hero-search" action="/experiences">
+          <input name="keyword" aria-label="体験談のキーワード" placeholder="例：転職 / 恋愛 / 一人暮らし / 就職" /><button type="submit" aria-label="検索する">検索</button>
         </form>
+        <nav class="category-chip-row" aria-label="カテゴリから探す">
+          <a class="category-chip" th:href="@{/experiences(keyword='就職')}">就職</a>
+          <a class="category-chip" th:href="@{/experiences(keyword='転職')}">転職</a>
+          <a class="category-chip" th:href="@{/experiences(keyword='恋愛')}">恋愛</a>
+          <a class="category-chip" th:href="@{/experiences(keyword='人間関係')}">人間関係</a>
+          <a class="category-chip" th:href="@{/experiences(keyword='お金')}">お金</a>
+          <a class="category-chip" th:href="@{/experiences(keyword='一人暮らし')}">一人暮らし</a>
+        </nav>
         <div class="hero-links">
-          <a class="button" href="/experiences">体験談を探す</a>
-          <a class="button button-secondary" href="/articles">記事を読む</a>
+          <a class="button" href="/experiences">体験談を探してみる</a>
         </div>
       </div>
-      <div class="radar" aria-hidden="true">
-        <i></i>
-        <b></b>
-        <b></b>
-        <b></b>
+      <div class="hero-visual">
+        <div class="radar-visual">
+          <div class="radar" aria-hidden="true">
+            <span class="radar-core"></span>
+            <i></i>
+            <b></b>
+            <b></b>
+            <b></b>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -97,13 +99,22 @@
         <h2>新着の体験談</h2>
       </div>
 
-      <div class="card-grid">
-        <article class="experience-card reveal" th:each="p:${latestPosts}">
-          <span th:text="${p.category}"></span>
+      <div class="card-grid latest-grid">
+        <article class="experience-card latest-card category-accent reveal" th:each="p:${latestPosts}"
+          th:attr="data-category=${p.category}">
+          <div class="card-top">
+            <span class="category-badge" th:text="${p.category}"></span>
+            <span class="card-date" th:text="${#temporals.format(p.createdAt, 'yyyy.MM.dd')}"></span>
+          </div>
           <h3 th:text="${p.title}"></h3>
-          <p th:text="${#temporals.format(p.createdAt, 'yyyy年M月d日')}"></p>
+          <p class="card-excerpt" th:if="${p.situationBefore}" th:text="${p.situationBefore}"></p>
+          <div class="card-lesson">
+            <p class="card-lesson-label">得られた教訓</p>
+            <p th:if="${wisdomUnlocked}" th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"></p>
+            <p th:unless="${wisdomUnlocked}" class="wisdom-teaser-note">🔒 体験談を投稿すると読めます</p>
+          </div>
           <div class="experience-card-actions" sec:authorize="isAuthenticated()">
-            <button class="button" type="button"
+            <button class="button button-secondary" type="button"
               th:attr="data-summary-target=|home-latest-summary-${p.id}|">簡易表示</button>
             <a th:href="@{/experiences/{id}(id=${p.id})}">詳細ページ</a>
           </div>
@@ -117,38 +128,113 @@
         <h2>経験から得られた教訓</h2>
       </div>
 
-      <div class="card-grid">
-        <article class="experience-card reveal" th:each="p:${recommendedPosts}">
-          <span th:text="${p.category}"></span>
-          <h3 th:if="${wisdomUnlocked}" th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"></h3>
-          <h3 th:unless="${wisdomUnlocked}" th:text="${p.difficulties ?: (p.outcome ?: 'この経験には学びがあります')}"></h3>
-          <p th:unless="${wisdomUnlocked}" class="wisdom-teaser-note">
-            🔒 体験談を投稿すると、この経験から得られた教訓を読めます
-          </p>
-          <p th:text="${#temporals.format(p.createdAt, 'yyyy年M月d日')}"></p>
-          <div class="experience-card-actions" sec:authorize="isAuthenticated()">
-            <button class="button" type="button"
-              th:attr="data-summary-target=|home-reference-summary-${p.id}|">簡易表示</button>
-            <a th:href="@{/experiences/{id}(id=${p.id})}">詳細ページ</a>
+      <div class="lesson-mini-grid">
+        <a class="experience-card lesson-mini-card category-accent reveal" th:each="p:${recommendedPosts}"
+          th:href="@{/experiences/{id}(id=${p.id})}" th:attr="data-category=${p.category}"
+          th:with="catGroup=${#lists.contains({'就職','高卒就職','転職','異業種転職','公務員','地元就職','フリーランス'}, p.category)
+            ? 'career' : (#lists.contains({'勉強','高校進学','大学進学','専門学校','大学中退','資格取得'}, p.category)
+            ? 'study' : (p.category == '恋愛'
+            ? 'love' : (#lists.contains({'上京','地元へ戻る'}, p.category) ? 'living' : 'default')))}">
+          <span class="lesson-mini-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" th:switch="${catGroup}">
+              <path th:case="'career'"
+                d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7h4a1 1 0 0 1 1 1v3H4V8a1 1 0 0 1 1-1h4Zm2-1.5V7h2V5.5h-2ZM4 12h16v6.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5V12Z"
+                fill="currentColor" />
+              <path th:case="'study'"
+                d="M4 5.2A1.2 1.2 0 0 1 5.2 4H11v16H5.2A1.2 1.2 0 0 1 4 18.8V5.2ZM13 4h5.8A1.2 1.2 0 0 1 20 5.2v13.6a1.2 1.2 0 0 1-1.2 1.2H13V4Z"
+                fill="currentColor" />
+              <path th:case="'love'"
+                d="M12 20.6s-7-4.4-9.4-8.7C1.1 8.6 2.8 5.5 6.1 5.1c1.9-.2 3.4.8 5.9 3.2 2.5-2.4 4-3.4 5.9-3.2 3.3.4 5 3.5 3.5 6.8-2.4 4.3-9.4 8.7-9.4 8.7Z"
+                fill="currentColor" />
+              <path th:case="'living'"
+                d="M3 11.2 12 3l9 8.2h-2.7v8.3a1 1 0 0 1-1 1h-3.8v-6H9.5v6H5.7a1 1 0 0 1-1-1v-8.3H3Z"
+                fill="currentColor" />
+              <path th:case="*"
+                d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7V16h5.6v-.5c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3Z"
+                stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <div class="lesson-mini-body">
+            <p th:if="${wisdomUnlocked}" th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"></p>
+            <p th:unless="${wisdomUnlocked}" th:text="${p.difficulties ?: (p.outcome ?: 'この経験には学びがあります')}"></p>
+            <p th:unless="${wisdomUnlocked}" class="wisdom-teaser-note">
+              🔒 投稿すると読めます
+            </p>
+            <span th:text="${p.category}"></span>
           </div>
-        </article>
+        </a>
       </div>
     </section>
 
-    <section class="home-section" th:if="${not #lists.isEmpty(latestArticles)}">
+    <section class="home-section ai-insight-section">
+      <div class="section-title">
+        <p class="eyebrow">AI INSIGHT</p>
+        <h2>AIなら、こんな傾向を整理できます</h2>
+      </div>
+      <p class="ai-insight-note">※表示内容はAI分析機能のイメージです。</p>
+
+      <div class="ai-insight-flow">
+        <div class="ai-insight-col regret">
+          <h3>よくある後悔</h3>
+          <ul>
+            <li>準備不足のまま転職した</li>
+            <li>お金の使いすぎ</li>
+            <li>人間関係のすれ違い</li>
+            <li>情報収集不足</li>
+          </ul>
+        </div>
+        <div class="ai-insight-arrow" aria-hidden="true">→</div>
+        <div class="ai-insight-col viewpoint">
+          <h3>役立つ視点</h3>
+          <ul>
+            <li>長期的に考える</li>
+            <li>自分の価値観を知る</li>
+            <li>先に備えておく</li>
+            <li>小さく試してから決める</li>
+          </ul>
+        </div>
+        <div class="ai-insight-arrow" aria-hidden="true">→</div>
+        <div class="ai-insight-col lesson">
+          <h3>実践できる教訓</h3>
+          <ul>
+            <li>予算を立てて管理する</li>
+            <li>感情と事実を分けて考える</li>
+            <li>信頼できる人に相談する</li>
+            <li>選択肢を複数持っておく</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section">
+      <div class="cta-lantern reveal">
+        <div class="cta-lantern-body">
+          <p class="eyebrow">FROM YOUR EXPERIENCE</p>
+          <h2>あなたの投稿が、誰かの次の判断を支える。</h2>
+          <p>
+            経験を言語化することで、自分の後悔を教訓に変えながら、同じ迷いを抱える誰かの選択を助けられます。書くことは、あなた自身が経験を整理し、気づきを教訓として残すことにもつながります。
+          </p>
+        </div>
+        <div class="cta-lantern-actions">
+          <a class="button button-learning" href="/experiences/new">体験談を投稿する</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section home-section-minor" th:if="${not #lists.isEmpty(latestArticles)}">
       <div class="section-title">
         <p class="eyebrow">ARTICLES</p>
         <h2>新着記事</h2>
       </div>
 
-      <div class="card-grid">
-        <article class="experience-card reveal" th:each="a:${latestArticles}">
-          <span class="eyebrow" th:text="${#temporals.format(a.publishedAt, 'yyyy年M月d日')}">公開日</span>
-          <h3 th:text="${a.title}">記事タイトル</h3>
-          <p th:text="${a.description}">記事の概要</p>
-          <div class="experience-card-actions">
-            <a th:href="@{/articles/{slug}(slug=${a.slug})}">記事を読む</a>
+      <div class="article-row-list">
+        <article class="article-row reveal" th:each="a:${latestArticles}">
+          <span class="article-row-date" th:text="${#temporals.format(a.publishedAt, 'yyyy.MM.dd')}">公開日</span>
+          <div class="article-row-body">
+            <h3 th:text="${a.title}">記事タイトル</h3>
+            <p th:text="${a.description}">記事の概要</p>
           </div>
+          <a class="article-row-link" th:href="@{/articles/{slug}(slug=${a.slug})}">記事を読む</a>
         </article>
       </div>
       <div class="home-section-more">
@@ -156,6 +242,7 @@
       </div>
     </section>
   </main>
+  <div th:replace="~{fragments/footer :: footer}"></div>
   <div class="summary-modal" sec:authorize="isAuthenticated()" th:each="p:${latestPosts}"
     th:id="|home-latest-summary-${p.id}|" hidden>
     <div class="summary-backdrop" data-close-summary></div>

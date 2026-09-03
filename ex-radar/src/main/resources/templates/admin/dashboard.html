@@ -7,23 +7,14 @@
     <title>管理者ダッシュボード | EXレーダー</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a href="/admin/articles">記事管理</a>
-        <a href="/admin/reports">通報管理</a>
-        <a href="/experiences">体験談</a>
-        <a href="/mypage">マイページ</a>
-        <form th:action="@{/logout}" method="post">
-          <button type="submit">ログアウト</button>
-        </form>
-      </nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="page admin-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='dashboard')}"></div>
       <div class="page-heading">
         <p class="eyebrow">ADMIN CONSOLE</p>
         <h1>管理者ダッシュボード</h1>
@@ -289,6 +280,7 @@
         </div>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
     <script>
       document.querySelectorAll('.admin-user-row').forEach(function (row) {
         row.addEventListener('click', function (event) {

@@ -7,15 +7,14 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>大切にしたい価値観 | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav><a href="/mypage">マイページ</a></nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="page">
+      <a class="back-link" href="/mypage">← マイページに戻る</a>
       <section class="panel">
         <p class="eyebrow">YOUR PERSPECTIVES</p>
         <h1>人生で大切にしたいこと</h1>
@@ -40,5 +39,6 @@
         </form>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

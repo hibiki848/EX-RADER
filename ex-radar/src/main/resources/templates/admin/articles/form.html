@@ -7,17 +7,15 @@
     <title th:text="${editing ? '記事を編集 | EXレーダー' : '記事を新規作成 | EXレーダー'}">記事の編集 | EXレーダー</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a href="/admin/articles">記事一覧に戻る</a>
-      </nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="form-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='articles')}"></div>
+      <a class="back-link" href="/admin/articles">← 記事一覧に戻る</a>
       <div class="page-heading">
         <p class="eyebrow">ADMIN CONSOLE</p>
         <h1 th:text="${editing ? '記事を編集' : '記事を新規作成'}">記事を編集</h1>
@@ -89,5 +87,6 @@
         </form>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

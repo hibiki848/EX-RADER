@@ -14,18 +14,12 @@
     ></th:block>
     <meta name="robots" content="index, follow" />
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a href="/articles">記事一覧</a
-        ><a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a
-        ><a class="button" sec:authorize="isAuthenticated()" href="/experiences/new">投稿する</a>
-      </nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="detail-page">
       <article>
         <div class="detail-hero">
@@ -39,9 +33,10 @@
           <p>
             EXレーダーは、経験者の教訓や失敗を判断材料として共有するサービスです。あなた自身の経験も、これから決める誰かの助けになります。
           </p>
-          <a class="button" href="/experiences/new">体験談を投稿する</a>
+          <a class="button button-learning" href="/experiences/new">体験談を投稿する</a>
         </section>
       </article>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>
