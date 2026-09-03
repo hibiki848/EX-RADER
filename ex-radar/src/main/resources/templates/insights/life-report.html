@@ -8,15 +8,14 @@
     <title>人生レポート | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="stylesheet" href="/css/insights.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a
-      ><a href="/insights">あなたの分析</a>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="insight-page">
+      <a class="back-link" href="/insights">← あなたの分析へ戻る</a>
       <div class="insight-hero reveal">
         <p class="eyebrow">MY LIFE REPORT</p>
         <h1>選択を、一本のルートとして眺める</h1>
@@ -76,5 +75,6 @@
         </div>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

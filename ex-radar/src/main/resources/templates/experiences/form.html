@@ -11,14 +11,12 @@
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" href="/css/app.css" defer />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav><a href="/mypage">マイページ</a></nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="form-page">
       <div class="page-heading">
         <p class="eyebrow">SHARE YOUR ROUTE</p>
@@ -26,6 +24,12 @@
           th:text="${editing ? '経験と教訓を編集する' : 'あなたの経験から得た知恵を伝える'}"
         ></h1>
         <p>具体的な経験ほど、同じ岐路に立つ人の助けになります。</p>
+        <ol class="form-flow" aria-hidden="true">
+          <li>体験</li>
+          <li>後悔・失敗</li>
+          <li>原因</li>
+          <li class="is-lesson">得られた教訓</li>
+        </ol>
       </div>
       <form
         class="experience-form"
@@ -319,7 +323,7 @@
           <button type="button" class="button button-secondary" id="draft-restore-dismiss">閉じる</button>
         </div>
         <div class="form-actions">
-          <a href="/mypage">キャンセル</a
+          <a class="button button-secondary" href="/mypage">キャンセル</a
           ><button
             type="submit"
             class="button button-secondary"
@@ -332,12 +336,14 @@
           <button
             type="submit"
             id="publish-submit"
+            class="button button-learning"
             th:text="${(!editing or isDraft) ? '投稿する' : '変更を保存'}"
           ></button>
           <span id="autosave-status" class="autosave-status" aria-live="polite"></span>
         </div>
       </form>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
     <template id="event-template"
       ><article class="life-event-editor">
         <div class="event-head">

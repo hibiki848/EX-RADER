@@ -7,16 +7,17 @@
     <meta name="robots" content="noindex, nofollow" />
     <title th:text="${category.name}+'の経験者の知恵 | EXレーダー'"></title>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a><a href="/choices">選択肢一覧</a>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="explore-page">
-      <p class="eyebrow">WISDOM GUIDE</p>
-      <h1 th:text="${category.name}+'を経験した人から学ぶ'"></h1>
+      <div class="page-heading">
+        <p class="eyebrow">WISDOM GUIDE</p>
+        <h1 th:text="${category.name}+'を経験した人から学ぶ'"></h1>
+      </div>
       <aside class="data-note">
         ここでは「選ぶべき」という結論は出しません。さまざまな経験を、自分で考えるための判断材料としてご覧ください。
       </aside>
@@ -45,5 +46,6 @@
         この選択の経験はまだ投稿されていません。
       </p>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

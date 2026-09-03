@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+  <body>
+    <!--/* 通常ユーザー向けページの共通ヘッダー。center nav / 右側の認証状態別アクションを持つ。
+         th:fragmentの値はタグ名(header)と衝突させない(Thymeleafのフラグメント選択はタグ名にも
+         マッチするため、"header"という名前だと2つの<header>要素の両方が選択されてしまう)。 */-->
+    <header th:fragment="siteHeader">
+      <div class="site-header-inner">
+        <a class="brand" href="/"><span class="brand-ex">EX</span>レーダー</a>
+        <nav class="site-nav" aria-label="メインナビゲーション">
+          <ul class="site-nav-links">
+            <li><a href="/experiences">体験談を探す</a></li>
+            <li><a href="/choices">教訓まとめ</a></li>
+            <li><a href="/articles">記事</a></li>
+            <li><a href="/experiences/new">新規投稿</a></li>
+          </ul>
+          <div class="site-nav-actions">
+            <a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a>
+            <a class="button" sec:authorize="isAnonymous()" href="/register">無料ではじめる</a>
+            <a class="button-secondary button" sec:authorize="isAuthenticated()" href="/mypage"
+              >マイページ<b class="notify-badge" th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></b
+            ></a>
+            <a class="button admin-nav-button" sec:authorize="hasRole('ADMIN')" href="/admin">管理者画面</a>
+            <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post">
+              <button class="header-logout" type="submit">ログアウト</button>
+            </form>
+          </div>
+        </nav>
+        <button class="nav-toggle" type="button" data-nav-toggle aria-label="メニューを開く" aria-expanded="false">
+          <span class="nav-toggle-bars" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <!--/* 認証ページ・エラーページ用の簡易ヘッダー(ロゴのみ、ナビ無し)。 */-->
+    <header th:fragment="siteHeaderMinimal">
+      <div class="site-header-inner">
+        <a class="brand" href="/"><span class="brand-ex">EX</span>レーダー</a>
+      </div>
+    </header>
+
+    <!--/* 管理画面専用サブナビ。共通headerには管理者専用リンクを置かないため、
+         管理画面配下のページ本文にこれを差し込み、既存の管理者導線を維持する。
+         current: 'dashboard' | 'articles' | 'reports' */-->
+    <nav th:fragment="adminSubnav(current)" class="admin-subnav" aria-label="管理画面ナビゲーション">
+      <a href="/admin" th:classappend="${current == 'dashboard'} ? ' is-active'">管理者ダッシュボード</a>
+      <a href="/admin/articles" th:classappend="${current == 'articles'} ? ' is-active'">記事管理</a>
+      <a href="/admin/reports" th:classappend="${current == 'reports'} ? ' is-active'">通報管理</a>
+    </nav>
+  </body>
+</html>

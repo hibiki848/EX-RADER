@@ -9,12 +9,14 @@
 .insight-hero h1 {
   font-size: clamp(2rem, 5vw, 4rem);
   margin: 0.15em 0;
+  color: var(--text-primary);
 }
 .data-note {
   padding: 16px 20px;
-  border-left: 4px solid var(--warm);
-  background: #fff8ec;
-  border-radius: 4px 12px 12px 4px;
+  border-left: 4px solid var(--amber);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
   margin: 12px 0 30px;
 }
 .stats-grid {
@@ -25,18 +27,14 @@
 .stat-card,
 .unlock-card,
 .report-counts > div {
-  background: #fff;
-  border: 1px solid #dce6eb;
-  border-radius: 18px;
   padding: 24px;
-  box-shadow: 0 8px 30px #102a430b;
 }
 .sample {
-  color: #526b7c;
+  color: var(--text-muted);
 }
 .sample strong {
   font-size: 1.65rem;
-  color: var(--teal);
+  color: var(--cyan-light);
 }
 .metric-row {
   display: grid;
@@ -45,17 +43,21 @@
   margin: 20px 0;
 }
 .metric-row > div {
-  background: #eef7f6;
-  border-radius: 12px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
   padding: 14px;
 }
 .metric-row span,
 .metric-row b {
   display: block;
 }
+.metric-row span {
+  color: var(--text-muted);
+}
 .metric-row b {
   font-size: 1.3rem;
   margin-top: 4px;
+  color: var(--text-primary);
 }
 .rank-list {
   padding: 0;
@@ -67,7 +69,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid #e7edef;
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-secondary);
 }
 .split {
   display: grid;
@@ -83,22 +86,22 @@
 }
 .unlock-card span {
   font-size: 0.8rem;
-  color: var(--teal);
+  color: var(--cyan-light);
 }
 .unlock-card.is-locked {
-  opacity: 0.62;
-  background: #edf1f4;
+  opacity: 0.6;
+  background: var(--bg-elevated);
 }
 .progress {
   height: 9px;
-  background: #dce8ea;
-  border-radius: 99px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-pill);
   overflow: hidden;
 }
 .progress i {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--teal), var(--warm));
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
   transition: width 0.6s ease;
 }
 .similar-list a {
@@ -110,13 +113,6 @@
   gap: 12px;
   margin-top: 24px;
 }
-.analysis-links a {
-  background: var(--teal);
-  color: #fff;
-  padding: 12px 18px;
-  border-radius: 99px;
-  text-decoration: none;
-}
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -124,13 +120,15 @@
 }
 .chips span {
   padding: 7px 12px;
-  background: #e8f5f4;
-  border-radius: 99px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
 }
 .route ol {
   list-style: none;
   padding: 0;
-  border-left: 3px solid #b8dedd;
+  border-left: 3px solid var(--border-light);
   margin-left: 10px;
 }
 .route li {
@@ -138,13 +136,14 @@
   gap: 4px;
   position: relative;
   padding: 5px 0 24px 24px;
+  color: var(--text-secondary);
 }
 .route li:before {
   content: "";
   position: absolute;
   width: 13px;
   height: 13px;
-  background: var(--warm);
+  background: var(--amber);
   border-radius: 50%;
   left: -8px;
   top: 8px;
@@ -155,7 +154,10 @@
 }
 .report-counts b {
   font-size: 2rem;
-  color: var(--teal);
+  color: var(--cyan-light);
+}
+.report-counts span {
+  color: var(--text-muted);
 }
 .reveal {
   animation: insight-in 0.55s both;

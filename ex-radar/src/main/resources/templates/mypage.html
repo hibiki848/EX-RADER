@@ -7,28 +7,23 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>マイページ</title>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a href="/experiences">体験談</a
-        ><a href="/mypage/notifications"
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="page account-page">
+      <nav class="page-links" aria-label="マイページ関連">
+        <a href="/mypage/notifications"
           >通知
           <b
-            class="badge"
+            class="notify-badge"
             th:if="${unreadNotificationCount>0}"
             th:text="${unreadNotificationCount}"
           ></b
         ></a>
-        <form th:action="@{/logout}" method="post">
-          <button type="submit">ログアウト</button>
-        </form>
       </nav>
-    </header>
-    <main class="page account-page">
       <section class="panel reveal">
         <h1 th:text="|${user.displayName}さんのマイページ|">マイページ</h1>
         <div class="account-actions">
@@ -101,5 +96,6 @@
         </form>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

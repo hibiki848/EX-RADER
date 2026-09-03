@@ -7,20 +7,20 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>人生の選択肢 | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a
-      ><a href="/experiences">すべての経験</a>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="explore-page">
-      <p class="eyebrow">CHOICE GUIDES</p>
-      <h1>人生の選択肢から知恵を探す</h1>
-      <p>
-        結論ではなく、先に経験した人が知っておきたかったことや教訓をまとめています。
-      </p>
+      <div class="page-heading">
+        <p class="eyebrow">CHOICE GUIDES</p>
+        <h1>人生の選択肢から知恵を探す</h1>
+        <p>
+          結論ではなく、先に経験した人が知っておきたかったことや教訓をまとめています。
+        </p>
+      </div>
       <div class="card-grid">
         <a
           class="experience-card"
@@ -31,5 +31,6 @@
         >
       </div>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

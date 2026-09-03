@@ -7,14 +7,12 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>選択肢ガイドを使う | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav><a href="/experiences">経験を探す</a></nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="page">
       <section class="panel unlock-message">
         <p class="eyebrow">CHOICE GUIDE</p>
@@ -40,5 +38,6 @@
         </div>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

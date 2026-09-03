@@ -8,14 +8,14 @@
     <title>詳細分析 | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="stylesheet" href="/css/insights.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a><a href="/insights">分析へ戻る</a>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="insight-page">
+      <a class="back-link" href="/insights">← 分析へ戻る</a>
       <aside class="data-note">
         以下は投稿データ上の傾向です。母数とともに参考情報としてご覧ください。
       </aside>
@@ -55,5 +55,6 @@
         <p th:if="${routes.empty}">人生イベントの投稿がまだありません。</p>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

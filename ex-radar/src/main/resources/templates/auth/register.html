@@ -11,8 +11,8 @@
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeaderMinimal}"></div>
     <main class="auth">
-      <a class="brand" href="/">EXレーダー</a>
       <section class="panel">
         <h1>新規登録</h1>
         <th:block th:if="${googleLoginEnabled}">
@@ -53,5 +53,6 @@
         <p><a href="/login">ログインへ戻る</a></p>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

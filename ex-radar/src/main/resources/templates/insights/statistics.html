@@ -8,17 +8,16 @@
     <title>カテゴリ統計 | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="stylesheet" href="/css/insights.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a href="/experiences">体験談</a><a href="/insights">あなたの分析</a>
-      </nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="insight-page">
+      <nav class="page-links" aria-label="分析ページ">
+        <a href="/insights">あなたの分析</a>
+      </nav>
       <div class="insight-hero reveal">
         <p class="eyebrow">PUBLIC DATA</p>
         <h1>経験者の投稿から見える傾向</h1>
@@ -85,5 +84,6 @@
         <p>公開された体験談は0件です。</p>
       </div>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

@@ -7,19 +7,20 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>意思決定メモ | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a
-      ><a href="/decision-memos">メモ一覧</a>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="form-page">
-      <h1>考えていることを整理する</h1>
-      <p>
-        ここに正解を書く必要はありません。後から考えがどう変わったかも残せます。
-      </p>
+      <a class="back-link" href="/decision-memos">← メモ一覧に戻る</a>
+      <div class="page-heading">
+        <h1>考えていることを整理する</h1>
+        <p>
+          ここに正解を書く必要はありません。後から考えがどう変わったかも残せます。
+        </p>
+      </div>
       <form
         class="experience-form"
         th:object="${decisionMemoForm}"
@@ -96,5 +97,6 @@
         <button>自分用に保存</button>
       </form>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

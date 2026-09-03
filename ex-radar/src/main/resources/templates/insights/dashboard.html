@@ -8,18 +8,17 @@
     <title>あなたの分析 | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="stylesheet" href="/css/insights.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a href="/statistics">公開統計</a
-        ><a href="/life-report">人生レポート</a>
-      </nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="insight-page">
+      <nav class="page-links" aria-label="分析ページ">
+        <a href="/statistics">公開統計</a>
+        <a href="/life-report">人生レポート</a>
+      </nav>
       <div class="insight-hero reveal">
         <p class="eyebrow">GIVE TO GET</p>
         <h1>経験を分けると、すべての分析が開く</h1>
@@ -104,5 +103,6 @@
         </div>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

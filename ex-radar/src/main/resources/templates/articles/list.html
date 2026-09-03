@@ -13,17 +13,12 @@
         ogType='website')}"
     ></th:block>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a
-        ><a class="button" sec:authorize="isAuthenticated()" href="/experiences/new">投稿する</a>
-      </nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="explore-page">
       <div class="page-heading">
         <p class="eyebrow">ARTICLES</p>
@@ -47,5 +42,6 @@
         <p>近日公開予定です。</p>
       </div>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>

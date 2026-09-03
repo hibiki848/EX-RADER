@@ -7,22 +7,14 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>通報管理 | EXレーダー</title>
     <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
-    <header>
-      <a class="brand" href="/">EXレーダー</a>
-      <nav>
-        <a href="/admin">管理者ダッシュボード</a>
-        <a href="/admin/articles">記事管理</a>
-        <a href="/mypage">マイページ</a>
-        <form th:action="@{/logout}" method="post">
-          <button class="header-logout" type="submit">ログアウト</button>
-        </form>
-      </nav>
-    </header>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="page admin-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='reports')}"></div>
       <div class="page-heading">
         <p class="eyebrow">ADMIN CONSOLE</p>
         <h1>通報管理</h1>
@@ -116,5 +108,6 @@
         <p th:if="${#lists.isEmpty(reports)}">通報はまだありません。</p>
       </section>
     </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
   </body>
 </html>
