@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -65,6 +66,30 @@ public class User extends BaseEntity {
   // ROLE_ADMINは常に除外されるため、このフラグは主にADMIN以外のアカウント向け。
   @Column(name = "analytics_excluded", nullable = false)
   private boolean analyticsExcluded;
+
+  // ログイン日時の記録は本カラム追加以降のログインからのみ始まる。既存ユーザーは
+  // マイグレーション時点で両方ともNULL(過去のログイン日時は推測で埋めない)。
+  @Column(name = "first_login_at")
+  private LocalDateTime firstLoginAt;
+
+  @Column(name = "last_login_at")
+  private LocalDateTime lastLoginAt;
+
+  // 有料プランの概念自体が本カラム追加まで存在しなかったため、既存ユーザーは全員
+  // FREE・関連日時は全てNULLから始まる。実際の加入・解約フローは別機能(未実装)が
+  // changePlan(...)を呼び出すことを想定している。
+  @Enumerated(EnumType.STRING)
+  @Column(name = "current_plan", nullable = false, length = 20)
+  private PlanType currentPlan = PlanType.FREE;
+
+  @Column(name = "first_paid_at")
+  private LocalDateTime firstPaidAt;
+
+  @Column(name = "premium_period_started_at")
+  private LocalDateTime premiumPeriodStartedAt;
+
+  @Column(name = "premium_period_ended_at")
+  private LocalDateTime premiumPeriodEndedAt;
 
   @ManyToMany
   @JoinTable(
@@ -142,6 +167,54 @@ public class User extends BaseEntity {
 
   public void setAnalyticsExcluded(boolean analyticsExcluded) {
     this.analyticsExcluded = analyticsExcluded;
+  }
+
+  public LocalDateTime getFirstLoginAt() {
+    return firstLoginAt;
+  }
+
+  public LocalDateTime getLastLoginAt() {
+    return lastLoginAt;
+  }
+
+  /** ログイン成功のたびに呼ぶ。初回ログイン日時は最初の1回だけ設定され、以後は上書きしない。 */
+  public void recordLogin(LocalDateTime at) {
+    if (firstLoginAt == null) firstLoginAt = at;
+    lastLoginAt = at;
+  }
+
+  public PlanType getCurrentPlan() {
+    return currentPlan;
+  }
+
+  public LocalDateTime getFirstPaidAt() {
+    return firstPaidAt;
+  }
+
+  public LocalDateTime getPremiumPeriodStartedAt() {
+    return premiumPeriodStartedAt;
+  }
+
+  public LocalDateTime getPremiumPeriodEndedAt() {
+    return premiumPeriodEndedAt;
+  }
+
+  /**
+   * プラン変更(FREE⇔PREMIUM)。初回有料加入日(firstPaidAt)は最初にPREMIUMへ変わった
+   * ときだけ設定し、以後は上書きしない。PREMIUMへ変わるたびに「今回の加入期間」の
+   * 開始日時を記録し、FREEへ戻るときに終了日時を記録する(加入期間の算出に使う)。
+   * 実際の課金処理そのものはこのメソッドの外(未実装の別機能)が担う想定。
+   */
+  public void changePlan(PlanType newPlan, LocalDateTime at) {
+    if (newPlan == currentPlan) return;
+    if (newPlan == PlanType.PREMIUM) {
+      if (firstPaidAt == null) firstPaidAt = at;
+      premiumPeriodStartedAt = at;
+      premiumPeriodEndedAt = null;
+    } else {
+      premiumPeriodEndedAt = at;
+    }
+    currentPlan = newPlan;
   }
 
   public void completeDisplayNameSetup(String displayName) {

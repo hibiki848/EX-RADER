@@ -213,23 +213,140 @@
           <span>停止中</span><strong th:text="${suspendedUserCount}">0</strong><small>ログインできないアカウント</small>
         </a>
       </section>
+
+      <details class="search-panel-wrap" aria-label="ユーザー検索">
+        <summary>ユーザーを検索・絞り込む</summary>
+        <form class="search-panel admin-user-search-form" method="get">
+          <label>ユーザー名<input name="name" th:value="${criteria.name}" /></label>
+          <label>メールアドレス<input name="email" th:value="${criteria.email}" /></label>
+          <label>ユーザーID<input type="number" name="userId" th:value="${criteria.userId}" /></label>
+          <fieldset>
+            <legend>プラン</legend>
+            <label
+              class="checkbox-inline"
+              th:each="plan : ${planOptions}"
+            >
+              <input
+                type="checkbox"
+                name="plans"
+                th:value="${plan}"
+                th:checked="${criteria.plans != null and criteria.plans.contains(plan)}"
+              />
+              <span th:text="${plan.name() == 'PREMIUM' ? 'プレミアム' : plan.name() == 'FREE' ? '無料' : plan.name()}">プラン</span>
+            </label>
+          </fieldset>
+          <label>登録日(From)<input type="date" name="registeredFrom" th:value="${criteria.registeredFrom}" /></label>
+          <label>登録日(To)<input type="date" name="registeredTo" th:value="${criteria.registeredTo}" /></label>
+          <label>登録経過日数(以上)<input type="number" min="0" name="registeredDaysAgoMin" th:value="${criteria.registeredDaysAgoMin}" /></label>
+          <label>登録経過日数(以内)<input type="number" min="0" name="registeredDaysAgoMax" th:value="${criteria.registeredDaysAgoMax}" /></label>
+          <label>初回ログイン日(From)<input type="date" name="firstLoginFrom" th:value="${criteria.firstLoginFrom}" /></label>
+          <label>初回ログイン日(To)<input type="date" name="firstLoginTo" th:value="${criteria.firstLoginTo}" /></label>
+          <label>最終ログイン日(From)<input type="date" name="lastLoginFrom" th:value="${criteria.lastLoginFrom}" /></label>
+          <label>最終ログイン日(To)<input type="date" name="lastLoginTo" th:value="${criteria.lastLoginTo}" /></label>
+          <label
+            >ログイン状況<select name="neverLoggedIn">
+              <option value="" th:selected="${criteria.neverLoggedIn == null}">指定なし</option>
+              <option value="true" th:selected="${criteria.neverLoggedIn} == true">一度もログインしていない</option>
+              <option value="false" th:selected="${criteria.neverLoggedIn} == false">ログイン経験あり</option>
+            </select></label
+          >
+          <label>初回投稿日(From)<input type="date" name="firstPostFrom" th:value="${criteria.firstPostFrom}" /></label>
+          <label>初回投稿日(To)<input type="date" name="firstPostTo" th:value="${criteria.firstPostTo}" /></label>
+          <label
+            >投稿状況<select name="hasPosted">
+              <option value="" th:selected="${criteria.hasPosted == null}">指定なし</option>
+              <option value="true" th:selected="${criteria.hasPosted} == true">投稿済み</option>
+              <option value="false" th:selected="${criteria.hasPosted} == false">未投稿</option>
+            </select></label
+          >
+          <label>投稿数(最小)<input type="number" min="0" name="postCountMin" th:value="${criteria.postCountMin}" /></label>
+          <label>投稿数(最大)<input type="number" min="0" name="postCountMax" th:value="${criteria.postCountMax}" /></label>
+          <label
+            >有料加入経験<select name="everPaid">
+              <option value="" th:selected="${criteria.everPaid == null}">指定なし</option>
+              <option value="true" th:selected="${criteria.everPaid} == true">あり</option>
+              <option value="false" th:selected="${criteria.everPaid} == false">なし</option>
+            </select></label
+          >
+          <label>初回有料加入日(From)<input type="date" name="firstPaidFrom" th:value="${criteria.firstPaidFrom}" /></label>
+          <label>初回有料加入日(To)<input type="date" name="firstPaidTo" th:value="${criteria.firstPaidTo}" /></label>
+          <label
+            >現在の加入状況<select name="currentlyPaid">
+              <option value="" th:selected="${criteria.currentlyPaid == null}">指定なし</option>
+              <option value="true" th:selected="${criteria.currentlyPaid} == true">現在有料会員</option>
+              <option value="false" th:selected="${criteria.currentlyPaid} == false">現在無料</option>
+            </select></label
+          >
+          <label>有料加入期間(最小日数)<input type="number" min="0" name="paidDurationMinDays" th:value="${criteria.paidDurationMinDays}" /></label>
+          <label>有料加入期間(最大日数)<input type="number" min="0" name="paidDurationMaxDays" th:value="${criteria.paidDurationMaxDays}" /></label>
+          <label
+            >並び順<select name="sort">
+              <option th:each="f : ${sortFieldOptions}" th:value="${f}" th:selected="${f == sort}" th:text="${f}"></option>
+            </select></label
+          >
+          <label
+            >昇順/降順<select name="direction">
+              <option value="DESC" th:selected="${direction.name() == 'DESC'}">新しい/多い順</option>
+              <option value="ASC" th:selected="${direction.name() == 'ASC'}">古い/少ない順</option>
+            </select></label
+          >
+          <button>この条件で検索する</button><a href="/admin">条件をクリア</a>
+        </form>
+      </details>
+
       <section class="panel reveal admin-users">
         <div class="section-heading">
           <div>
             <h2>アカウント管理</h2>
-            <p th:text="${filter == 'admins' ? '管理者アカウントだけを表示しています。' : filter == 'suspended' ? '停止中のアカウントだけを表示しています。' : '権限とログイン状態を変更できます。'}">権限とログイン状態を変更できます。</p>
+            <p th:text="|${result.totalElements}件のユーザーが条件に一致しています(${result.number + 1}/${result.totalPages == 0 ? 1 : result.totalPages}ページ)|">
+              権限とログイン状態を変更できます。
+            </p>
           </div>
         </div>
+
+        <div class="admin-selection-toolbar">
+          <button type="button" class="button button-secondary" data-select-page>このページを全選択</button>
+          <button type="button" class="button button-secondary" data-select-clear>選択を解除</button>
+          <span id="admin-selection-count" class="field-hint">0件選択中</span>
+        </div>
+
         <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>ユーザー</th><th>登録日</th><th>権限</th><th>状態</th><th>アクセス解析</th><th>操作</th></tr></thead>
+          <table class="admin-table admin-user-table" id="admin-user-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>ユーザー</th>
+                <th>プラン</th>
+                <th>登録日</th>
+                <th>初回ログイン</th>
+                <th>最終ログイン</th>
+                <th>初回投稿</th>
+                <th>投稿数</th>
+                <th>初回有料加入</th>
+                <th>有料加入期間</th>
+                <th>権限</th>
+                <th>状態</th>
+                <th>アクセス解析</th>
+                <th>操作</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr th:each="u : ${users}" class="admin-user-row" th:attr="data-url=@{/admin/users/{id}(id=${u.id})}" tabindex="0">
-                <td><a class="admin-user-link" th:href="@{/admin/users/{id}(id=${u.id})}"><strong th:text="${u.displayName}">ユーザー</strong><small th:text="${u.email}">email</small></a></td>
-                <td th:text="${#temporals.format(u.createdAt, 'yyyy/MM/dd')}">2026/01/01</td>
-                <td><span class="role-badge" th:classappend="${u.role.name() == 'ADMIN'} ? ' is-admin' : ''" th:text="${u.role.name() == 'ADMIN' ? '管理者' : '一般ユーザー'}">一般ユーザー</span></td>
-                <td><span th:class="${u.suspended ? 'status-badge is-stopped' : 'status-badge'}" th:text="${u.suspended ? '停止中' : '利用中'}">利用中</span></td>
-                <td>
+              <tr th:each="u : ${result.content}" class="admin-user-row" th:attr="data-url=@{/admin/users/{id}(id=${u.id})}" tabindex="0">
+                <td data-label="選択">
+                  <input type="checkbox" class="admin-user-checkbox" name="selectedUserIds" th:value="${u.id}" onclick="event.stopPropagation()" aria-label="このユーザーを選択" />
+                </td>
+                <td data-label="ユーザー"><a class="admin-user-link" th:href="@{/admin/users/{id}(id=${u.id})}"><strong th:text="${u.displayName}">ユーザー</strong><small th:text="${u.email}">email</small></a></td>
+                <td data-label="プラン"><span class="role-badge" th:classappend="${u.currentPlan.name() == 'PREMIUM'} ? ' is-admin' : ''" th:text="${u.currentPlan.name() == 'PREMIUM' ? 'プレミアム' : '無料'}">無料</span></td>
+                <td data-label="登録日" th:text="${#temporals.format(u.registeredAt, 'yyyy/MM/dd')}">2026/01/01</td>
+                <td data-label="初回ログイン" th:text="${u.firstLoginAt != null ? #temporals.format(u.firstLoginAt, 'yyyy/MM/dd') : '—'}">—</td>
+                <td data-label="最終ログイン" th:text="${u.lastLoginAt != null ? #temporals.format(u.lastLoginAt, 'yyyy/MM/dd') : '—'}">—</td>
+                <td data-label="初回投稿" th:text="${u.firstPostAt != null ? #temporals.format(u.firstPostAt, 'yyyy/MM/dd') : '—'}">—</td>
+                <td data-label="投稿数" th:text="${u.postCount}">0</td>
+                <td data-label="初回有料加入" th:text="${u.firstPaidAt != null ? #temporals.format(u.firstPaidAt, 'yyyy/MM/dd') : '—'}">—</td>
+                <td data-label="有料加入期間" th:text="${u.paidDurationDays != null ? u.paidDurationDays + '日' : '—'}">—</td>
+                <td data-label="権限"><span class="role-badge" th:classappend="${u.role.name() == 'ADMIN'} ? ' is-admin' : ''" th:text="${u.role.name() == 'ADMIN' ? '管理者' : '一般ユーザー'}">一般ユーザー</span></td>
+                <td data-label="状態"><span th:class="${u.suspended ? 'status-badge is-stopped' : 'status-badge'}" th:text="${u.suspended ? '停止中' : '利用中'}">利用中</span></td>
+                <td data-label="アクセス解析">
                   <span
                     th:if="${u.role.name() == 'ADMIN'}"
                     class="status-badge is-stopped"
@@ -243,7 +360,7 @@
                     >対象</span
                   >
                 </td>
-                <td class="admin-actions">
+                <td class="admin-actions" data-label="操作">
                   <span th:if="${u.email.equalsIgnoreCase(currentEmail)}" class="current-user">現在のアカウント</span>
                   <th:block th:unless="${u.email.equalsIgnoreCase(currentEmail)}">
                     <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post" onclick="event.stopPropagation()">
@@ -278,6 +395,20 @@
             </tbody>
           </table>
         </div>
+        <p class="empty-state" th:if="${result.empty}">条件に一致するユーザーがいません。</p>
+
+        <nav class="pagination" th:if="${result.totalPages > 1}">
+          <a
+            th:if="${result.hasPrevious()}"
+            th:href="@{/admin(page=${result.number - 1}, sort=${sort}, direction=${direction}, filter=${filter}, name=${criteria.name}, email=${criteria.email}, userId=${criteria.userId}, plans=${criteria.plans}, registeredFrom=${criteria.registeredFrom}, registeredTo=${criteria.registeredTo}, registeredDaysAgoMin=${criteria.registeredDaysAgoMin}, registeredDaysAgoMax=${criteria.registeredDaysAgoMax}, firstLoginFrom=${criteria.firstLoginFrom}, firstLoginTo=${criteria.firstLoginTo}, lastLoginFrom=${criteria.lastLoginFrom}, lastLoginTo=${criteria.lastLoginTo}, neverLoggedIn=${criteria.neverLoggedIn}, firstPostFrom=${criteria.firstPostFrom}, firstPostTo=${criteria.firstPostTo}, hasPosted=${criteria.hasPosted}, postCountMin=${criteria.postCountMin}, postCountMax=${criteria.postCountMax}, everPaid=${criteria.everPaid}, firstPaidFrom=${criteria.firstPaidFrom}, firstPaidTo=${criteria.firstPaidTo}, currentlyPaid=${criteria.currentlyPaid}, paidDurationMinDays=${criteria.paidDurationMinDays}, paidDurationMaxDays=${criteria.paidDurationMaxDays})"
+            >前へ</a
+          ><span th:text="${result.number + 1}+'/'+${result.totalPages}"></span
+          ><a
+            th:if="${result.hasNext()}"
+            th:href="@{/admin(page=${result.number + 1}, sort=${sort}, direction=${direction}, filter=${filter}, name=${criteria.name}, email=${criteria.email}, userId=${criteria.userId}, plans=${criteria.plans}, registeredFrom=${criteria.registeredFrom}, registeredTo=${criteria.registeredTo}, registeredDaysAgoMin=${criteria.registeredDaysAgoMin}, registeredDaysAgoMax=${criteria.registeredDaysAgoMax}, firstLoginFrom=${criteria.firstLoginFrom}, firstLoginTo=${criteria.firstLoginTo}, lastLoginFrom=${criteria.lastLoginFrom}, lastLoginTo=${criteria.lastLoginTo}, neverLoggedIn=${criteria.neverLoggedIn}, firstPostFrom=${criteria.firstPostFrom}, firstPostTo=${criteria.firstPostTo}, hasPosted=${criteria.hasPosted}, postCountMin=${criteria.postCountMin}, postCountMax=${criteria.postCountMax}, everPaid=${criteria.everPaid}, firstPaidFrom=${criteria.firstPaidFrom}, firstPaidTo=${criteria.firstPaidTo}, currentlyPaid=${criteria.currentlyPaid}, paidDurationMinDays=${criteria.paidDurationMinDays}, paidDurationMaxDays=${criteria.paidDurationMaxDays})"
+            >次へ</a
+          >
+        </nav>
       </section>
       <section class="panel reveal admin-posts" th:if="${selectedUser != null}">
         <div class="section-heading">
@@ -302,13 +433,58 @@
     <script>
       document.querySelectorAll('.admin-user-row').forEach(function (row) {
         row.addEventListener('click', function (event) {
-          if (event.target.closest('a, button, form')) return;
+          if (event.target.closest('a, button, form, input')) return;
           window.location.href = row.dataset.url;
         });
         row.addEventListener('keydown', function (event) {
           if (event.key === 'Enter' || event.key === ' ') window.location.href = row.dataset.url;
         });
       });
+    </script>
+    <script>
+      // ユーザー選択(将来の一括メッセージ配信・お知らせ配信向け)。今回は選択状態の
+      // UIのみを用意し、実際の送信処理は実装しない。選択はページ内(現在表示中の行)に
+      // 限定される(ページをまたいだ選択の保持は行わない、単純さを優先)。
+      (function () {
+        var table = document.getElementById('admin-user-table');
+        if (!table) return;
+        var countEl = document.getElementById('admin-selection-count');
+        var selectPageButton = document.querySelector('[data-select-page]');
+        var clearButton = document.querySelector('[data-select-clear]');
+
+        function checkboxes() {
+          return Array.prototype.slice.call(table.querySelectorAll('.admin-user-checkbox'));
+        }
+
+        function updateCount() {
+          if (!countEl) return;
+          var selected = checkboxes().filter(function (cb) {
+            return cb.checked;
+          }).length;
+          countEl.textContent = selected + '件選択中';
+        }
+
+        checkboxes().forEach(function (cb) {
+          cb.addEventListener('change', updateCount);
+        });
+        if (selectPageButton) {
+          selectPageButton.addEventListener('click', function () {
+            checkboxes().forEach(function (cb) {
+              cb.checked = true;
+            });
+            updateCount();
+          });
+        }
+        if (clearButton) {
+          clearButton.addEventListener('click', function () {
+            checkboxes().forEach(function (cb) {
+              cb.checked = false;
+            });
+            updateCount();
+          });
+        }
+        updateCount();
+      })();
     </script>
     <script>
       (function () {
