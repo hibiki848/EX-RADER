@@ -18,6 +18,7 @@ public class AccountService {
   private final CommentRepository comments;
   private final DecisionMemoRepository memos;
   private final ReportRepository reports;
+  private final ExperienceReadRepository reads;
   private final PasswordEncoder encoder;
 
   public AccountService(
@@ -28,6 +29,7 @@ public class AccountService {
       CommentRepository c,
       DecisionMemoRepository m,
       ReportRepository reports,
+      ExperienceReadRepository reads,
       PasswordEncoder e) {
     users = u;
     posts = p;
@@ -36,6 +38,7 @@ public class AccountService {
     comments = c;
     memos = m;
     this.reports = reports;
+    this.reads = reads;
     encoder = e;
   }
 
@@ -124,12 +127,14 @@ public class AccountService {
     var ownedPosts = posts.findByAuthorId(userId);
     comments.deleteByAuthorId(userId);
     reactions.deleteByUserId(userId);
+    reads.deleteByUserId(userId);
     notifications.deleteByRecipientId(userId);
     memos.deleteByUserId(userId);
     reports.deleteByReporterId(userId);
     for (var post : ownedPosts) {
       comments.deleteByPostId(post.getId());
       reactions.deleteByPostId(post.getId());
+      reads.deleteByPostId(post.getId());
       posts.delete(post);
     }
     users.delete(user);

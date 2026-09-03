@@ -17,9 +17,12 @@
         ogType='article')}"
     ></th:block>
     <meta th:unless="${post.published}" name="robots" content="noindex, nofollow" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="stylesheet" href="/css/interactions.css" />
     <script src="/js/site-nav.js" defer></script>
+    <script src="/js/experience-read-tracker.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
@@ -132,6 +135,15 @@
             <p th:text="${wisdom.adviceToPastSelf}"></p>
           </th:block>
         </section>
+        <!--/* 本文(経験・学び)を最後まで読んだことの検知用。ここが画面内に入るとJSが
+             既読として記録する(ログイン中のみ。開いただけでは記録しない)。 */-->
+        <div
+          id="read-progress-sentinel"
+          sec:authorize="isAuthenticated()"
+          th:if="${post.published}"
+          th:attr="data-post-id=${post.id}"
+          aria-hidden="true"
+        ></div>
         <section
           id="reactions"
           class="interaction-panel"

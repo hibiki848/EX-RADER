@@ -85,25 +85,11 @@
       </div>
 
       <div class="card-grid latest-grid">
-        <article class="experience-card latest-card category-accent reveal" th:each="p:${latestPosts}"
-          th:attr="data-category=${p.category}">
-          <div class="card-top">
-            <span class="category-badge" th:text="${p.category}"></span>
-            <span class="card-date" th:text="${#temporals.format(p.createdAt, 'yyyy.MM.dd')}"></span>
-          </div>
-          <h3 th:text="${p.title}"></h3>
-          <p class="card-excerpt" th:if="${p.situationBefore}" th:text="${p.situationBefore}"></p>
-          <div class="card-lesson">
-            <p class="card-lesson-label">得られた教訓</p>
-            <p th:if="${wisdomUnlocked}" th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"></p>
-            <p th:unless="${wisdomUnlocked}" class="wisdom-teaser-note">🔒 体験談を投稿すると読めます</p>
-          </div>
-          <div class="experience-card-actions" sec:authorize="isAuthenticated()">
-            <button class="button button-secondary" type="button"
-              th:attr="data-summary-target=|home-latest-summary-${p.id}|">簡易表示</button>
-            <a th:href="@{/experiences/{id}(id=${p.id})}">詳細ページ</a>
-          </div>
-        </article>
+        <th:block th:each="p:${latestPosts}">
+          <th:block
+            th:replace="~{fragments/experience-card :: card(p=${p}, wisdomUnlocked=${wisdomUnlocked}, modalPrefix='home-latest-summary-', extraClass='latest-card', gateActionsToAuth=true)}"
+          ></th:block>
+        </th:block>
       </div>
     </section>
 

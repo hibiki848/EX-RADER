@@ -12,12 +12,14 @@ import com.exradar.entity.Role;
 import com.exradar.entity.User;
 import com.exradar.form.ExperiencePostForm;
 import com.exradar.repository.CategoryRepository;
+import com.exradar.repository.ExperienceReadRepository;
 import com.exradar.repository.ExperiencePostRepository;
 import com.exradar.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,6 +40,7 @@ class ExperiencePostControllerTest {
   @Autowired UserRepository users;
   @Autowired CategoryRepository categories;
   @Autowired ExperiencePostRepository posts;
+  @Autowired ExperienceReadRepository reads;
   @Autowired PasswordEncoder encoder;
   @Autowired com.exradar.service.ExperiencePostService postService;
 
@@ -358,6 +361,64 @@ class ExperiencePostControllerTest {
         .andExpect(redirectedUrlPattern("**/login"));
 
     assertThat(posts.count()).isEqualTo(countBefore);
+  }
+
+  /**
+   * 一覧の「もっと見る」用JSON API(GET /experiences, Accept: application/json)。
+   * 通常のHTML一覧(GET /experiences)と同じURL・同じSecurityConfig(未ログインでも許可)を
+   * 使い、コンテンツネゴシエーションだけで振り分けられることを確認する。
+   */
+  @Test
+  void experiencesJsonApiReturnsPageWithoutLogin() throws Exception {
+    var author = users.save(new User("json-list-author@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "json-list-category", 1));
+    publish(author, category, "JSON一覧確認用の体験談");
+
+    mvc.perform(get("/experiences").accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content[0].title").value("JSON一覧確認用の体験談"))
+        .andExpect(jsonPath("$.content[0].learned").value(org.hamcrest.Matchers.nullValue()))
+        .andExpect(jsonPath("$.number").value(0))
+        .andExpect(jsonPath("$.totalElements").value(1))
+        .andExpect(jsonPath("$.hasNext").value(false));
+  }
+
+  @Test
+  void anonymousCannotMarkExperienceAsReadAndIsRedirectedToLogin() throws Exception {
+    var author = users.save(new User("read-anon-author@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "read-anon-category", 1));
+    var postId = publish(author, category, "既読(匿名)確認用");
+
+    mvc.perform(post("/experiences/" + postId + "/read").with(csrf()))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrlPattern("**/login"));
+    assertThat(reads.count()).isZero();
+  }
+
+  @Test
+  void loggedInUserCanMarkExperienceAsReadAndRepeatedCallsDoNotDuplicate() throws Exception {
+    var author = users.save(new User("read-author@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var reader = users.save(new User("read-reader@example.com", encoder.encode("password"), "読者", Role.USER));
+    var category = categories.save(new Category("転職", "read-category", 1));
+    var postId = publish(author, category, "既読確認用の体験談");
+
+    mvc.perform(post("/experiences/" + postId + "/read").with(user(reader.getEmail())).with(csrf()))
+        .andExpect(status().isNoContent());
+    assertThat(reads.count()).isEqualTo(1);
+
+    // 同じ体験談を再度「既読」呼び出ししても行は増えない。
+    mvc.perform(post("/experiences/" + postId + "/read").with(user(reader.getEmail())).with(csrf()))
+        .andExpect(status().isNoContent());
+    assertThat(reads.count()).isEqualTo(1);
+
+    // JSON一覧APIにも既読状態が反映される。
+    mvc.perform(
+            get("/experiences")
+                .param("categoryId", String.valueOf(category.getId()))
+                .with(user(reader.getEmail()))
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content[0].read").value(true));
   }
 
   private Long publish(User author, Category category, String title) {

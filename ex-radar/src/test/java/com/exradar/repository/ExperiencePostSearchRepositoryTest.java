@@ -33,9 +33,36 @@ class ExperiencePostSearchRepositoryTest {
     save("非公開Java転職", career, false, 28, "30代", 10, 1, 3, true, "Java");
     var c =
         new ExperienceSearchCriteria(
-            "Java", career.getId(), "Java", 25, 30, "30代", null, null, 8, 3, 3, 3, true);
+            "Java", career.getId(), "Java", 25, 30, "30代", null, null, 8, 3, 3, 3, true, null, null);
     var result = posts.findAll(ExperiencePostSpecifications.publicSearch(c), PageRequest.of(0, 10));
     assertThat(result.getContent()).extracting(ExperiencePost::getTitle).containsExactly("Java転職");
+  }
+
+  @Test
+  void dateRangeFiltersByCreatedAt() {
+    var saved = save("日付フィルタ確認用の投稿", career, true, 25, "20代", 7, 3, 1, true, "日付");
+    var createdDate = posts.findById(saved.getId()).orElseThrow().getCreatedAt().toLocalDate();
+
+    var todayRange =
+        new ExperienceSearchCriteria(
+            null, null, "日付", null, null, null, null, null, null, null, null, null, null,
+            createdDate, createdDate);
+    assertThat(
+            posts
+                .findAll(ExperiencePostSpecifications.publicSearch(todayRange), PageRequest.of(0, 10))
+                .getContent())
+        .extracting(ExperiencePost::getTitle)
+        .containsExactly("日付フィルタ確認用の投稿");
+
+    var futureOnly =
+        new ExperienceSearchCriteria(
+            null, null, "日付", null, null, null, null, null, null, null, null, null, null,
+            createdDate.plusDays(1), null);
+    assertThat(
+            posts
+                .findAll(ExperiencePostSpecifications.publicSearch(futureOnly), PageRequest.of(0, 10))
+                .getContent())
+        .isEmpty();
   }
 
   @Test
@@ -44,7 +71,7 @@ class ExperiencePostSearchRepositoryTest {
       save("公開投稿" + i, career, true, 25, "20代", 7, 3, 1, true, "共通", "タグ" + i);
     var c =
         new ExperienceSearchCriteria(
-            null, null, "共通", null, null, null, null, null, null, null, null, null, null);
+            null, null, "共通", null, null, null, null, null, null, null, null, null, null, null, null);
     var first =
         posts.findAll(
             ExperiencePostSpecifications.publicSearch(c), PageRequest.of(0, 5, Sort.by("id")));

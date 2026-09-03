@@ -17,6 +17,7 @@ public class InteractionService {
   private final ReportRepository reports;
   private final ExperiencePostRepository posts;
   private final UserRepository users;
+  private final ExperienceReadRepository reads;
 
   public InteractionService(
       ReactionRepository reactions,
@@ -24,13 +25,27 @@ public class InteractionService {
       NotificationRepository notifications,
       ReportRepository reports,
       ExperiencePostRepository posts,
-      UserRepository users) {
+      UserRepository users,
+      ExperienceReadRepository reads) {
     this.reactions = reactions;
     this.comments = comments;
     this.notifications = notifications;
     this.reports = reports;
     this.posts = posts;
     this.users = users;
+    this.reads = reads;
+  }
+
+  /**
+   * 体験談を最後まで読んだことを記録する。(user_id, post_id)で高々1行しか持たないため、
+   * 既に既読なら何もしない(何度読んでも重複レコードを作らない)。
+   */
+  @Transactional
+  public void markRead(Long postId, String email) {
+    var user = user(email);
+    var post = publicPost(postId);
+    if (reads.existsByUserIdAndPostId(user.getId(), postId)) return;
+    reads.save(new ExperienceRead(user, post));
   }
 
   @Transactional

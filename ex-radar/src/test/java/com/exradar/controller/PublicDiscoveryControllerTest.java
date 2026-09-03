@@ -33,7 +33,7 @@ class PublicDiscoveryControllerTest {
   @Test
   void anonymousCanSearchWithPagingAndAllFilters() throws Exception {
     when(categories.findByActiveTrueOrderByDisplayOrder()).thenReturn(List.of());
-    when(service.search(any(), eq(1), eq("popular"), eq(false)))
+    when(service.search(any(), eq(1), eq("popular"), eq(false), isNull()))
         .thenReturn(Page.empty(PageRequest.of(1, 12)));
     mvc.perform(
             get("/experiences")
@@ -64,7 +64,8 @@ class PublicDiscoveryControllerTest {
                         && Boolean.TRUE.equals(c.chooseAgain())),
             eq(1),
             eq("popular"),
-            eq(false));
+            eq(false),
+            isNull());
   }
 
   @Test

@@ -56,6 +56,13 @@ public final class ExperiencePostSpecifications {
       if (c.yearsMax() != null) p = cb.and(p, cb.le(root.get("yearsElapsed"), c.yearsMax()));
       if (c.chooseAgain() != null)
         p = cb.and(p, cb.equal(root.get("chooseAgain"), c.chooseAgain()));
+      if (c.dateFrom() != null)
+        p = cb.and(p, cb.greaterThanOrEqualTo(root.get("createdAt"), c.dateFrom().atStartOfDay()));
+      if (c.dateTo() != null)
+        p =
+            cb.and(
+                p,
+                cb.lessThan(root.get("createdAt"), c.dateTo().plusDays(1).atStartOfDay()));
       return p;
     };
   }
