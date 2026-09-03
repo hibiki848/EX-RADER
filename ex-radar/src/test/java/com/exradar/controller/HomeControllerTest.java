@@ -53,8 +53,8 @@ class HomeControllerTest {
     var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
     org.assertj.core.api.Assertions.assertThat(body)
-        .contains("<title>EXレーダー | 他人の失敗・後悔から学び、判断材料にする</title>")
-        .contains("EXレーダー | 他人の失敗・後悔から学び、判断材料にする\" />")
+        .contains("<title>EXレーダー | 他人の失敗・後悔から学び、これからを賢く生きる</title>")
+        .contains("EXレーダー | 自分や他人の失敗・後悔から学び、これからを賢く生きる\" />")
         .contains(
             "悔いのない人生などない。学びのない人生などない。自分と他人の失敗を「学び」に変え、あなたの人生を賢く導く。")
         .contains("rel=\"canonical\"")
@@ -93,14 +93,15 @@ class HomeControllerTest {
   /**
    * サイトリンク候補の土台として、トップページから未ログインでも/experiences・/articlesへ
    * 通常のaタグ(href属性)で辿れることを確認する(JSクリックイベントだけの遷移ではない)。
-   * アンカーテキストも「体験談を探す」「記事を読む」など内容が分かる表現になっていること。
+   * experiencesはHeroのメインCTA(「体験談を探してみる」)、articlesは常に描画される
+   * 共通フッターのナビ(「記事」)から辿れることを確認する。
    */
   @Test
   void homeHasNormalAnchorLinksToExperiencesAndArticlesForAnonymousUsers() throws Exception {
     var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
     org.assertj.core.api.Assertions.assertThat(body)
-        .contains("<a class=\"button\" href=\"/experiences\">体験談を探す</a>")
-        .contains("href=\"/articles\">記事を読む</a>");
+        .contains("<a class=\"button\" href=\"/experiences\">体験談を探してみる</a>")
+        .contains("<a href=\"/articles\">記事</a>");
   }
 
   @Test
@@ -165,7 +166,7 @@ class HomeControllerTest {
     org.assertj.core.api.Assertions.assertThat(anonymousBody)
         .doesNotContain("資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった")
         .contains("勉強時間の確保に苦労した")
-        .contains("体験談を投稿すると、この経験から得られた教訓を読めます");
+        .contains("投稿すると読めます");
 
     var contributor =
         users.save(new User("home-lesson-reader@example.com", encoder.encode("password"), "貢献者", Role.USER));
@@ -195,8 +196,9 @@ class HomeControllerTest {
     mvc.perform(get("/")).andExpect(status().isOk());
   }
 
+  /** 「新着の体験談」カード上部の投稿日は、コンパクトな "yyyy.MM.dd" 形式で表示される。 */
   @Test
-  void homeDatesUseJapaneseYearMonthDayFormat() throws Exception {
+  void homeExperienceCardDatesUseCompactDotFormat() throws Exception {
     var owner =
         users.save(new User("home-date-format@example.com", encoder.encode("password"), "日付確認者", Role.USER));
     var category = categories.save(new Category("転職", "home-date-format-category", 1));
@@ -205,7 +207,7 @@ class HomeControllerTest {
     var result = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
     var expected =
-        java.time.format.DateTimeFormatter.ofPattern("yyyy年M月d日").format(java.time.LocalDate.now());
+        java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd").format(java.time.LocalDate.now());
     org.assertj.core.api.Assertions.assertThat(result).contains(expected);
   }
 

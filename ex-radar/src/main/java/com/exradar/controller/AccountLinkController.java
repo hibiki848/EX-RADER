@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import java.util.concurrent.TimeUnit;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -91,6 +92,18 @@ public class AccountLinkController {
             .findByEmailIgnoreCase(email)
             .orElseThrow(() -> new ResourceNotFoundException("ユーザーが見つかりません"));
     user.linkGoogleAccount(sub);
+    try {
+      // findByEmailIgnoreCase()で取得した時点でトランザクションが終わり、userはdetached状態になっている。
+      // save()を呼ばない限りlinkGoogleAccount()によるprovider_user_idの変更はDBへ反映されず、
+      // 次回のGoogleログインで再びアカウント連携確認画面に戻ってしまう(このメソッドの主目的)。
+      users.save(user);
+    } catch (DataIntegrityViolationException e) {
+      // provider_user_id(Googleのsub)には一意制約があるため、この10分間の待機中に
+      // 同じGoogleアカウントが別のEXレーダーアカウントへ連携済みになっていた場合はここで検知する。
+      model.addAttribute("email", email);
+      model.addAttribute("linkError", "このGoogleアカウントは既に別のアカウントと連携されています。");
+      return "auth/link-account";
+    }
 
     // 認証成功。ここから先はこのリクエストを正式なログイン状態にする(プログラムによるログイン)。
     // セッション固定攻撃対策として、認証確定後にセッションIDを再発行してからSecurityContextを保存する。
