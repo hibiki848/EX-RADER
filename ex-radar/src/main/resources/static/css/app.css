@@ -772,6 +772,59 @@ a.admin-post:hover,
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 14px;
 }
+/* カード構造(card-top/card-lesson等)はexperience-cardフラグメント共通の見た目として
+   ベースクラスに定義し、.latest-cardはホーム限定のサイズ調整(小さめpadding・行数)のみを
+   上書きする(トップページと検索一覧でコンポーネントを共通化するため)。 */
+.experience-card .card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.experience-card .card-date {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.experience-card .card-excerpt {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.experience-card .card-lesson {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-default);
+  border-left: 2px solid var(--cat, var(--amber));
+  background: color-mix(in srgb, var(--cat, var(--amber)) 7%, transparent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.experience-card .card-lesson-label {
+  margin: 0 0 4px;
+  color: var(--cat, var(--amber-light));
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.experience-card .card-lesson p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.experience-card .card-lesson .wisdom-teaser-note {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
 .latest-card {
   padding: 16px;
 }
@@ -782,55 +835,6 @@ a.admin-post:hover,
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-.latest-card .card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.latest-card .card-date {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
-.latest-card .card-excerpt {
-  margin: 6px 0 0;
-  color: var(--text-secondary);
-  font-size: 0.86rem;
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.latest-card .card-lesson {
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-top: 1px solid var(--border-default);
-  border-left: 2px solid var(--cat, var(--amber));
-  background: color-mix(in srgb, var(--cat, var(--amber)) 7%, transparent);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-.latest-card .card-lesson-label {
-  margin: 0 0 4px;
-  color: var(--cat, var(--amber-light));
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.latest-card .card-lesson p {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  line-height: 1.55;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.latest-card .card-lesson .wisdom-teaser-note {
-  color: var(--text-muted);
-  font-size: 0.78rem;
 }
 .latest-card .experience-card-actions {
   margin-top: 12px;
@@ -1177,13 +1181,131 @@ input[type="radio"] {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 16px;
-  margin: 28px 0;
   padding: clamp(20px, 4vw, 32px);
 }
 .search-panel label {
   display: grid;
   align-content: start;
   gap: 6px;
+}
+
+/* ============================================================
+   体験談一覧(experiences/list.html): 絞り込みパネル・表示切替・追加読み込み
+   ============================================================ */
+.search-panel-wrap {
+  margin: 28px 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 28px #00000030;
+}
+.search-panel-wrap > summary {
+  padding: clamp(16px, 3vw, 24px);
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.search-panel-wrap > summary::-webkit-details-marker {
+  display: none;
+}
+.search-panel-wrap > summary::before {
+  content: "▸ ";
+  color: var(--cyan);
+}
+.search-panel-wrap[open] > summary::before {
+  content: "▾ ";
+}
+.search-panel-wrap > summary:hover {
+  color: var(--cyan-light);
+}
+.search-panel-wrap > .search-panel {
+  margin: 0;
+  border-top: 1px solid var(--border-default);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.results-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 0 16px;
+}
+.results-toolbar p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+.list-view-toggle {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+}
+.list-view-toggle button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.list-view-toggle button.is-active {
+  background: var(--cyan);
+  color: var(--on-bright);
+}
+
+/* 最低幅300pxのauto-fitで、スマホ=1列/タブレット=2列/PC(1120px前後)=3列に自然に収まる。 */
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+.read-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+/* 「詳細表示」時のみ見せる追加情報(満足度・タグ)。コンパクト表示では常に非表示。 */
+.card-detail-extra {
+  display: none;
+}
+.card-detail-extra .card-meta-line {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.search-results-grid[data-view="detailed"] .card-detail-extra {
+  display: block;
+}
+.search-results-grid[data-view="detailed"] .card-excerpt,
+.search-results-grid[data-view="detailed"] .card-lesson p {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.load-more-area {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0 8px;
+}
+#load-more-sentinel {
+  height: 1px;
+}
+/* IntersectionObserverの検知対象。高さ0の要素は交差判定が環境依存で不安定になるため、
+   ごく小さい明示的な高さを与える(見た目には影響しない)。 */
+#read-progress-sentinel {
+  height: 4px;
 }
 
 .value-grid {

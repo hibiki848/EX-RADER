@@ -1,5 +1,7 @@
 package com.exradar.controller;
 
+import com.exradar.dto.ExperienceCardDto;
+import com.exradar.dto.ExperienceListPageDto;
 import com.exradar.dto.ExperienceSearchCriteria;
 import com.exradar.dto.ExperienceWisdomView;
 import com.exradar.entity.ExperiencePost;
@@ -9,6 +11,7 @@ import com.exradar.repository.CategoryRepository;
 import com.exradar.repository.PersonalValueRepository;
 import com.exradar.service.*;
 import java.security.Principal;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,7 +54,7 @@ public class ExperiencePostController {
       Model model) {
     var email = principal == null ? null : principal.getName();
     boolean wisdomUnlocked = service.canReadExperiences(email);
-    model.addAttribute("result", service.search(criteria, page, sort, wisdomUnlocked));
+    model.addAttribute("result", service.search(criteria, page, sort, wisdomUnlocked, email));
     model.addAttribute("wisdomUnlocked", wisdomUnlocked);
     model.addAttribute("sort", sort);
     // カテゴリのみで絞り込んでいる場合は「カテゴリページ」として自己canonical+専用の
@@ -68,6 +71,37 @@ public class ExperiencePostController {
               });
     }
     return "experiences/list";
+  }
+
+  /**
+   * 一覧の「もっと見る」用JSON API。URLは通常の一覧ページと同じ/experiencesのままで、
+   * Acceptヘッダによるコンテンツネゴシエーションでこちらへ振り分ける(SecurityConfigの
+   * "^/experiences$"(GET)permitAllをそのまま再利用でき、新たなURL・権限設定が不要)。
+   * DB側の絞り込み・並び替え・ページングをそのまま使うため、投稿数が増えても
+   * 全件取得にはならない(service.searchが常にPageで返す)。
+   */
+  @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseBody
+  ExperienceListPageDto listJson(
+      @ModelAttribute ExperienceSearchCriteria criteria,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "latest") String sort,
+      Principal principal) {
+    var email = principal == null ? null : principal.getName();
+    boolean wisdomUnlocked = service.canReadExperiences(email);
+    return ExperienceListPageDto.from(service.search(criteria, page, sort, wisdomUnlocked, email));
+  }
+
+  /**
+   * 体験談本文を最後まで読んだ(スクロールで検知)ことをサーバー側へ記録する。
+   * ログイン必須(SecurityConfigの.anyRequest().authenticated()により、GETのみpermitAllの
+   * 他のexperiencesエンドポイントとは異なりこのPOSTは自動的に認証必須になる)。
+   */
+  @PostMapping("/{id}/read")
+  @ResponseBody
+  ResponseEntity<Void> markRead(@PathVariable Long id, Principal principal) {
+    interactions.markRead(id, principal.getName());
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/new")

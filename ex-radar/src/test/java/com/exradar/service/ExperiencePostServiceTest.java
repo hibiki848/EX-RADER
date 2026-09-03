@@ -22,6 +22,7 @@ class ExperiencePostServiceTest {
   @Autowired UserRepository users;
   @Autowired CategoryRepository categories;
   @Autowired ExperiencePostRepository posts;
+  @Autowired ExperienceReadRepository reads;
   @Autowired PasswordEncoder encoder;
   @Autowired Validator validator;
   User owner, other, admin;
@@ -93,12 +94,58 @@ class ExperiencePostServiceTest {
     service.createDraft(draft, owner.getEmail());
     var criteria =
         new com.exradar.dto.ExperienceSearchCriteria(
-            "未経験", category.getId(), "IT", null, null, null, null, null, 8, 3, null, null, true);
+            "未経験", category.getId(), "IT", null, null, null, null, null, 8, 3, null, null, true, null,
+            null);
     var result = service.search(criteria, 0, "latest", false);
     assertThat(result.getTotalElements()).isEqualTo(1);
     assertThat(result.getContent())
         .extracting(com.exradar.dto.ExperienceCardDto::title)
         .containsExactly("未経験転職のその後");
+  }
+
+  @Test
+  void oldestSortReturnsAscendingCreatedAt() {
+    var first = valid();
+    first.setTitle("先に投稿");
+    service.create(first, owner.getEmail());
+    posts.flush();
+    var second = valid();
+    second.setTitle("後に投稿");
+    service.create(second, owner.getEmail());
+    posts.flush();
+
+    var criteria =
+        new com.exradar.dto.ExperienceSearchCriteria(
+            null, category.getId(), null, null, null, null, null, null, null, null, null, null, null,
+            null, null);
+    var oldestFirst = service.search(criteria, 0, "oldest", false).getContent();
+    assertThat(oldestFirst)
+        .extracting(com.exradar.dto.ExperienceCardDto::title)
+        .containsExactly("先に投稿", "後に投稿");
+    var latestFirst = service.search(criteria, 0, "latest", false).getContent();
+    assertThat(latestFirst)
+        .extracting(com.exradar.dto.ExperienceCardDto::title)
+        .containsExactly("後に投稿", "先に投稿");
+  }
+
+  @Test
+  void searchWithViewerEmailMarksReadStatusOnlyForThatViewer() {
+    var saved = service.create(valid(), owner.getEmail());
+    posts.flush();
+    reads.save(new ExperienceRead(other, posts.findById(saved.getId()).orElseThrow()));
+
+    var criteria =
+        new com.exradar.dto.ExperienceSearchCriteria(
+            null, category.getId(), null, null, null, null, null, null, null, null, null, null, null,
+            null, null);
+    var forReader = service.search(criteria, 0, "latest", false, other.getEmail()).getContent();
+    assertThat(forReader).extracting(com.exradar.dto.ExperienceCardDto::read).containsExactly(true);
+
+    var forStranger = service.search(criteria, 0, "latest", false, admin.getEmail()).getContent();
+    assertThat(forStranger).extracting(com.exradar.dto.ExperienceCardDto::read).containsExactly(false);
+
+    var anonymous = service.search(criteria, 0, "latest", false).getContent();
+    assertThat(anonymous).extracting(com.exradar.dto.ExperienceCardDto::read).containsExactly(false);
   }
 
   @Test
@@ -252,7 +299,8 @@ class ExperiencePostServiceTest {
 
     var criteria =
         new com.exradar.dto.ExperienceSearchCriteria(
-            null, category.getId(), null, null, null, null, null, null, null, null, null, null, null);
+            null, category.getId(), null, null, null, null, null, null, null, null, null, null, null,
+            null, null);
 
     var lockedCard = service.search(criteria, 0, "latest", false).getContent().get(0);
     assertThat(lockedCard.learned()).isNull();

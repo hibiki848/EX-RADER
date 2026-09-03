@@ -24,6 +24,7 @@ class InteractionServiceTest {
   @Autowired NotificationRepository notifications;
   @Autowired CommentRepository comments;
   @Autowired ReportRepository reports;
+  @Autowired ExperienceReadRepository reads;
   @Autowired PasswordEncoder encoder;
   User owner, other, admin;
   ExperiencePost post;
@@ -106,6 +107,43 @@ class InteractionServiceTest {
     reactions.saveAndFlush(new Reaction(other, post, ReactionType.HELPFUL));
     assertThatThrownBy(
             () -> reactions.saveAndFlush(new Reaction(other, post, ReactionType.HELPFUL)))
+        .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+  }
+
+  @Test
+  void markReadRecordsReadOnFirstCallOnly() {
+    assertThat(reads.existsByUserIdAndPostId(other.getId(), post.getId())).isFalse();
+
+    service.markRead(post.getId(), other.getEmail());
+    assertThat(reads.count()).isEqualTo(1);
+    assertThat(reads.existsByUserIdAndPostId(other.getId(), post.getId())).isTrue();
+
+    // 同じ体験談を何度読んでも行は増えない(重複レコードを作らない)。
+    service.markRead(post.getId(), other.getEmail());
+    service.markRead(post.getId(), other.getEmail());
+    assertThat(reads.count()).isEqualTo(1);
+  }
+
+  @Test
+  void markReadIsPerUserAndPerPost() {
+    var category = categories.save(new Category("既読テスト用", "read-test-category", 100));
+    var otherPost = new ExperiencePost(owner);
+    otherPost.updateContent(
+        category, "別の体験談", 25, "会社員", "30代", 5, "状況", "悩み", "選択肢", "選択", "理由", "結果", "良かった", "大変",
+        "想定外", 8, 2, true, "助言");
+    otherPost.publish();
+    otherPost = posts.save(otherPost);
+
+    service.markRead(post.getId(), other.getEmail());
+    assertThat(reads.existsByUserIdAndPostId(other.getId(), post.getId())).isTrue();
+    assertThat(reads.existsByUserIdAndPostId(other.getId(), otherPost.getId())).isFalse();
+    assertThat(reads.existsByUserIdAndPostId(admin.getId(), post.getId())).isFalse();
+  }
+
+  @Test
+  void databaseRejectsDuplicateRead() {
+    reads.saveAndFlush(new ExperienceRead(other, post));
+    assertThatThrownBy(() -> reads.saveAndFlush(new ExperienceRead(other, post)))
         .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
   }
 }

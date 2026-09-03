@@ -30,8 +30,14 @@ public record ExperienceCardDto(
     String learned,
     String lesson,
     List<String> tags,
-    LocalDateTime createdAt) {
+    LocalDateTime createdAt,
+    boolean read) {
   public static ExperienceCardDto from(ExperiencePost p, boolean wisdomUnlocked) {
+    return from(p, wisdomUnlocked, false);
+  }
+
+  /** readは検索一覧(search)でのみ実際の既読状態を渡す。他の呼び出し元は既読表示を持たないためfalse固定でよい。 */
+  public static ExperienceCardDto from(ExperiencePost p, boolean wisdomUnlocked, boolean read) {
     return new ExperienceCardDto(
         p.getId(),
         p.getTitle(),
@@ -50,6 +56,7 @@ public record ExperienceCardDto(
         wisdomUnlocked ? p.getLearned() : null,
         wisdomUnlocked ? p.getLesson() : null,
         p.getTags().stream().map(t -> t.getName()).sorted().toList(),
-        p.getCreatedAt());
+        p.getCreatedAt(),
+        read);
   }
 }

@@ -72,15 +72,21 @@ public class SecurityConfig {
                     // "/experiences"はGET(検索・一覧)のみ未ログインで許可する。POST(新規投稿)まで
                     // 誤って許可しないよう、他の"/experiences/**"配下と同様に認証を必須にする
                     // (以前は素のパス文字列指定によりPOSTも意図せず未ログインで到達可能だった)。
-                    .requestMatchers(new RegexRequestMatcher("^/experiences$", "GET"))
+                    // 末尾の(\?.*)?は必須: RegexRequestMatcherはクエリ文字列込みのURLに対して
+                    // 正規表現をマッチさせるため、これが無いと検索条件付き(?keyword=...等)の
+                    // GETがどれも一致せず、未ログイン検索・一覧のページングが軒並みログインへ
+                    // リダイレクトされてしまう(実サーバーでのみ再現し、MockMvcのテストでは
+                    // クエリ文字列の扱いが異なるため気づけない)。
+                    .requestMatchers(new RegexRequestMatcher("^/experiences(\\?.*)?$", "GET"))
                     .permitAll()
-                    .requestMatchers(new RegexRequestMatcher("^/experiences/[0-9]+$", "GET"))
+                    .requestMatchers(new RegexRequestMatcher("^/experiences/[0-9]+(\\?.*)?$", "GET"))
                     .permitAll()
                     // 体験談詳細の簡易表示(要点)・表示方法選択も、詳細ページ本体と同じ公開範囲にする
                     // (同じ内容の別表示形式に過ぎないため、詳細ページだけ公開して片方だけ
                     // ログイン必須のままにすると閲覧制限として一貫しない)。GET以外は含めない。
                     .requestMatchers(
-                        new RegexRequestMatcher("^/experiences/[0-9]+/(view-options|summary)$", "GET"))
+                        new RegexRequestMatcher(
+                            "^/experiences/[0-9]+/(view-options|summary)(\\?.*)?$", "GET"))
                     .permitAll()
                     .requestMatchers("/admin/**", "/api/admin/**")
                     .hasRole("ADMIN")

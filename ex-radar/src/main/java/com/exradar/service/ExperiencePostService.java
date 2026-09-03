@@ -12,23 +12,29 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ExperiencePostService {
+  /** 一覧の初期表示・追加読み込み(もっと見る)1回あたりの件数。 */
+  public static final int SEARCH_PAGE_SIZE = 20;
+
   private final ExperiencePostRepository posts;
   private final UserRepository users;
   private final CategoryRepository categories;
   private final TagRepository tags;
   private final PersonalValueRepository values;
+  private final ExperienceReadRepository reads;
 
   public ExperiencePostService(
       ExperiencePostRepository posts,
       UserRepository users,
       CategoryRepository categories,
       TagRepository tags,
-      PersonalValueRepository values) {
+      PersonalValueRepository values,
+      ExperienceReadRepository reads) {
     this.posts = posts;
     this.users = users;
     this.categories = categories;
     this.tags = tags;
     this.values = values;
+    this.reads = reads;
   }
 
   /**
@@ -40,15 +46,37 @@ public class ExperiencePostService {
   @Transactional(readOnly = true)
   public Page<ExperienceCardDto> search(
       ExperienceSearchCriteria criteria, int page, String sort, boolean wisdomUnlocked) {
+    return search(criteria, page, sort, wisdomUnlocked, null);
+  }
+
+  /**
+   * viewerEmailを渡すと、その人が既読済みの投稿にread=trueを立てて返す(一覧カードの既読表示用)。
+   * nullの場合(未ログイン、または既読状態が不要な呼び出し元)は全件read=falseになる。
+   * 既読状態はページ内の投稿ID群に対する1回のIN句クエリでまとめて取得し、N+1を避ける。
+   */
+  @Transactional(readOnly = true)
+  public Page<ExperienceCardDto> search(
+      ExperienceSearchCriteria criteria,
+      int page,
+      String sort,
+      boolean wisdomUnlocked,
+      String viewerEmail) {
     var order =
-        "helpful".equals(sort)
-            ? Sort.by(Sort.Order.desc("createdAt"))
+        "oldest".equals(sort)
+            ? Sort.by(Sort.Order.asc("createdAt"))
             : Sort.by(Sort.Order.desc("createdAt"));
-    return posts
-        .findAll(
+    var result =
+        posts.findAll(
             ExperiencePostSpecifications.publicSearch(criteria),
-            PageRequest.of(Math.max(0, page), 12, order))
-        .map(p -> ExperienceCardDto.from(p, wisdomUnlocked));
+            PageRequest.of(Math.max(0, page), SEARCH_PAGE_SIZE, order));
+    Long viewerId =
+        viewerEmail == null ? null : users.findByEmailIgnoreCase(viewerEmail).map(User::getId).orElse(null);
+    Set<Long> readIds =
+        viewerId == null || result.isEmpty()
+            ? Set.of()
+            : new HashSet<>(
+                reads.findReadPostIds(viewerId, result.map(ExperiencePost::getId).toList()));
+    return result.map(p -> ExperienceCardDto.from(p, wisdomUnlocked, readIds.contains(p.getId())));
   }
 
   @Transactional(readOnly = true)
@@ -84,6 +112,8 @@ public class ExperiencePostService {
         new ExperienceSearchCriteria(
             null,
             source.getCategory().getId(),
+            null,
+            null,
             null,
             null,
             null,
@@ -173,6 +203,7 @@ public class ExperiencePostService {
   public void delete(Long id, String email) {
     var post = find(id);
     requireManage(post, email);
+    reads.deleteByPostId(id);
     posts.delete(post);
   }
 

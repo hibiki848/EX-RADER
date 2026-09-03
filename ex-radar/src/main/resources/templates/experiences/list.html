@@ -16,6 +16,7 @@
     ></th:block>
     <link rel="stylesheet" href="/css/app.css" />
     <script src="/js/site-nav.js" defer></script>
+    <script src="/js/experience-list.js" defer></script>
   </head>
   <body>
     <div th:replace="~{fragments/loading :: loading}"></div>
@@ -26,129 +27,170 @@
         <p class="eyebrow">EXPLORE ROUTES</p>
         <h1>体験談を探す</h1>
         <p>
-          経験者の教訓や、選ぶ前に知っておきたかったことを判断材料として探しましょう。
+          公開中の体験談を新着順に一覧表示しています。条件を指定すると絞り込めます(未指定の項目は「すべて」として扱われます)。
         </p>
       </div>
-      <form class="search-panel" method="get">
-        <label
-          >キーワード<input
-            name="keyword"
-            th:value="${experienceSearchCriteria.keyword}" /></label
-        ><label
-          >カテゴリ<select name="categoryId">
-            <option value="">すべて</option>
-            <option
-              th:each="c:${categories}"
-              th:value="${c.id}"
-              th:text="${c.name}"
-              th:selected="${c.id==experienceSearchCriteria.categoryId}"
-            ></option></select></label
-        ><label
-          >タグ<input
-            name="tag"
-            th:value="${experienceSearchCriteria.tag}" /></label
-        ><label
-          >選択時年齢<input
-            type="number"
-            name="ageFrom"
-            min="0"
-            max="120"
-            th:value="${experienceSearchCriteria.ageFrom}"
-            placeholder="下限" /></label
-        ><label
-          >〜<input
-            type="number"
-            name="ageTo"
-            min="0"
-            max="120"
-            th:value="${experienceSearchCriteria.ageTo}"
-            placeholder="上限" /></label
-        ><label
-          >現在の年代<input
-            name="currentAgeGroup"
-            th:value="${experienceSearchCriteria.currentAgeGroup}" /></label
-        ><label
-          >学歴<input
-            name="education"
-            th:value="${experienceSearchCriteria.education}" /></label
-        ><label
-          >職業<input
-            name="occupation"
-            th:value="${experienceSearchCriteria.occupation}" /></label
-        ><label
-          >満足度（以上）<input
-            type="number"
-            name="satisfactionMin"
-            min="1"
-            max="10"
-            th:value="${experienceSearchCriteria.satisfactionMin}" /></label
-        ><label
-          >後悔度（以下）<input
-            type="number"
-            name="regretMax"
-            min="1"
-            max="10"
-            th:value="${experienceSearchCriteria.regretMax}" /></label
-        ><label
-          >経過年数<input
-            type="number"
-            name="yearsMin"
-            min="0"
-            max="100"
-            th:value="${experienceSearchCriteria.yearsMin}"
-            placeholder="下限" /></label
-        ><label
-          >〜<input
-            type="number"
-            name="yearsMax"
-            min="0"
-            max="100"
-            th:value="${experienceSearchCriteria.yearsMax}"
-            placeholder="上限" /></label
-        ><label
-          >もう一度選ぶ<select name="chooseAgain">
-            <option value="">指定なし</option>
-            <option value="true">はい</option>
-            <option value="false">いいえ</option>
-          </select></label
-        ><label
-          >並び順<select name="sort">
-            <option value="latest">最新</option>
-            <option value="helpful">判断材料を探す</option>
-          </select></label
-        ><button>検索する</button><a href="/experiences">クリア</a>
-      </form>
-      <p th:text="${result.totalElements}+'件の体験談'"></p>
-      <div class="card-grid">
-          <article class="experience-card reveal" th:each="p:${result.content}">
-            <span class="eyebrow" th:text="${p.category}"></span>
-            <h2 th:text="${p.title}"></h2>
-            <p th:text="${p.author}+'さん ・ 満足度 '+${p.satisfaction}+'/10'"></p>
-            <div class="tags"><span th:each="tag:${p.tags}" th:text="'#'+${tag}"></span></div>
-            <div class="experience-card-actions">
-              <button class="button" type="button" th:attr="data-summary-target=|summary-${p.id}|">簡易表示</button>
-              <a th:href="@{/experiences/{id}(id=${p.id})}">詳細ページ</a>
-            </div>
-          </article>
+
+      <details class="search-panel-wrap" open>
+        <summary>絞り込み条件</summary>
+        <form class="search-panel" method="get">
+          <label
+            >キーワード<input
+              name="keyword"
+              th:value="${experienceSearchCriteria.keyword}" /></label
+          ><label
+            >カテゴリ<select name="categoryId">
+              <option value="">すべて</option>
+              <option
+                th:each="c:${categories}"
+                th:value="${c.id}"
+                th:text="${c.name}"
+                th:selected="${c.id==experienceSearchCriteria.categoryId}"
+              ></option></select></label
+          ><label
+            >タグ<input
+              name="tag"
+              th:value="${experienceSearchCriteria.tag}" /></label
+          ><label
+            >投稿日<input
+              type="date"
+              name="dateFrom"
+              th:value="${experienceSearchCriteria.dateFrom}" /></label
+          ><label
+            >〜<input
+              type="date"
+              name="dateTo"
+              th:value="${experienceSearchCriteria.dateTo}" /></label
+          ><label
+            >選択時年齢<input
+              type="number"
+              name="ageFrom"
+              min="0"
+              max="120"
+              th:value="${experienceSearchCriteria.ageFrom}"
+              placeholder="下限" /></label
+          ><label
+            >〜<input
+              type="number"
+              name="ageTo"
+              min="0"
+              max="120"
+              th:value="${experienceSearchCriteria.ageTo}"
+              placeholder="上限" /></label
+          ><label
+            >現在の年代<input
+              name="currentAgeGroup"
+              th:value="${experienceSearchCriteria.currentAgeGroup}" /></label
+          ><label
+            >学歴<input
+              name="education"
+              th:value="${experienceSearchCriteria.education}" /></label
+          ><label
+            >職業<input
+              name="occupation"
+              th:value="${experienceSearchCriteria.occupation}" /></label
+          ><label
+            >満足度（以上）<input
+              type="number"
+              name="satisfactionMin"
+              min="1"
+              max="10"
+              th:value="${experienceSearchCriteria.satisfactionMin}" /></label
+          ><label
+            >後悔度（以下）<input
+              type="number"
+              name="regretMax"
+              min="1"
+              max="10"
+              th:value="${experienceSearchCriteria.regretMax}" /></label
+          ><label
+            >経過年数<input
+              type="number"
+              name="yearsMin"
+              min="0"
+              max="100"
+              th:value="${experienceSearchCriteria.yearsMin}"
+              placeholder="下限" /></label
+          ><label
+            >〜<input
+              type="number"
+              name="yearsMax"
+              min="0"
+              max="100"
+              th:value="${experienceSearchCriteria.yearsMax}"
+              placeholder="上限" /></label
+          ><label
+            >もう一度選ぶ<select name="chooseAgain">
+              <option value="">指定なし</option>
+              <option value="true" th:selected="${experienceSearchCriteria.chooseAgain}==true">はい</option>
+              <option value="false" th:selected="${experienceSearchCriteria.chooseAgain}==false">いいえ</option>
+            </select></label
+          ><label
+            >並び順<select name="sort">
+              <option value="latest" th:selected="${sort=='latest'}">新しい順</option>
+              <option value="oldest" th:selected="${sort=='oldest'}">古い順</option>
+            </select></label
+          ><button>この条件で絞り込む</button><a href="/experiences">条件をクリア</a>
+        </form>
+      </details>
+
+      <div class="results-toolbar">
+        <p id="results-shown-count" th:text="${result.numberOfElements}+' / '+${result.totalElements}+'件を表示中'"></p>
+        <div class="list-view-toggle" role="group" aria-label="表示形式">
+          <button type="button" class="is-active" data-list-view="compact" aria-pressed="true">コンパクト表示</button>
+          <button type="button" data-list-view="detailed" aria-pressed="false">詳細表示</button>
+        </div>
       </div>
+
+      <div
+        class="card-grid search-results-grid"
+        id="experience-results"
+        data-view="compact"
+        th:attr="data-current-page=${result.number},data-wisdom-unlocked=${wisdomUnlocked}"
+      >
+        <th:block th:each="p:${result.content}">
+          <th:block
+            th:replace="~{fragments/experience-card :: card(p=${p}, wisdomUnlocked=${wisdomUnlocked}, modalPrefix='summary-', extraClass='', gateActionsToAuth=false)}"
+          ></th:block>
+        </th:block>
+      </div>
+
       <div class="empty-state" th:if="${result.empty}">
         <h2>条件に合う体験談はまだありません</h2>
         <p>条件を少し広げてみてください。</p>
       </div>
-      <nav class="pagination" th:if="${result.totalPages>1}">
-        <a
-          th:if="${result.hasPrevious()}"
-          th:href="@{/experiences(page=${result.number-1},sort=${sort})}"
-          >前へ</a
-        ><span th:text="${result.number+1}+'/'+${result.totalPages}"></span
-        ><a
-          th:if="${result.hasNext()}"
-          th:href="@{/experiences(page=${result.number+1},sort=${sort})}"
-          >次へ</a
-        >
-      </nav>
+
+      <div class="load-more-area" th:if="${result.hasNext()}">
+        <button id="load-more-button" type="button" class="button button-secondary">もっと見る</button>
+        <div id="load-more-sentinel" aria-hidden="true"></div>
+      </div>
     </main>
     <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <template id="experience-card-template">
+      <article class="experience-card category-accent reveal">
+        <div class="card-top">
+          <span class="category-badge" data-slot="category"></span>
+          <span class="read-badge" data-slot="read-badge" hidden>既読</span>
+          <span class="card-date" data-slot="date"></span>
+        </div>
+        <h3 data-slot="title"></h3>
+        <p class="card-excerpt" data-slot="excerpt"></p>
+        <div class="card-detail-extra">
+          <p class="card-meta-line" data-slot="meta"></p>
+          <div class="tags" data-slot="tags"></div>
+        </div>
+        <div class="card-lesson">
+          <p class="card-lesson-label">得られた教訓</p>
+          <p data-slot="lesson-text"></p>
+          <p data-slot="lesson-locked" class="wisdom-teaser-note">🔒 体験談を投稿すると読めます</p>
+        </div>
+        <div class="experience-card-actions">
+          <a data-slot="detail-link">詳細ページ</a>
+        </div>
+      </article>
+    </template>
+
     <div class="summary-modal" th:each="p:${result.content}" th:id="|summary-${p.id}|" hidden>
       <div class="summary-backdrop" data-close-summary></div>
       <section class="summary-modal-card" role="dialog" aria-modal="true">
@@ -172,19 +214,5 @@
         <div class="summary-actions"><a class="button" th:href="@{/experiences/{id}(id=${p.id})}">詳細ページで読む</a></div>
       </section>
     </div>
-    <script>
-      document.querySelectorAll('[data-summary-target]').forEach(function (button) {
-        button.addEventListener('click', function () {
-          document.getElementById(button.dataset.summaryTarget).hidden = false;
-          document.body.classList.add('modal-open');
-        });
-      });
-      document.querySelectorAll('[data-close-summary]').forEach(function (element) {
-        element.addEventListener('click', function () {
-          element.closest('.summary-modal').hidden = true;
-          document.body.classList.remove('modal-open');
-        });
-      });
-    </script>
   </body>
 </html>

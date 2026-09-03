@@ -1,5 +1,7 @@
 package com.exradar.dto;
 
+import java.time.LocalDate;
+
 public record ExperienceSearchCriteria(
     String keyword,
     Long categoryId,
@@ -13,7 +15,9 @@ public record ExperienceSearchCriteria(
     Integer regretMax,
     Integer yearsMin,
     Integer yearsMax,
-    Boolean chooseAgain) {
+    Boolean chooseAgain,
+    LocalDate dateFrom,
+    LocalDate dateTo) {
   public boolean empty() {
     return blank(keyword)
         && categoryId == null
@@ -27,7 +31,9 @@ public record ExperienceSearchCriteria(
         && regretMax == null
         && yearsMin == null
         && yearsMax == null
-        && chooseAgain == null;
+        && chooseAgain == null
+        && dateFrom == null
+        && dateTo == null;
   }
 
   /** カテゴリのみで絞り込んでいる状態か(SEO上「カテゴリページ」として自己canonicalにしてよいか判定用)。 */
@@ -44,7 +50,9 @@ public record ExperienceSearchCriteria(
         && regretMax == null
         && yearsMin == null
         && yearsMax == null
-        && chooseAgain == null;
+        && chooseAgain == null
+        && dateFrom == null
+        && dateTo == null;
   }
 
   private static boolean blank(String v) {
