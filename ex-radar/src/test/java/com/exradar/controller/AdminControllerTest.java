@@ -126,6 +126,53 @@ class AdminControllerTest {
         .andExpect(model().attribute("publishedPostCount", 1L));
   }
 
+  /**
+   * 「このブラウザをアクセス解析から除外」トグルは、ログイン中ユーザーのDBフラグとは別に
+   * Cookie(NavigationAdvice.BROWSER_EXCLUSION_COOKIE)でブラウザ単位に持たせる。
+   * Set-Cookieの属性(HttpOnly/Secure/SameSite/Max-Age)と、除外解除時に即time失効させる
+   * (Max-Age=0)ことをここで検証する。
+   */
+  @Test
+  void togglingBrowserAnalyticsExclusionSetsAndClearsCookie() throws Exception {
+    User admin =
+        users.save(new User("admin-browser-ex@example.com", encoder.encode("password123"), "Admin", Role.ADMIN));
+
+    var excludeResult =
+        mvc.perform(
+                post("/admin/browser-analytics-exclusion")
+                    .with(user(admin.getEmail()).roles("ADMIN"))
+                    .with(csrf())
+                    .param("excluded", "true"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/admin"))
+            .andReturn();
+    String setCookie = excludeResult.getResponse().getHeader("Set-Cookie");
+    assertThat(setCookie).contains("exr_ga_excluded=1");
+    assertThat(setCookie).contains("HttpOnly");
+    assertThat(setCookie).contains("Secure");
+    assertThat(setCookie).contains("SameSite=Lax");
+    assertThat(setCookie).contains("Max-Age=34560000"); // 400日
+
+    // ダッシュボードのモデル属性にも反映される
+    mvc.perform(
+            get("/admin")
+                .with(user(admin.getEmail()).roles("ADMIN"))
+                .cookie(new jakarta.servlet.http.Cookie("exr_ga_excluded", "1")))
+        .andExpect(model().attribute("browserAnalyticsExcluded", true));
+
+    var restoreResult =
+        mvc.perform(
+                post("/admin/browser-analytics-exclusion")
+                    .with(user(admin.getEmail()).roles("ADMIN"))
+                    .with(csrf())
+                    .param("excluded", "false"))
+            .andExpect(status().is3xxRedirection())
+            .andReturn();
+    String clearCookie = restoreResult.getResponse().getHeader("Set-Cookie");
+    assertThat(clearCookie).contains("exr_ga_excluded=");
+    assertThat(clearCookie).contains("Max-Age=0");
+  }
+
   private ExperiencePostForm validForm(Long categoryId) {
     var f = new ExperiencePostForm();
     f.setCategoryId(categoryId);
