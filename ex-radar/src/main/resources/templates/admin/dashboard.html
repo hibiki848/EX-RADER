@@ -2,7 +2,7 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <th:block th:replace="~{fragments/favicon :: links}"></th:block>
     <title>管理者ダッシュボード | EXレーダー</title>
     <meta name="robots" content="noindex, nofollow" />
@@ -419,50 +419,104 @@
           });
         }
 
+        // データ取得(fetch/HTTPステータス/JSON解析)と、取得後の画面描画は
+        // 原因が全く異なるため、意図的に別ステージとして扱う。エラー発生時は
+        // err.stage で発生箇所を判別し、コンソールへ詳細(スタックトレース含む)を
+        // 出力する。描画処理は各セクションを独立させ、1箇所で例外が起きても
+        // 他のセクション(既に表示できた数値等)を巻き込んで消さないようにする。
+        function renderSection(label, fn) {
+          try {
+            fn();
+          } catch (err) {
+            console.error('[admin-dashboard] section "' + label + '" failed to render', err);
+          }
+        }
+
         var analyticsRequest = fetch('/api/admin/analytics', { headers: { Accept: 'application/json' } })
           .then(function (response) {
-            if (!response.ok) throw new Error('request failed: ' + response.status);
-            return response.json();
+            if (!response.ok) {
+              var httpError = new Error('API request failed with status ' + response.status);
+              httpError.stage = 'http';
+              throw httpError;
+            }
+            return response.json().catch(function (parseErr) {
+              parseErr.stage = 'parse';
+              throw parseErr;
+            });
           })
           .then(function (data) {
             document.getElementById('ga-loading').hidden = true;
             var body = document.getElementById('ga-dashboard-body');
             body.hidden = false;
-            fillFields(body, data);
 
-            var gaAvailable = data.googleAnalytics && data.googleAnalytics.available;
-            document.getElementById('ga-unavailable-access').hidden = !!gaAvailable;
+            var gaAvailable;
+            try {
+              // 数値項目の表示と「GA4取得可否」の判定は、以降の各セクション描画が
+              // 前提とする基礎処理のため、ここで例外が起きた場合だけ"render"として扱う。
+              fillFields(body, data);
+              gaAvailable = !!(data.googleAnalytics && data.googleAnalytics.available);
+              document.getElementById('ga-unavailable-access').hidden = gaAvailable;
+            } catch (err) {
+              err.stage = 'render';
+              throw err;
+            }
 
             var dailyStats = gaAvailable ? data.googleAnalytics.dailyStats : [];
             var currentRange = 7;
-            renderChart(dailyStats, currentRange);
+
+            renderSection('chart', function () {
+              renderChart(dailyStats, currentRange);
+            });
             body.querySelectorAll('.ga-chart-toggle button').forEach(function (button) {
               button.addEventListener('click', function () {
                 body.querySelectorAll('.ga-chart-toggle button').forEach(function (b) {
                   b.classList.remove('is-active');
                 });
                 button.classList.add('is-active');
-                renderChart(dailyStats, Number(button.dataset.range));
+                renderSection('chart', function () {
+                  renderChart(dailyStats, Number(button.dataset.range));
+                });
               });
             });
 
-            renderTopPages(gaAvailable ? data.googleAnalytics.topPages : []);
-            renderBarList(
-              'ga-traffic-sources',
-              'ga-traffic-empty',
-              gaAvailable ? data.googleAnalytics.trafficSources : [],
-              'source',
-              'sessions');
-            renderBarList(
-              'ga-devices',
-              'ga-devices-empty',
-              gaAvailable ? data.googleAnalytics.devices : [],
-              'category',
-              'activeUsers');
+            renderSection('topPages', function () {
+              renderTopPages(gaAvailable ? data.googleAnalytics.topPages : []);
+            });
+            renderSection('trafficSources', function () {
+              renderBarList(
+                'ga-traffic-sources',
+                'ga-traffic-empty',
+                gaAvailable ? data.googleAnalytics.trafficSources : [],
+                'source',
+                'sessions');
+            });
+            renderSection('devices', function () {
+              renderBarList(
+                'ga-devices',
+                'ga-devices-empty',
+                gaAvailable ? data.googleAnalytics.devices : [],
+                'category',
+                'activeUsers');
+            });
           })
-          .catch(function () {
+          .catch(function (err) {
             document.getElementById('ga-loading').hidden = true;
-            document.getElementById('ga-fetch-error').hidden = false;
+            var stage = err && err.stage;
+            console.error(
+              '[admin-dashboard] analytics dashboard failed to load (stage=' + (stage || 'fetch') + ')',
+              err);
+            var banner = document.getElementById('ga-fetch-error');
+            if (stage === 'render') {
+              // fetch/APIは成功しデータも取得できているが、取得後の画面描画側で例外が
+              // 発生した場合。fetch失敗・APIエラーと混同しないよう文言を分ける。
+              banner.textContent =
+                'データの取得はできましたが、画面の表示処理でエラーが発生しました。' +
+                'お手数ですが、ブラウザの開発者ツールのコンソールに表示された内容をご確認ください。';
+            } else {
+              banner.textContent =
+                'ダッシュボードデータの取得に失敗しました。時間をおいて再読み込みしてください。';
+            }
+            banner.hidden = false;
           });
 
         if (window.ExRadarLoader) window.ExRadarLoader.wait(analyticsRequest);

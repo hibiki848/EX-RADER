@@ -4,7 +4,8 @@
     <!--/* 通常ユーザー向けページの共通ヘッダー。center nav / 右側の認証状態別アクションを持つ。
          th:fragmentの値はタグ名(header)と衝突させない(Thymeleafのフラグメント選択はタグ名にも
          マッチするため、"header"という名前だと2つの<header>要素の両方が選択されてしまう)。 */-->
-    <header th:fragment="siteHeader">
+    <th:block th:fragment="siteHeader">
+    <header>
       <div class="site-header-inner">
         <a class="brand" href="/"><span class="brand-ex">EX</span>レーダー</a>
         <nav class="site-nav" aria-label="メインナビゲーション">
@@ -31,6 +32,53 @@
         </button>
       </div>
     </header>
+
+    <!--/* スマートフォン表示専用の画面下固定ナビゲーション(Indeedアプリ等に見られる形式)。
+         900px以下でのみ表示され(app.css側でdisplay制御)、PC表示には影響しない。
+         現在地のハイライトはsite-nav.jsがdata-bottom-nav属性を見て付与する。 */-->
+    <nav class="bottom-nav" aria-label="モバイルナビゲーション">
+      <a href="/" data-bottom-nav="home">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 10.5 12 4l8 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M6 9.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M10 20v-5h4v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>ホーム</span>
+      </a>
+      <a href="/experiences" data-bottom-nav="experiences">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8" />
+          <path d="m20 20-4.8-4.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        <span>体験談を探す</span>
+      </a>
+      <a href="/experiences/new" class="bottom-nav-post" data-bottom-nav="post">
+        <span class="bottom-nav-post-icon">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span>投稿</span>
+      </a>
+      <a href="/mypage/notifications" data-bottom-nav="notifications">
+        <span class="bottom-nav-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 10a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+            <path d="M10 18.5a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <b class="notify-badge" th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></b>
+        </span>
+        <span>通知</span>
+      </a>
+      <a href="/mypage" data-bottom-nav="mypage">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.8" />
+          <path d="M4.8 19.5c1-3.4 3.9-5.5 7.2-5.5s6.2 2.1 7.2 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>マイページ</span>
+      </a>
+    </nav>
+    </th:block>
 
     <!--/* 認証ページ・エラーページ用の簡易ヘッダー(ロゴのみ、ナビ無し)。 */-->
     <header th:fragment="siteHeaderMinimal">
