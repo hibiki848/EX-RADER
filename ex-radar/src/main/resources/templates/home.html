@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <th:block th:replace="~{fragments/favicon :: links}"></th:block>
   <title>EXレーダー |自分自身や他人の失敗・後悔から学び、これからを賢く生きる</title>
   <th:block th:replace="~{fragments/seo :: meta(
@@ -76,21 +76,6 @@
           </div>
         </div>
       </div>
-    </section>
-
-    <section class="home-section action-grid" sec:authorize="isAuthenticated()">
-      <a class="panel" sec:authorize="isAuthenticated()" href="/choices">
-        <h2>人生の選択肢から探す</h2>
-        <p>選択ごとに、経験者の教訓や知っておきたかったことを見る</p>
-      </a>
-      <a class="panel" sec:authorize="isAuthenticated()" href="/experiences">
-        <h2>経験者の教訓を見る</h2>
-        <p>先に歩いた人が経験から学んだことを読む</p>
-      </a>
-      <a class="panel" sec:authorize="isAuthenticated()" href="/decision-memos">
-        <h2>考えを整理する</h2>
-        <p>非公開の意思決定メモに、気づきと考えの変化を残す</p>
-      </a>
     </section>
 
     <section class="home-section home-section-latest">
@@ -168,10 +153,12 @@
 
     <section class="home-section ai-insight-section">
       <div class="section-title">
-        <p class="eyebrow">AI INSIGHT</p>
+        <p class="eyebrow">AI INSIGHT <span class="badge-coming-soon">COMING SOON</span></p>
         <h2>AIなら、こんな傾向を整理できます</h2>
       </div>
-      <p class="ai-insight-note">※表示内容はAI分析機能のイメージです。</p>
+      <p class="ai-insight-note">
+        ※これはAI分析機能の完成イメージのサンプルです。現在開発中の機能であり、実際のデータ分析結果ではありません。
+      </p>
 
       <div class="ai-insight-flow">
         <div class="ai-insight-col regret">

@@ -115,11 +115,11 @@ header {
   position: sticky;
   top: 0;
   z-index: 30;
-  height: 72px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 max(5vw, 24px);
+  padding: env(safe-area-inset-top) max(5vw, 24px) 0;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-default);
 }
@@ -254,6 +254,11 @@ header {
 }
 .nav-toggle-bars::after {
   top: 6px;
+}
+
+/* スマートフォン用の画面下固定ナビ(Indeedアプリ等の形式)。PC・タブレット横では非表示。 */
+.bottom-nav {
+  display: none;
 }
 
 /* ============================================================
@@ -1805,6 +1810,20 @@ input[type="radio"] {
   color: var(--text-muted);
   background: transparent;
 }
+/* 未実装機能(AI分析等)を、利用可能な機能と誤解されないよう明示するバッジ。 */
+.badge-coming-soon {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: #ff9d2e1a;
+  border: 1px solid var(--amber-dark);
+  color: var(--amber-light);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  vertical-align: middle;
+}
 
 /* ============================================================
    モーダル(体験談 簡易表示)
@@ -2287,6 +2306,81 @@ input[type="radio"] {
   header[data-nav-open="true"] .site-nav-actions .button {
     width: 100%;
   }
+
+  /* 画面下固定ナビ。iPhoneのホームインジケータ領域(safe-area-inset-bottom)を
+     paddingとして確保し、コンテンツ側はbodyのpadding-bottomで隠れないようにする。 */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-default);
+    padding: 6px max(4px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom))
+      max(4px, env(safe-area-inset-left));
+    box-shadow: 0 -8px 24px #00000030;
+  }
+  .bottom-nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 52px;
+    padding: 4px 2px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+  }
+  .bottom-nav a svg {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+  }
+  .bottom-nav a.is-active {
+    color: var(--cyan-light);
+  }
+  .bottom-nav-icon-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+  .bottom-nav-icon-wrap .notify-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    margin-left: 0;
+  }
+  .bottom-nav-post {
+    color: var(--amber-light);
+  }
+  .bottom-nav-post-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: var(--on-bright);
+  }
+  .bottom-nav-post-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  /* 下部固定ナビの高さぶん、本文(フッター含む)が隠れないようにする。
+     :has()で「実際に.bottom-navが存在するページ」だけに限定し、認証/エラーページ等
+     (siteHeaderMinimalのみでbottom-navを持たない)に余分な余白が生まれないようにする。 */
+  body:has(.bottom-nav) {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
 }
 @media (max-width: 720px) {
   .hero {
@@ -2301,7 +2395,7 @@ input[type="radio"] {
     width: 100%;
   }
   header {
-    padding: 0 16px;
+    padding: env(safe-area-inset-top) 16px 0;
   }
   header[data-nav-open="true"] .site-nav {
     margin: 0 -16px;
