@@ -33,7 +33,10 @@ class NavigationAdviceTest {
     @SuppressWarnings("unchecked")
     ObjectProvider<com.exradar.service.AccountService> accountProvider = mock(ObjectProvider.class);
 
-    var advice = new NavigationAdvice(accountProvider, usersProvider, mockEnv);
+    @SuppressWarnings("unchecked")
+    ObjectProvider<com.exradar.service.AdminMessagingService> adminMessagingProvider = mock(ObjectProvider.class);
+
+    var advice = new NavigationAdvice(accountProvider, adminMessagingProvider, usersProvider, mockEnv);
     setGaMeasurementId(advice, "G-TESTID123");
     return advice;
   }

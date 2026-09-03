@@ -19,6 +19,8 @@ public class AccountService {
   private final DecisionMemoRepository memos;
   private final ReportRepository reports;
   private final ExperienceReadRepository reads;
+  private final AdminMessageRecipientRepository adminMessageRecipients;
+  private final AdminMessageRepository adminMessages;
   private final PasswordEncoder encoder;
 
   public AccountService(
@@ -30,6 +32,8 @@ public class AccountService {
       DecisionMemoRepository m,
       ReportRepository reports,
       ExperienceReadRepository reads,
+      AdminMessageRecipientRepository adminMessageRecipients,
+      AdminMessageRepository adminMessages,
       PasswordEncoder e) {
     users = u;
     posts = p;
@@ -39,6 +43,8 @@ public class AccountService {
     memos = m;
     this.reports = reports;
     this.reads = reads;
+    this.adminMessageRecipients = adminMessageRecipients;
+    this.adminMessages = adminMessages;
     encoder = e;
   }
 
@@ -131,6 +137,10 @@ public class AccountService {
     notifications.deleteByRecipientId(userId);
     memos.deleteByUserId(userId);
     reports.deleteByReporterId(userId);
+    // 退会するユーザー自身の受信記録は削除する。送信した管理者メッセージ本体・他の
+    // 受信者の記録は、1人の退会だけでは消えないよう送信者情報だけ外す(FK制約回避)。
+    adminMessageRecipients.deleteByUserId(userId);
+    adminMessages.clearCreatedByAdmin(userId);
     for (var post : ownedPosts) {
       comments.deleteByPostId(post.getId());
       reactions.deleteByPostId(post.getId());

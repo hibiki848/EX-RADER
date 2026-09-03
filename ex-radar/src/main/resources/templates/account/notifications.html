@@ -15,6 +15,30 @@
     <div th:replace="~{fragments/header :: siteHeader}"></div>
     <main class="page">
       <a class="back-link" href="/mypage">← マイページに戻る</a>
+
+      <section class="panel reveal">
+        <div class="section-heading">
+          <h1>運営からのメッセージ</h1>
+        </div>
+        <p th:if="${messageResult.empty}">運営からのメッセージはありません。</p>
+        <article
+          class="notice"
+          th:each="msg:${messageResult.content}"
+          th:classappend="${!msg.read}?' unread'"
+        >
+          <a th:href="@{/mypage/messages/{id}(id=${msg.recipientId})}">
+            <strong th:text="${msg.title}"></strong>
+            <p th:text="${msg.bodyExcerpt}"></p>
+            <small th:text="${#temporals.format(msg.sentAt,'yyyy/MM/dd HH:mm')}"></small>
+          </a>
+        </article>
+        <nav class="pagination" th:if="${messageResult.totalPages > 1}">
+          <a th:if="${messageResult.hasPrevious()}" th:href="@{/mypage/notifications(messagePage=${messageResult.number - 1})}">前へ</a
+          ><span th:text="${messageResult.number + 1}+'/'+${messageResult.totalPages}"></span
+          ><a th:if="${messageResult.hasNext()}" th:href="@{/mypage/notifications(messagePage=${messageResult.number + 1})}">次へ</a>
+        </nav>
+      </section>
+
       <section class="panel reveal">
         <div class="section-heading">
           <h1>通知</h1>
