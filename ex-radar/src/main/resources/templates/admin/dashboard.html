@@ -31,6 +31,24 @@
             <h2>アクセス解析ダッシュボード</h2>
             <p>Google Analytics 4とEXレーダー内部データをまとめて確認できます。</p>
           </div>
+          <form th:action="@{/admin/browser-analytics-exclusion}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" name="excluded" th:value="${!browserAnalyticsExcluded}" />
+            <p class="field-hint">
+              <span th:if="${browserAnalyticsExcluded}"
+                >このブラウザは現在アクセス解析から除外されています(未ログイン時も含む)</span
+              ><span th:unless="${browserAnalyticsExcluded}"
+                >このブラウザ(未ログイン時のアクセスも含む)を確認用に除外できます</span
+              >
+            </p>
+            <button
+              class="button button-secondary"
+              type="submit"
+              th:text="${browserAnalyticsExcluded} ? 'アクセス解析の対象に戻す' : 'このブラウザをアクセス解析から除外'"
+            >
+              このブラウザをアクセス解析から除外
+            </button>
+          </form>
         </div>
         <p id="ga-loading" class="ga-loading">読み込み中です…</p>
         <p id="ga-fetch-error" class="error" hidden>

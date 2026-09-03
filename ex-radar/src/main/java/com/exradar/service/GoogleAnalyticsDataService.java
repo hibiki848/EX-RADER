@@ -42,9 +42,21 @@ public class GoogleAnalyticsDataService {
       @Value("${exradar.analytics.ga4.property-id:}") String propertyId,
       @Value("${exradar.analytics.ga4.service-account-key:}") String serviceAccountKeyJson,
       RestClient.Builder restClientBuilder) {
-    this.propertyId = propertyId;
+    this.propertyId = normalizePropertyId(propertyId);
     this.credentials = buildCredentials(serviceAccountKeyJson);
     this.restClient = restClientBuilder.baseUrl(BASE_URL).build();
+  }
+
+  /**
+   * GA4管理画面の「プロパティの詳細」には"properties/123456789"という形式でプロパティIDが
+   * 表示されることがある。URLテンプレート側が既に"properties/{id}"を含むため、この接頭辞が
+   * 付いたままGA4_PROPERTY_IDへ設定されると"properties/properties/123456789"という
+   * 不正なURLになり404が返る(実際に発生しうる設定ミスのため、ここで吸収する)。
+   */
+  static String normalizePropertyId(String value) {
+    if (value == null) return "";
+    String trimmed = value.trim();
+    return trimmed.startsWith("properties/") ? trimmed.substring("properties/".length()) : trimmed;
   }
 
   public boolean isConfigured() {
@@ -64,10 +76,14 @@ public class GoogleAnalyticsDataService {
     }
   }
 
-  /** Property ID・認証情報の設定有無だけをログに出す(値そのものは秘密情報のため出力しない)。 */
+  /**
+   * Property ID・認証情報の設定有無をログに出す。propertyIdはGA4管理画面で確認できる
+   * 識別子であり秘密情報ではないため値そのものを出力する("properties/..."接頭辞の
+   * 付け間違い等、設定ミスの切り分けに使う)。credentialsの中身(秘密鍵等)は出力しない。
+   */
   private void logConfigurationState(String operation) {
     log.info("GA4 analytics request started: {}", operation);
-    log.info("GA4 property configured: {}", propertyId != null && !propertyId.isBlank());
+    log.info("GA4 property configured: {} (propertyId={})", !propertyId.isBlank(), propertyId);
     log.info("GA4 credentials configured: {}", credentials != null);
   }
 
@@ -76,7 +92,33 @@ public class GoogleAnalyticsDataService {
       credentials.refresh();
       return credentials.getAccessToken().getTokenValue();
     } catch (IOException e) {
+      // credentials.refresh()はGoogleのOAuthトークンエンドポイントと通信する。ここで失敗する
+      // 典型的な原因はサービスアカウントキーが失効・削除されている、システム時刻がずれている、
+      // ネットワーク到達性が無い等。キーの内容やトークン自体はログへ一切出力しない。
+      log.error(
+          "GA4アクセストークンの取得に失敗しました(サービスアカウントキーの有効性・"
+              + "システム時刻・ネットワーク到達性を確認してください)",
+          e);
       throw new IllegalStateException("GA4アクセストークンの取得に失敗しました", e);
+    }
+  }
+
+  /**
+   * RuntimeExceptionをログへ出す共通処理。HTTPエラー応答(RestClientResponseException、
+   * 4xx/5xx)の場合はステータスコードとGA4側のエラーメッセージ本文まで出す(原因の特定に
+   * 直結するため)。それ以外(接続不可・タイムアウト等)は例外メッセージのみ出す。
+   * いずれもAuthorizationヘッダーやcredentials自体をログへ含めることはない。
+   */
+  private void logApiFailure(String label, RuntimeException e) {
+    if (e instanceof org.springframework.web.client.RestClientResponseException httpError) {
+      log.error(
+          "Google Analytics Data API request failed: {} status={} responseBody={}",
+          label,
+          httpError.getStatusCode(),
+          httpError.getResponseBodyAsString(),
+          e);
+    } else {
+      log.error("Google Analytics Data API request failed: {}", label, e);
     }
   }
 
@@ -165,7 +207,7 @@ public class GoogleAnalyticsDataService {
           false,
           null);
     } catch (RuntimeException e) {
-      log.error("Google Analytics Data API request failed: batchRunReports", e);
+      logApiFailure("batchRunReports", e);
       return unavailable("Google Analyticsのデータを取得できませんでした");
     }
   }
@@ -200,7 +242,7 @@ public class GoogleAnalyticsDataService {
         response.path("reports").forEach(combined::add);
         log.info("Google Analytics Data API request succeeded: {}", label);
       } catch (RuntimeException e) {
-        log.error("Google Analytics Data API request failed: {}", label, e);
+        logApiFailure(label, e);
         throw e;
       }
     }
@@ -228,7 +270,7 @@ public class GoogleAnalyticsDataService {
       log.info("Google Analytics Data API request succeeded: runRealtimeReport");
       return metricAt(response, 0, 0);
     } catch (RuntimeException e) {
-      log.error("Google Analytics Data API request failed: runRealtimeReport", e);
+      logApiFailure("runRealtimeReport", e);
       return null;
     }
   }
