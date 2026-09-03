@@ -10,6 +10,7 @@ import com.exradar.entity.Role;
 import com.exradar.entity.User;
 import com.exradar.repository.UserRepository;
 import com.exradar.security.OAuth2LoginFailureHandler;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ class AccountLinkControllerTest {
   @Autowired MockMvc mvc;
   @Autowired UserRepository users;
   @Autowired PasswordEncoder encoder;
+  @Autowired EntityManager entityManager;
 
   @Test
   void withoutPendingLinkRedirectsToLogin() throws Exception {
@@ -68,6 +70,12 @@ class AccountLinkControllerTest {
             .andExpect(redirectedUrl("/"))
             .andReturn();
 
+    // 1st-levelキャッシュ越しの見かけ上の一致(mutateしたJavaオブジェクトをそのまま読み返しているだけ)
+    // ではなく、実際にDBへUPDATEされたことを検証するため、永続化コンテキストを一度破棄してから
+    // 読み直す(これによりAccountLinkController側でuser.linkGoogleAccount(sub)の後にusers.save(user)
+    // を呼び忘れる回帰が起きた場合、このテストが確実に落ちるようにしている)。
+    entityManager.flush();
+    entityManager.clear();
     User linked = users.findById(existing.getId()).orElseThrow();
     assertThat(linked.getProviderUserId()).isEqualTo("sub-def");
     // メール+パスワードでのログイン能力(パスワードハッシュ)は変更されていない
@@ -77,6 +85,38 @@ class AccountLinkControllerTest {
     HttpSession authenticatedSession = result.getRequest().getSession(false);
     mvc.perform(get("/mypage").session((MockHttpSession) authenticatedSession))
         .andExpect(status().isOk());
+  }
+
+  /**
+   * ケース3の回帰テスト: 一度連携が完了したユーザーが再度Googleでログインした場合、
+   * アカウント連携確認画面(AccountLinkRequiredException)を経由せず、
+   * CustomOidcUserServiceがfindByProviderUserId(sub)だけでそのユーザーを見つけられること。
+   */
+  @Test
+  void secondGoogleLoginAfterLinkingSkipsConfirmationScreen() throws Exception {
+    User existing =
+        users.save(
+            new User("link-target5@example.com", encoder.encode("password123"), "既存ユーザー", Role.USER));
+    MockHttpSession session = pendingLinkSession("sub-repeat", "link-target5@example.com");
+
+    mvc.perform(
+            post("/oauth2/link-account")
+                .session(session)
+                .with(csrf())
+                .param("password", "password123"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/"));
+
+    entityManager.flush();
+    entityManager.clear();
+
+    // 2回目以降のGoogleログインでCustomOidcUserService#findOrCreateUserが最初に行うのと同じ
+    // 突合(findByProviderUserId)。これがヒットする限り、AccountLinkRequiredExceptionは
+    // 発生せず「連携確認画面を出さずログイン成功」する(CustomOidcUserServiceTest側で、
+    // このメソッドがヒットした場合に例外を投げず既存ユーザーを返すことは別途検証済み)。
+    User relinked = users.findByProviderUserId("sub-repeat").orElseThrow();
+    assertThat(relinked.getEmail()).isEqualTo("link-target5@example.com");
+    assertThat(relinked.getId()).isEqualTo(existing.getId());
   }
 
   @Test
