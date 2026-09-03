@@ -16,6 +16,11 @@ server:
     include-message: never
     include-stacktrace: never
 exradar:
+  # 旧Railway本番ホスト(例: ex-rader-production.up.railway.app)。本番Railwayサービスの
+  # 環境変数LEGACY_HOSTにのみ設定する。未設定(dev/test/staging等)ではリダイレクトは常に無効。
+  legacy-host: ${LEGACY_HOST:}
+  # リダイレクト先の正式ドメイン。
+  canonical-host: ${CANONICAL_HOST:ex-radar.jp}
   analytics:
     measurement-id: ${GA4_MEASUREMENT_ID:}
     ga4:
