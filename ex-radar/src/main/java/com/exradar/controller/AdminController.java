@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.exradar.dto.AdminUserSearchCriteria;
 import com.exradar.dto.AdminUserSortField;
@@ -61,6 +62,7 @@ public class AdminController {
     model.addAttribute("publishedPostCount", service.publishedPostCount());
     model.addAttribute("result", userSearch.search(effectiveCriteria, page, sort, direction));
     model.addAttribute("criteria", criteria);
+    model.addAttribute("criteriaQuery", criteriaQueryString(criteria));
     model.addAttribute("sort", sort);
     model.addAttribute("direction", direction);
     model.addAttribute("filter", filter == null ? "all" : filter);
@@ -81,6 +83,7 @@ public class AdminController {
         userSearch.search(
             AdminUserSearchCriteria.empty(), 0, AdminUserSortField.REGISTERED_AT, Sort.Direction.DESC));
     model.addAttribute("criteria", AdminUserSearchCriteria.empty());
+    model.addAttribute("criteriaQuery", criteriaQueryString(AdminUserSearchCriteria.empty()));
     model.addAttribute("sort", AdminUserSortField.REGISTERED_AT);
     model.addAttribute("direction", Sort.Direction.DESC);
     model.addAttribute("filter", "all");
@@ -121,6 +124,48 @@ public class AdminController {
         c.firstPostTo(), c.hasPosted(), c.postCountMin(), c.postCountMax(), c.everPaid(),
         c.firstPaidFrom(), c.firstPaidTo(), c.currentlyPaid(), c.paidDurationMinDays(),
         c.paidDurationMaxDays());
+  }
+
+  /**
+   * AdminUserSearchCriteriaの全項目(~26個)をクエリ文字列へ変換する。
+   * Thymeleafの@{}リンク式は、これだけの数の${}をパラメータに並べると
+   * 構文解析自体に失敗する(TemplateProcessingException)ため、Java側で
+   * 文字列として組み立ててからテンプレート内では文字列連結のみで使う。
+   */
+  private String criteriaQueryString(AdminUserSearchCriteria c) {
+    var b = UriComponentsBuilder.newInstance();
+    addParam(b, "name", c.name());
+    addParam(b, "email", c.email());
+    addParam(b, "userId", c.userId());
+    addParam(b, "role", c.role());
+    addParam(b, "suspended", c.suspended());
+    if (c.plans() != null) for (var plan : c.plans()) addParam(b, "plans", plan);
+    addParam(b, "registeredFrom", c.registeredFrom());
+    addParam(b, "registeredTo", c.registeredTo());
+    addParam(b, "registeredDaysAgoMin", c.registeredDaysAgoMin());
+    addParam(b, "registeredDaysAgoMax", c.registeredDaysAgoMax());
+    addParam(b, "firstLoginFrom", c.firstLoginFrom());
+    addParam(b, "firstLoginTo", c.firstLoginTo());
+    addParam(b, "lastLoginFrom", c.lastLoginFrom());
+    addParam(b, "lastLoginTo", c.lastLoginTo());
+    addParam(b, "neverLoggedIn", c.neverLoggedIn());
+    addParam(b, "firstPostFrom", c.firstPostFrom());
+    addParam(b, "firstPostTo", c.firstPostTo());
+    addParam(b, "hasPosted", c.hasPosted());
+    addParam(b, "postCountMin", c.postCountMin());
+    addParam(b, "postCountMax", c.postCountMax());
+    addParam(b, "everPaid", c.everPaid());
+    addParam(b, "firstPaidFrom", c.firstPaidFrom());
+    addParam(b, "firstPaidTo", c.firstPaidTo());
+    addParam(b, "currentlyPaid", c.currentlyPaid());
+    addParam(b, "paidDurationMinDays", c.paidDurationMinDays());
+    addParam(b, "paidDurationMaxDays", c.paidDurationMaxDays());
+    var query = b.build().encode().toString();
+    return query.startsWith("?") ? query.substring(1) : query;
+  }
+
+  private void addParam(UriComponentsBuilder b, String name, Object value) {
+    if (value != null) b.queryParam(name, value);
   }
 
   @PostMapping("/browser-analytics-exclusion")

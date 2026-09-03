@@ -2,6 +2,7 @@ package com.exradar.controller;
 
 import com.exradar.repository.UserRepository;
 import com.exradar.service.AccountService;
+import com.exradar.service.AdminMessagingService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Principal;
@@ -14,6 +15,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @ControllerAdvice
 public class NavigationAdvice {
   private final ObjectProvider<AccountService> service;
+  private final ObjectProvider<AdminMessagingService> adminMessaging;
   private final ObjectProvider<UserRepository> users;
   private final Environment environment;
 
@@ -31,16 +33,30 @@ public class NavigationAdvice {
   private boolean seoIndexable;
 
   public NavigationAdvice(
-      ObjectProvider<AccountService> s, ObjectProvider<UserRepository> users, Environment environment) {
+      ObjectProvider<AccountService> s,
+      ObjectProvider<AdminMessagingService> adminMessaging,
+      ObjectProvider<UserRepository> users,
+      Environment environment) {
     service = s;
+    this.adminMessaging = adminMessaging;
     this.users = users;
     this.environment = environment;
   }
 
+  /**
+   * 既存の「通知」(コメント・リアクション、AccountService)と、新設の運営メッセージ
+   * (AdminMessagingService)、両方の未読数を合算した値。バッジの表示先(ヘッダー・
+   * モバイル下部ナビ)を1つに保つため、通知の種類ごとに別々のバッジを増やさず、
+   * ここで一元的に合算する。匿名ユーザー(p==null)ではどちらのクエリも実行しない。
+   */
   @ModelAttribute("unreadNotificationCount")
   public long unread(Principal p) {
+    if (p == null) return 0;
     var a = service.getIfAvailable();
-    return p == null || a == null ? 0 : a.unread(p.getName());
+    var m = adminMessaging.getIfAvailable();
+    long legacy = a == null ? 0 : a.unread(p.getName());
+    long messages = m == null ? 0 : m.unreadCount(p.getName());
+    return legacy + messages;
   }
 
   /**

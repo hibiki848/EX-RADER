@@ -292,6 +292,14 @@
           >
           <button>この条件で検索する</button><a href="/admin">条件をクリア</a>
         </form>
+        <p class="field-hint">
+          <a
+            class="button button-secondary"
+            th:href="@{/admin/messages/new} + '?' + ${criteriaQuery}"
+          >
+            この検索条件に一致する全員へメッセージを送る
+          </a>
+        </p>
       </details>
 
       <section class="panel reveal admin-users">
@@ -308,6 +316,7 @@
           <button type="button" class="button button-secondary" data-select-page>このページを全選択</button>
           <button type="button" class="button button-secondary" data-select-clear>選択を解除</button>
           <span id="admin-selection-count" class="field-hint">0件選択中</span>
+          <button type="button" class="button" id="admin-message-selected" disabled>選択したユーザーへメッセージを送る</button>
         </div>
 
         <div class="admin-table-wrap">
@@ -400,12 +409,12 @@
         <nav class="pagination" th:if="${result.totalPages > 1}">
           <a
             th:if="${result.hasPrevious()}"
-            th:href="@{/admin(page=${result.number - 1}, sort=${sort}, direction=${direction}, filter=${filter}, name=${criteria.name}, email=${criteria.email}, userId=${criteria.userId}, plans=${criteria.plans}, registeredFrom=${criteria.registeredFrom}, registeredTo=${criteria.registeredTo}, registeredDaysAgoMin=${criteria.registeredDaysAgoMin}, registeredDaysAgoMax=${criteria.registeredDaysAgoMax}, firstLoginFrom=${criteria.firstLoginFrom}, firstLoginTo=${criteria.firstLoginTo}, lastLoginFrom=${criteria.lastLoginFrom}, lastLoginTo=${criteria.lastLoginTo}, neverLoggedIn=${criteria.neverLoggedIn}, firstPostFrom=${criteria.firstPostFrom}, firstPostTo=${criteria.firstPostTo}, hasPosted=${criteria.hasPosted}, postCountMin=${criteria.postCountMin}, postCountMax=${criteria.postCountMax}, everPaid=${criteria.everPaid}, firstPaidFrom=${criteria.firstPaidFrom}, firstPaidTo=${criteria.firstPaidTo}, currentlyPaid=${criteria.currentlyPaid}, paidDurationMinDays=${criteria.paidDurationMinDays}, paidDurationMaxDays=${criteria.paidDurationMaxDays})"
+            th:href="@{/admin(page=${result.number - 1}, sort=${sort}, direction=${direction}, filter=${filter})} + '&' + ${criteriaQuery}"
             >前へ</a
           ><span th:text="${result.number + 1}+'/'+${result.totalPages}"></span
           ><a
             th:if="${result.hasNext()}"
-            th:href="@{/admin(page=${result.number + 1}, sort=${sort}, direction=${direction}, filter=${filter}, name=${criteria.name}, email=${criteria.email}, userId=${criteria.userId}, plans=${criteria.plans}, registeredFrom=${criteria.registeredFrom}, registeredTo=${criteria.registeredTo}, registeredDaysAgoMin=${criteria.registeredDaysAgoMin}, registeredDaysAgoMax=${criteria.registeredDaysAgoMax}, firstLoginFrom=${criteria.firstLoginFrom}, firstLoginTo=${criteria.firstLoginTo}, lastLoginFrom=${criteria.lastLoginFrom}, lastLoginTo=${criteria.lastLoginTo}, neverLoggedIn=${criteria.neverLoggedIn}, firstPostFrom=${criteria.firstPostFrom}, firstPostTo=${criteria.firstPostTo}, hasPosted=${criteria.hasPosted}, postCountMin=${criteria.postCountMin}, postCountMax=${criteria.postCountMax}, everPaid=${criteria.everPaid}, firstPaidFrom=${criteria.firstPaidFrom}, firstPaidTo=${criteria.firstPaidTo}, currentlyPaid=${criteria.currentlyPaid}, paidDurationMinDays=${criteria.paidDurationMinDays}, paidDurationMaxDays=${criteria.paidDurationMaxDays})"
+            th:href="@{/admin(page=${result.number + 1}, sort=${sort}, direction=${direction}, filter=${filter})} + '&' + ${criteriaQuery}"
             >次へ</a
           >
         </nav>
@@ -442,26 +451,35 @@
       });
     </script>
     <script>
-      // ユーザー選択(将来の一括メッセージ配信・お知らせ配信向け)。今回は選択状態の
-      // UIのみを用意し、実際の送信処理は実装しない。選択はページ内(現在表示中の行)に
-      // 限定される(ページをまたいだ選択の保持は行わない、単純さを優先)。
+      // ユーザー選択(個別・複数ユーザーへのメッセージ配信向け)。選択はページ内
+      // (現在表示中の行)に限定される(ページをまたいだ選択の保持は行わない、
+      // 単純さを優先。ページを跨いだ全件は「検索条件に一致する全員」機能で対応する)。
       (function () {
         var table = document.getElementById('admin-user-table');
         if (!table) return;
         var countEl = document.getElementById('admin-selection-count');
         var selectPageButton = document.querySelector('[data-select-page]');
         var clearButton = document.querySelector('[data-select-clear]');
+        var messageSelectedButton = document.getElementById('admin-message-selected');
 
         function checkboxes() {
           return Array.prototype.slice.call(table.querySelectorAll('.admin-user-checkbox'));
         }
 
+        function selectedIds() {
+          return checkboxes()
+            .filter(function (cb) {
+              return cb.checked;
+            })
+            .map(function (cb) {
+              return cb.value;
+            });
+        }
+
         function updateCount() {
-          if (!countEl) return;
-          var selected = checkboxes().filter(function (cb) {
-            return cb.checked;
-          }).length;
-          countEl.textContent = selected + '件選択中';
+          var ids = selectedIds();
+          if (countEl) countEl.textContent = ids.length + '件選択中';
+          if (messageSelectedButton) messageSelectedButton.disabled = ids.length === 0;
         }
 
         checkboxes().forEach(function (cb) {
@@ -481,6 +499,16 @@
               cb.checked = false;
             });
             updateCount();
+          });
+        }
+        if (messageSelectedButton) {
+          messageSelectedButton.addEventListener('click', function () {
+            var params = selectedIds()
+              .map(function (id) {
+                return 'selectedUserId=' + encodeURIComponent(id);
+              })
+              .join('&');
+            if (params) window.location.href = '/admin/messages/new?' + params;
           });
         }
         updateCount();

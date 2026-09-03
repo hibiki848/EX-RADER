@@ -19,7 +19,7 @@
             <a class="button header-login" sec:authorize="isAnonymous()" href="/login">ログイン</a>
             <a class="button" sec:authorize="isAnonymous()" href="/register">無料ではじめる</a>
             <a class="button-secondary button" sec:authorize="isAuthenticated()" href="/mypage"
-              >マイページ<b class="notify-badge" th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></b
+              >マイページ<b class="notify-badge" th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}" th:text="${unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}"></b
             ></a>
             <a class="button admin-nav-button" sec:authorize="hasRole('ADMIN')" href="/admin">管理者画面</a>
             <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post">
@@ -66,7 +66,7 @@
             <path d="M6 10a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
             <path d="M10 18.5a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
           </svg>
-          <b class="notify-badge" th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></b>
+          <b class="notify-badge" th:if="${unreadNotificationCount != null and unreadNotificationCount > 0}" th:text="${unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}"></b>
         </span>
         <span>通知</span>
       </a>
@@ -89,11 +89,12 @@
 
     <!--/* 管理画面専用サブナビ。共通headerには管理者専用リンクを置かないため、
          管理画面配下のページ本文にこれを差し込み、既存の管理者導線を維持する。
-         current: 'dashboard' | 'articles' | 'reports' */-->
+         current: 'dashboard' | 'articles' | 'reports' | 'messages' */-->
     <nav th:fragment="adminSubnav(current)" class="admin-subnav" aria-label="管理画面ナビゲーション">
       <a href="/admin" th:classappend="${current == 'dashboard'} ? ' is-active'">管理者ダッシュボード</a>
       <a href="/admin/articles" th:classappend="${current == 'articles'} ? ' is-active'">記事管理</a>
       <a href="/admin/reports" th:classappend="${current == 'reports'} ? ' is-active'">通報管理</a>
+      <a href="/admin/messages" th:classappend="${current == 'messages'} ? ' is-active'">メッセージ配信</a>
     </nav>
   </body>
 </html>

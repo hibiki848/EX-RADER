@@ -2,6 +2,7 @@ package com.exradar.controller;
 
 import com.exradar.form.*;
 import com.exradar.service.AccountService;
+import com.exradar.service.AdminMessagingService;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;
@@ -14,9 +15,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/mypage")
 public class AccountController {
   private final AccountService service;
+  private final AdminMessagingService messaging;
 
-  public AccountController(AccountService s) {
+  public AccountController(AccountService s, AdminMessagingService messaging) {
     service = s;
+    this.messaging = messaging;
   }
 
   @GetMapping
@@ -81,8 +84,10 @@ public class AccountController {
   }
 
   @GetMapping("/notifications")
-  public String notifications(Principal p, Model m) {
+  public String notifications(
+      Principal p, @RequestParam(defaultValue = "0") int messagePage, Model m) {
     m.addAttribute("notifications", service.notifications(p.getName()));
+    m.addAttribute("messageResult", messaging.listFor(p.getName(), messagePage));
     return "account/notifications";
   }
 
@@ -96,6 +101,17 @@ public class AccountController {
   public String readAll(Principal p) {
     service.readAll(p.getName());
     return "redirect:/mypage/notifications";
+  }
+
+  /**
+   * 運営メッセージの詳細。開いた時点(GETでの正常表示)で既読にする。
+   * recipient.userId==認証ユーザーのIDをサーバー側で必ず検証するため(サービス層の
+   * open()内部)、他ユーザー宛のIDをURLへ直打ちしても404として扱われ閲覧できない。
+   */
+  @GetMapping("/messages/{id}")
+  public String messageDetail(Principal p, @PathVariable Long id, Model m) {
+    m.addAttribute("recipient", messaging.open(id, p.getName()));
+    return "account/message-detail";
   }
 
   @PostMapping("/delete")

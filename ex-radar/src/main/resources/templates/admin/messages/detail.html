@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <th:block th:replace="~{fragments/favicon :: links}"></th:block>
+    <title th:text="${message.title} + ' | 配信履歴 | EXレーダー'"></title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="detail-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='messages')}"></div>
+      <a class="back-link" href="/admin/messages">← 配信履歴一覧に戻る</a>
+      <p class="success" th:if="${success}" th:text="${success}"></p>
+
+      <article class="detail-hero panel">
+        <p class="eyebrow" th:text="${#temporals.format(message.sentAt, 'yyyy/MM/dd HH:mm')} + ' 配信'"></p>
+        <h1 th:text="${message.title}"></h1>
+        <p th:text="${message.createdByAdmin != null ? message.createdByAdmin.displayName + 'さんが送信' : '送信した管理者は退会済みです'}"></p>
+      </article>
+
+      <section class="panel story-section">
+        <h2>本文</h2>
+        <p th:text="${message.body}" style="white-space: pre-wrap"></p>
+        <p th:if="${message.linkUrl}"><a th:href="${message.linkUrl}" target="_blank" rel="noopener noreferrer" th:text="${message.linkUrl}"></a></p>
+      </section>
+
+      <section class="panel story-section">
+        <h2>配信対象(<span th:text="${#lists.size(recipients)}"></span>人)</h2>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>ユーザー</th><th>既読状態</th><th>既読日時</th></tr></thead>
+            <tbody>
+              <tr th:each="r : ${recipients}">
+                <td><strong th:text="${r.user.displayName}"></strong><small th:text="${r.user.email}"></small></td>
+                <td><span th:class="${r.read ? 'status-badge' : 'status-badge is-stopped'}" th:text="${r.read ? '既読' : '未読'}"></span></td>
+                <td th:text="${r.readAt != null ? #temporals.format(r.readAt, 'yyyy/MM/dd HH:mm') : '—'}"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>
