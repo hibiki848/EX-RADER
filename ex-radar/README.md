@@ -216,6 +216,8 @@ macOS / Linux：
    | `GA4_SERVICE_ACCOUNT_KEY`（任意） | 管理者ダッシュボードのGA4連携用。サービスアカウントのJSONキーの中身をそのまま設定 |
    | `GOOGLE_CLIENT_ID`（任意） | Googleログイン用のクライアントID。未設定の場合はGoogleログイン機能自体が無効化され、従来のメール+パスワード認証のみになる |
    | `GOOGLE_CLIENT_SECRET`（任意） | Googleログイン用のクライアントシークレット |
+   | `LEGACY_HOST`（任意、独自ドメイン移行後の本番サービスのみ） | 旧Railway本番URLのホスト名（例: `ex-rader-production.up.railway.app`）。設定すると、このホスト宛のアクセスのみ`CANONICAL_HOST`へ301リダイレクトする。未設定時はリダイレクト機能自体が無効（staging等の他サービスには設定しないこと） |
+   | `CANONICAL_HOST`（任意、デフォルト`ex-radar.jp`） | `LEGACY_HOST`設定時のリダイレクト先ドメイン |
 
    `PORT`はRailwayが自動的に設定するため、追加設定は不要です（アプリ側は`${PORT:8080}`で待ち受けます）。
 
