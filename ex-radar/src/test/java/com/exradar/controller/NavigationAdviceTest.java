@@ -7,11 +7,14 @@ import static org.mockito.Mockito.when;
 import com.exradar.entity.Role;
 import com.exradar.entity.User;
 import com.exradar.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 /**
  * GA4タグ(gtag.js)を出力してよいかどうかの判定ロジックの単体テスト。
@@ -51,22 +54,34 @@ class NavigationAdviceTest {
     return () -> email;
   }
 
+  /** Cookieを一切持たない、通常のリクエストを模したもの。 */
+  private HttpServletRequest requestWithoutCookie() {
+    return new MockHttpServletRequest();
+  }
+
+  /** 「このブラウザをアクセス解析から除外」設定済みのブラウザから来たリクエストを模したもの。 */
+  private HttpServletRequest requestWithBrowserExclusionCookie() {
+    var request = new MockHttpServletRequest();
+    request.setCookies(new Cookie(NavigationAdvice.BROWSER_EXCLUSION_COOKIE, "1"));
+    return request;
+  }
+
   @Test
   void nonProdEnvironmentNeverEmitsGaTagEvenForAnonymous() {
     var advice = advice("dev");
-    assertThat(advice.gaMeasurementId(null)).isEmpty();
+    assertThat(advice.gaMeasurementId(null, requestWithoutCookie())).isEmpty();
   }
 
   @Test
   void testProfileNeverEmitsGaTag() {
     var advice = advice("test");
-    assertThat(advice.gaMeasurementId(null)).isEmpty();
+    assertThat(advice.gaMeasurementId(null, requestWithoutCookie())).isEmpty();
   }
 
   @Test
   void prodAndAnonymousUserIsMeasured() {
     var advice = advice("prod");
-    assertThat(advice.gaMeasurementId(null)).isEqualTo("G-TESTID123");
+    assertThat(advice.gaMeasurementId(null, requestWithoutCookie())).isEqualTo("G-TESTID123");
   }
 
   @Test
@@ -75,7 +90,8 @@ class NavigationAdviceTest {
     var user = new User("regular@example.com", "hash", "一般ユーザー", Role.USER);
     when(users.findByEmailIgnoreCase("regular@example.com")).thenReturn(Optional.of(user));
 
-    assertThat(advice.gaMeasurementId(principalFor("regular@example.com"))).isEqualTo("G-TESTID123");
+    assertThat(advice.gaMeasurementId(principalFor("regular@example.com"), requestWithoutCookie()))
+        .isEqualTo("G-TESTID123");
   }
 
   @Test
@@ -85,7 +101,8 @@ class NavigationAdviceTest {
     user.setAnalyticsExcluded(true);
     when(users.findByEmailIgnoreCase("excluded@example.com")).thenReturn(Optional.of(user));
 
-    assertThat(advice.gaMeasurementId(principalFor("excluded@example.com"))).isEmpty();
+    assertThat(advice.gaMeasurementId(principalFor("excluded@example.com"), requestWithoutCookie()))
+        .isEmpty();
   }
 
   @Test
@@ -96,7 +113,8 @@ class NavigationAdviceTest {
     admin.setAnalyticsExcluded(false);
     when(users.findByEmailIgnoreCase("admin@example.com")).thenReturn(Optional.of(admin));
 
-    assertThat(advice.gaMeasurementId(principalFor("admin@example.com"))).isEmpty();
+    assertThat(advice.gaMeasurementId(principalFor("admin@example.com"), requestWithoutCookie()))
+        .isEmpty();
   }
 
   @Test
@@ -105,23 +123,80 @@ class NavigationAdviceTest {
     var user = new User("was-excluded@example.com", "hash", "元除外ユーザー", Role.USER);
     user.setAnalyticsExcluded(true);
     when(users.findByEmailIgnoreCase("was-excluded@example.com")).thenReturn(Optional.of(user));
-    assertThat(advice.gaMeasurementId(principalFor("was-excluded@example.com"))).isEmpty();
+    assertThat(advice.gaMeasurementId(principalFor("was-excluded@example.com"), requestWithoutCookie()))
+        .isEmpty();
 
     user.setAnalyticsExcluded(false);
-    assertThat(advice.gaMeasurementId(principalFor("was-excluded@example.com"))).isEqualTo("G-TESTID123");
+    assertThat(advice.gaMeasurementId(principalFor("was-excluded@example.com"), requestWithoutCookie()))
+        .isEqualTo("G-TESTID123");
   }
 
   @Test
   void loggedOutAfterExclusionIsMeasuredAsAnonymous() {
     var advice = advice("prod");
     // ログアウト後はPrincipalがnullになる(除外対象だったユーザーの情報は引き継がれない)。
-    assertThat(advice.gaMeasurementId(null)).isEqualTo("G-TESTID123");
+    assertThat(advice.gaMeasurementId(null, requestWithoutCookie())).isEqualTo("G-TESTID123");
   }
 
   @Test
   void blankMeasurementIdNeverEmitsRegardlessOfEnvironmentOrUser() {
     var advice = advice("prod");
     setGaMeasurementId(advice, "");
-    assertThat(advice.gaMeasurementId(null)).isEmpty();
+    assertThat(advice.gaMeasurementId(null, requestWithoutCookie())).isEmpty();
+  }
+
+  // --- ここから「このブラウザを除外」Cookieに関するテスト ---
+
+  @Test
+  void browserExclusionCookieStopsMeasurementForAnonymousVisitor() {
+    // 要望の核心: ログイン前(匿名)の状態でも、このブラウザ由来のアクセスは計測しない。
+    var advice = advice("prod");
+    assertThat(advice.gaMeasurementId(null, requestWithBrowserExclusionCookie())).isEmpty();
+  }
+
+  @Test
+  void browserExclusionCookieStopsMeasurementEvenForRegularLoggedInUser() {
+    // ブラウザ除外は、ログイン後の一般ユーザー(analyticsExcluded=false)であっても優先される。
+    var advice = advice("prod");
+    var user = new User("regular-on-excluded-browser@example.com", "hash", "一般ユーザー", Role.USER);
+    when(users.findByEmailIgnoreCase("regular-on-excluded-browser@example.com"))
+        .thenReturn(Optional.of(user));
+
+    assertThat(
+            advice.gaMeasurementId(
+                principalFor("regular-on-excluded-browser@example.com"),
+                requestWithBrowserExclusionCookie()))
+        .isEmpty();
+  }
+
+  @Test
+  void withoutExclusionCookieAnonymousIsStillMeasuredAsBefore() {
+    // Cookieが無いブラウザ(=一般の未ログイン利用者)は従来どおり計測される。
+    var advice = advice("prod");
+    assertThat(advice.gaMeasurementId(null, requestWithoutCookie())).isEqualTo("G-TESTID123");
+  }
+
+  @Test
+  void isBrowserExcludedReturnsFalseWhenNoCookiesArePresent() {
+    assertThat(NavigationAdvice.isBrowserExcluded(requestWithoutCookie())).isFalse();
+  }
+
+  @Test
+  void isBrowserExcludedReturnsFalseWhenOtherCookiesArePresentButNotThisOne() {
+    var request = new MockHttpServletRequest();
+    request.setCookies(new Cookie("JSESSIONID", "abc123"));
+    assertThat(NavigationAdvice.isBrowserExcluded(request)).isFalse();
+  }
+
+  @Test
+  void isBrowserExcludedReturnsTrueOnlyForExactValueOne() {
+    var request = new MockHttpServletRequest();
+    request.setCookies(new Cookie(NavigationAdvice.BROWSER_EXCLUSION_COOKIE, "0"));
+    assertThat(NavigationAdvice.isBrowserExcluded(request)).isFalse();
+  }
+
+  @Test
+  void isBrowserExcludedReturnsTrueWhenCookieIsSet() {
+    assertThat(NavigationAdvice.isBrowserExcluded(requestWithBrowserExclusionCookie())).isTrue();
   }
 }
