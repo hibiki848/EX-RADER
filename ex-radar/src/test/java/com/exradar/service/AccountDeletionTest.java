@@ -7,9 +7,13 @@ import com.exradar.entity.Category;
 import com.exradar.entity.ExperienceRead;
 import com.exradar.entity.Role;
 import com.exradar.entity.User;
+import com.exradar.repository.AdminAnnouncementRecipientRepository;
+import com.exradar.repository.AdminAnnouncementRepository;
 import com.exradar.repository.CategoryRepository;
 import com.exradar.repository.ExperienceReadRepository;
 import com.exradar.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,6 +30,9 @@ class AccountDeletionTest {
   @Autowired CategoryRepository categories;
   @Autowired ExperiencePostService postService;
   @Autowired ExperienceReadRepository reads;
+  @Autowired AdminAnnouncementService announcementService;
+  @Autowired AdminAnnouncementRepository announcements;
+  @Autowired AdminAnnouncementRecipientRepository announcementRecipients;
   @Autowired PasswordEncoder encoder;
 
   @Test
@@ -71,6 +78,41 @@ class AccountDeletionTest {
     // 投稿削除の前に片付けられ、FK制約違反にならない。
     service.deleteAccount(author.getEmail(), "password123");
     assertThat(reads.count()).isZero();
+  }
+
+  /** お知らせの対象者(受信側)が退会しても、FK制約違反にならず自分のRecipientレコードだけが消える。 */
+  @Test
+  void deletingRecipientAccountRemovesTheirAnnouncementRecipientRecordWithoutFkViolation() {
+    var admin = users.save(new User("announcement-delete-admin@example.com", encoder.encode("password123"), "運営", Role.ADMIN));
+    var target = users.save(new User("announcement-delete-target@example.com", encoder.encode("password123"), "対象者", Role.USER));
+    var announcement =
+        announcementService.create(
+            "退会確認お知らせ", "本文", null, LocalDateTime.now().minusDays(1), null, 0, admin.getEmail(), List.of(target.getId()));
+    assertThat(announcementRecipients.countByAnnouncementId(announcement.getId())).isEqualTo(1);
+
+    service.deleteAccount(target.getEmail(), "password123");
+
+    assertThat(announcementRecipients.countByAnnouncementId(announcement.getId())).isZero();
+    assertThat(announcements.findById(announcement.getId())).isPresent();
+  }
+
+  /**
+   * お知らせを作成した管理者が退会しても、お知らせ本体・他の対象者のRecipientレコードは
+   * 削除されない(送信者情報だけがNULLになる)。
+   */
+  @Test
+  void deletingCreatingAdminAccountClearsAttributionButKeepsAnnouncementAndOtherRecipients() {
+    var admin = users.save(new User("announcement-admin-delete-admin@example.com", encoder.encode("password123"), "運営", Role.ADMIN));
+    var target = users.save(new User("announcement-admin-delete-target@example.com", encoder.encode("password123"), "対象者", Role.USER));
+    var announcement =
+        announcementService.create(
+            "作成者退会確認お知らせ", "本文", null, LocalDateTime.now().minusDays(1), null, 0, admin.getEmail(), List.of(target.getId()));
+
+    service.deleteAccount(admin.getEmail(), "password123");
+
+    var reloaded = announcements.findById(announcement.getId()).orElseThrow();
+    assertThat(reloaded.getCreatedByAdmin()).isNull();
+    assertThat(announcementRecipients.countByAnnouncementId(announcement.getId())).isEqualTo(1);
   }
 
   private com.exradar.form.ExperiencePostForm validForm(Long categoryId) {

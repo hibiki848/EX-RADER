@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <th:block th:replace="~{fragments/favicon :: links}"></th:block>
+    <title>ログイン時お知らせを作成 | EXレーダー</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="form-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='announcements')}"></div>
+      <a class="back-link" href="/admin">← 管理者ダッシュボードに戻る</a>
+      <div class="page-heading">
+        <p class="eyebrow">ADMIN CONSOLE</p>
+        <h1>ログイン時お知らせを作成</h1>
+        <p>選択したユーザー、または検索条件に一致する全ユーザーを対象に作成します。対象はこの作成時点で確定し、以後変わりません。</p>
+      </div>
+
+      <section class="panel">
+        <h2>配信対象</h2>
+        <p
+          th:text="${targetMode == 'EXPLICIT'}
+            ? '管理者ユーザー一覧で選択した ' + ${targetCount} + ' 人が対象です。'
+            : 'この検索条件に一致する ' + ${targetCount} + ' 人が対象です(作成した瞬間に対象を確定します。以後、対象ユーザーの条件が変わっても対象者は変わりません)。'"
+        >
+          対象人数
+        </p>
+        <p class="error" th:if="${targetCount == 0}">対象が0人のため、このままでは作成できません。一覧に戻って条件を見直してください。</p>
+        <ul class="admin-message-target-sample" th:if="${targetCount > 0}">
+          <li th:each="u : ${targetSample}" th:text="${u.displayName} + '（' + ${u.email} + '）'"></li>
+          <li th:if="${targetSampleRemaining > 0}" th:text="'ほか ' + ${targetSampleRemaining} + ' 人'"></li>
+        </ul>
+      </section>
+
+      <form
+        class="experience-form"
+        th:object="${adminAnnouncementForm}"
+        th:action="@{/admin/announcements}"
+        method="post"
+        id="admin-announcement-form"
+      >
+        <div class="error-summary" th:if="${#fields.hasAnyErrors()}" role="alert">
+          <strong>入力内容を確認してください</strong>
+          <ul>
+            <li th:each="e:${#fields.allErrors()}" th:text="${e}"></li>
+          </ul>
+        </div>
+        <p class="error" th:if="${targetError}" th:text="${targetError}"></p>
+        <p class="error" th:if="${dateError}" th:text="${dateError}"></p>
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" name="targetMode" th:value="${targetMode}" />
+        <th:block th:if="${targetMode == 'EXPLICIT'}">
+          <input type="hidden" th:each="id : ${targetUserIds}" name="selectedUserId" th:value="${id}" />
+        </th:block>
+        <th:block th:if="${targetMode == 'CRITERIA'}">
+          <input type="hidden" name="name" th:value="${criteria.name}" />
+          <input type="hidden" name="email" th:value="${criteria.email}" />
+          <input type="hidden" name="userId" th:value="${criteria.userId}" />
+          <input type="hidden" name="role" th:value="${criteria.role}" />
+          <input type="hidden" name="suspended" th:value="${criteria.suspended}" />
+          <input type="hidden" th:each="plan : ${criteria.plans}" name="plans" th:value="${plan}" />
+          <input type="hidden" name="registeredFrom" th:value="${criteria.registeredFrom}" />
+          <input type="hidden" name="registeredTo" th:value="${criteria.registeredTo}" />
+          <input type="hidden" name="registeredDaysAgoMin" th:value="${criteria.registeredDaysAgoMin}" />
+          <input type="hidden" name="registeredDaysAgoMax" th:value="${criteria.registeredDaysAgoMax}" />
+          <input type="hidden" name="firstLoginFrom" th:value="${criteria.firstLoginFrom}" />
+          <input type="hidden" name="firstLoginTo" th:value="${criteria.firstLoginTo}" />
+          <input type="hidden" name="lastLoginFrom" th:value="${criteria.lastLoginFrom}" />
+          <input type="hidden" name="lastLoginTo" th:value="${criteria.lastLoginTo}" />
+          <input type="hidden" name="neverLoggedIn" th:value="${criteria.neverLoggedIn}" />
+          <input type="hidden" name="firstPostFrom" th:value="${criteria.firstPostFrom}" />
+          <input type="hidden" name="firstPostTo" th:value="${criteria.firstPostTo}" />
+          <input type="hidden" name="hasPosted" th:value="${criteria.hasPosted}" />
+          <input type="hidden" name="postCountMin" th:value="${criteria.postCountMin}" />
+          <input type="hidden" name="postCountMax" th:value="${criteria.postCountMax}" />
+          <input type="hidden" name="everPaid" th:value="${criteria.everPaid}" />
+          <input type="hidden" name="firstPaidFrom" th:value="${criteria.firstPaidFrom}" />
+          <input type="hidden" name="firstPaidTo" th:value="${criteria.firstPaidTo}" />
+          <input type="hidden" name="currentlyPaid" th:value="${criteria.currentlyPaid}" />
+          <input type="hidden" name="paidDurationMinDays" th:value="${criteria.paidDurationMinDays}" />
+          <input type="hidden" name="paidDurationMaxDays" th:value="${criteria.paidDurationMaxDays}" />
+        </th:block>
+
+        <section class="panel form-section">
+          <h2>内容</h2>
+          <label>タイトル（必須）<input th:field="*{title}" maxlength="200" /><small th:errors="*{title}"></small></label>
+          <label>本文（必須）<textarea th:field="*{body}" maxlength="4000" rows="8"></textarea><small th:errors="*{body}"></small></label>
+          <label
+            >リンク（任意）<input th:field="*{linkUrl}" maxlength="500" placeholder="https://ex-radar.jp/... または /experiences/1" /><span class="field-hint"
+              >http(s)から始まるURL、または/から始まるサイト内パスを指定できます。</span
+            ><small th:errors="*{linkUrl}"></small
+          ></label>
+        </section>
+
+        <section class="panel form-section">
+          <h2>配信期間・優先度</h2>
+          <label
+            >配信開始日時（必須）<input type="datetime-local" th:field="*{startsAt}" /><small th:errors="*{startsAt}"></small
+          ></label>
+          <label
+            >配信終了日時（任意）<input type="datetime-local" th:field="*{endsAt}" /><span class="field-hint"
+              >指定しない場合、非公開にするまで配信され続けます。</span
+            ><small th:errors="*{endsAt}"></small
+          ></label>
+          <label
+            >優先度<input type="number" th:field="*{priority}" step="1" /><span class="field-hint"
+              >複数のお知らせが同時に表示対象の場合、数値が大きいものから優先して1件だけ表示します。</span
+            ></label
+          >
+        </section>
+
+        <button type="submit" id="admin-announcement-submit" th:disabled="${targetCount == 0}">
+          <span th:text="${targetCount}"></span>人を対象に作成します
+        </button>
+        <p class="field-hint">作成直後はまだ非公開です。内容を確認のうえ、詳細画面から「公開」してください。</p>
+      </form>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script>
+      // 二重送信の防止(可能な範囲で): 送信ボタンをクリック直後に無効化し、
+      // 連打・同じフォームの再送信による重複作成を減らす。
+      document.getElementById('admin-announcement-form').addEventListener('submit', function () {
+        var button = document.getElementById('admin-announcement-submit');
+        if (button) {
+          button.disabled = true;
+          button.textContent = '作成中…';
+        }
+      });
+    </script>
+  </body>
+</html>

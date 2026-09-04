@@ -2,9 +2,11 @@ package com.exradar.controller;
 
 import com.exradar.form.*;
 import com.exradar.service.AccountService;
+import com.exradar.service.AdminAnnouncementService;
 import com.exradar.service.AdminMessagingService;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -16,10 +18,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AccountController {
   private final AccountService service;
   private final AdminMessagingService messaging;
+  private final AdminAnnouncementService announcements;
 
-  public AccountController(AccountService s, AdminMessagingService messaging) {
+  public AccountController(AccountService s, AdminMessagingService messaging, AdminAnnouncementService announcements) {
     service = s;
     this.messaging = messaging;
+    this.announcements = announcements;
   }
 
   @GetMapping
@@ -112,6 +116,17 @@ public class AccountController {
   public String messageDetail(Principal p, @PathVariable Long id, Model m) {
     m.addAttribute("recipient", messaging.open(id, p.getName()));
     return "account/message-detail";
+  }
+
+  /**
+   * ログイン後お知らせモーダルの「次回以降このお知らせを表示しない」。fetch()によるAJAX呼び出しを
+   * 想定し、画面遷移せずに完了できるよう204を返す(サービス層でrecipient.userId==認証ユーザーの
+   * IDを必ず検証するため、他ユーザー宛のIDを直打ちしても操作できない)。
+   */
+  @PostMapping("/announcements/{id}/dismiss")
+  public ResponseEntity<Void> dismissAnnouncement(Principal p, @PathVariable Long id) {
+    announcements.dismissPermanently(id, p.getName());
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/delete")
