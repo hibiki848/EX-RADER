@@ -23,7 +23,6 @@ public class HomeController {
     boolean wisdomUnlocked = posts.canReadExperiences(email);
     model.addAttribute("wisdomUnlocked", wisdomUnlocked);
     model.addAttribute("latestPosts", posts.latest(wisdomUnlocked));
-    model.addAttribute("recommendedPosts", posts.recommended(wisdomUnlocked));
     model.addAttribute("latestArticles", articles.latest());
     return "home";
   }

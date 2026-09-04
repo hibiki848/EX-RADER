@@ -649,7 +649,6 @@ button:active {
 .panel,
 .experience-card,
 .admin-post,
-.wisdom-card,
 .view-option,
 .detail-hero,
 .story-section,
@@ -661,7 +660,6 @@ button:active {
 .unlock-card,
 .stat-card,
 .report-counts > div,
-.lesson-mini-card,
 .ai-insight-col {
   background: var(--bg-card);
   border: 1px solid var(--border-default);
@@ -710,7 +708,6 @@ a.admin-post:hover,
 }
 
 .action-grid,
-.wisdom-grid,
 .memo-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -733,6 +730,10 @@ a.admin-post:hover,
 }
 .experience-card {
   padding: 24px;
+}
+.experience-card:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
 }
 .experience-card h2,
 .experience-card h3 {
@@ -908,16 +909,12 @@ a.admin-post:hover,
 .lesson-spotlight h2 {
   color: var(--amber-light);
 }
-.lesson-spotlight blockquote,
-.wisdom-card blockquote {
+.lesson-spotlight blockquote {
   margin: 0;
   font-size: 1.2rem;
   line-height: 1.75;
   font-weight: 700;
   color: var(--text-primary);
-}
-.wisdom-card {
-  padding: 26px;
 }
 .private-note {
   display: inline-block;
@@ -1493,84 +1490,6 @@ input[type="radio"] {
   to {
     transform: scale(2.1);
     opacity: 0;
-  }
-}
-
-/* 経験から得られた教訓(ホーム下部のコンパクトな横長ミニカード。PCで4〜5列)。
-   auto-fitにより件数に応じて均等配置される(3件なら3列均等、5件で5列上限)。
-   ダミーデータでの穴埋めは行わない。 */
-.lesson-mini-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 12px;
-}
-.lesson-mini-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 14px;
-  text-decoration: none;
-  color: inherit;
-  transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
-}
-.lesson-mini-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--cat, var(--amber));
-  transform: translateY(-2px);
-}
-.lesson-mini-icon {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--cat, var(--amber)) 16%, transparent);
-  color: var(--cat, var(--amber-light));
-}
-.lesson-mini-body {
-  min-width: 0;
-}
-.lesson-mini-card p {
-  margin: 0 0 6px;
-  color: var(--text-primary);
-  font-weight: 650;
-  font-size: 0.88rem;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.lesson-mini-card .wisdom-teaser-note {
-  font-size: 0.74rem;
-  line-height: 1.4;
-}
-.lesson-mini-card > span:last-of-type,
-.lesson-mini-body > span:last-of-type {
-  color: var(--cat, var(--text-muted));
-  font-size: 0.76rem;
-  font-weight: 600;
-}
-@media (max-width: 1080px) {
-  .lesson-mini-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-@media (max-width: 640px) {
-  .lesson-mini-grid {
-    display: flex;
-    grid-template-columns: none;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 4px;
-    margin: 0 -16px;
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  .lesson-mini-card {
-    flex: 0 0 68vw;
-    scroll-snap-align: start;
   }
 }
 
@@ -2804,6 +2723,113 @@ input[type="radio"] {
     text-align: left;
   }
 }
+/* ============================================================
+   教訓まとめ(choices/list.html): カテゴリバー・教訓カード。
+   既存の.category-chip/.card-grid/.experience-card/.category-accent/.tags/
+   .category-badge/.card-date/.results-toolbar/.list-view-toggle/.empty-state
+   をそのまま流用し、ここでは差分のみを追加する(スマホ向けデザインをベースに、
+   PC/タブレットでは.explore-pageの既存max-widthで読みやすい幅に収める)。
+   ============================================================ */
+.lesson-category-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin: 4px 0 24px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.lesson-category-chip {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.lesson-category-chip:hover {
+  border-color: var(--cyan);
+  color: var(--cyan-light);
+}
+.lesson-category-chip.is-active {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--on-bright);
+}
+@media (min-width: 900px) {
+  .lesson-category-bar {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+.lesson-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+.lesson-card {
+  padding: 22px;
+}
+.lesson-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.lesson-card-text {
+  margin: 0 0 10px;
+  color: var(--text-primary);
+  font-weight: 650;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lesson-card-detail {
+  display: none;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-default);
+}
+.lesson-card-detail h3 {
+  margin: 0 0 6px;
+}
+.lesson-card-detail .card-excerpt {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.lesson-card-grid[data-view="detailed"] .lesson-card-text {
+  -webkit-line-clamp: unset;
+}
+.lesson-card-grid[data-view="detailed"] .lesson-card-detail {
+  display: block;
+}
+
+.lesson-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 32px 0;
+}
+.lesson-pagination span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

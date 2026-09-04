@@ -50,12 +50,23 @@ class ChoiceGuideRenderingTest {
     categories.findBySlug("choice-rendering").ifPresent(categories::delete);
   }
 
+  /** 旧・カテゴリ別詳細ページのURL(/choices/{slug})は、新しい検索クエリパラメータ形式へ転送される。 */
+  @Test
+  void legacyPerCategoryUrlRedirectsToNewQueryParamUrl() throws Exception {
+    mvc.perform(get("/choices/choice-rendering").with(user("choice@example.com")))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/choices?category=choice-rendering"));
+  }
+
   @Test
   void contributorCanRenderChoiceGuideWithOpenInViewDisabled() throws Exception {
-    mvc.perform(get("/choices/choice-rendering").with(user("choice@example.com")))
+    mvc.perform(
+            get("/choices").param("category", "choice-rendering").with(user("choice@example.com")))
         .andExpect(status().isOk())
-        .andExpect(view().name("choices/detail"))
-        .andExpect(content().string(org.hamcrest.Matchers.containsString("選択肢表示を経験した人から学ぶ")));
+        .andExpect(view().name("choices/list"))
+        // 教訓カードはlearned優先(ExperienceCardDto/experience-cardフラグメントと同じ優先順位)で
+        // 表示するため、フィクスチャのlearned本文が表示される。
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("経験して分かったこと")));
   }
 
   private ExperiencePostForm validForm(Long categoryId) {

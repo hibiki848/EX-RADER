@@ -52,6 +52,23 @@ class CategorySelectionTest {
     assertThat(categories.findBySlug("love")).isPresent();
   }
 
+  /** V18で追加した4カテゴリ(仕事・人間関係・お金・その他)が既存カテゴリを維持したまま追加されていること。 */
+  @Test
+  void flywaySeedsFourAdditionalCategoriesWithoutRemovingExisting() {
+    var active = categories.findByActiveTrueOrderByDisplayOrder();
+    var names = active.stream().map(Category::getName).toList();
+
+    assertThat(names)
+        .contains(
+            "勉強", "高校進学", "大学進学", "専門学校", "高卒就職", "大学中退", "就職", "転職",
+            "異業種転職", "公務員", "資格取得", "上京", "地元就職", "地元へ戻る", "フリーランス", "恋愛");
+    assertThat(names).contains("仕事", "人間関係", "お金", "その他");
+    assertThat(categories.findBySlug("work")).isPresent();
+    assertThat(categories.findBySlug("relationships")).isPresent();
+    assertThat(categories.findBySlug("money")).isPresent();
+    assertThat(categories.findBySlug("other")).isPresent();
+  }
+
   @Test
   void newExperienceFormOffersRealCategoryOptionsIncludingLove() throws Exception {
     users.save(new User("category-form-user@example.com", "encoded", "カテゴリ確認", Role.USER));
@@ -68,6 +85,57 @@ class CategorySelectionTest {
         .andExpect(status().isOk())
         .andExpect(content().string(org.hamcrest.Matchers.containsString("恋愛")))
         .andExpect(content().string(org.hamcrest.Matchers.containsString("すべて")));
+  }
+
+  /** 新カテゴリ「仕事」で投稿でき、DBに正しく保存され、一覧・検索・教訓まとめのいずれでも絞り込める。 */
+  @Test
+  void submittingWorkCategoryPersistsAndIsFilterableEverywhere() throws Exception {
+    var author =
+        users.save(new User("category-work-user@example.com", "encoded", "投稿者", Role.USER));
+    Long workCategoryId = categories.findBySlug("work").orElseThrow().getId();
+
+    mvc.perform(
+            post("/experiences")
+                .with(user(author.getEmail()))
+                .with(csrf())
+                .param("categoryId", String.valueOf(workCategoryId))
+                .param("title", "仕事に関する体験談")
+                .param("situationBefore", "状況")
+                .param("worries", "悩み")
+                .param("alternatives", "選択肢")
+                .param("choiceMade", "選んだこと")
+                .param("reason", "理由")
+                .param("outcome", "結果")
+                .param("goodThings", "良かったこと")
+                .param("difficulties", "大変だったこと")
+                .param("unexpectedThings", "想定外だったこと")
+                .param("learned", "学んだこと")
+                .param("lesson", "教訓")
+                .param("satisfaction", "8")
+                .param("regret", "2")
+                .param("adviceToPastSelf", "アドバイス")
+                .param("published", "true"))
+        .andExpect(status().is3xxRedirection());
+
+    var created =
+        posts.findByAuthorId(author.getId()).stream()
+            .filter(p -> p.getTitle().equals("仕事に関する体験談"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(created.getCategory().getName()).isEqualTo("仕事");
+
+    // 検索画面(/experiences)で絞り込める
+    mvc.perform(get("/experiences").param("categoryId", String.valueOf(workCategoryId)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("仕事に関する体験談")));
+
+    // 教訓まとめ(/choices)でも同じカテゴリで絞り込める(教訓を読める=投稿者自身なのでゲートを満たす)
+    mvc.perform(
+            get("/choices")
+                .param("category", "work")
+                .with(user(author.getEmail())))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("学んだこと")));
   }
 
   @Test

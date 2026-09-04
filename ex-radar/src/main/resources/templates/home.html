@@ -93,50 +93,6 @@
       </div>
     </section>
 
-    <section class="home-section">
-      <div class="section-title">
-        <p class="eyebrow">REFERENCE</p>
-        <h2>経験から得られた教訓</h2>
-      </div>
-
-      <div class="lesson-mini-grid">
-        <a class="experience-card lesson-mini-card category-accent reveal" th:each="p:${recommendedPosts}"
-          th:href="@{/experiences/{id}(id=${p.id})}" th:attr="data-category=${p.category}"
-          th:with="catGroup=${#lists.contains({'就職','高卒就職','転職','異業種転職','公務員','地元就職','フリーランス'}, p.category)
-            ? 'career' : (#lists.contains({'勉強','高校進学','大学進学','専門学校','大学中退','資格取得'}, p.category)
-            ? 'study' : (p.category == '恋愛'
-            ? 'love' : (#lists.contains({'上京','地元へ戻る'}, p.category) ? 'living' : 'default')))}">
-          <span class="lesson-mini-icon" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" th:switch="${catGroup}">
-              <path th:case="'career'"
-                d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7h4a1 1 0 0 1 1 1v3H4V8a1 1 0 0 1 1-1h4Zm2-1.5V7h2V5.5h-2ZM4 12h16v6.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5V12Z"
-                fill="currentColor" />
-              <path th:case="'study'"
-                d="M4 5.2A1.2 1.2 0 0 1 5.2 4H11v16H5.2A1.2 1.2 0 0 1 4 18.8V5.2ZM13 4h5.8A1.2 1.2 0 0 1 20 5.2v13.6a1.2 1.2 0 0 1-1.2 1.2H13V4Z"
-                fill="currentColor" />
-              <path th:case="'love'"
-                d="M12 20.6s-7-4.4-9.4-8.7C1.1 8.6 2.8 5.5 6.1 5.1c1.9-.2 3.4.8 5.9 3.2 2.5-2.4 4-3.4 5.9-3.2 3.3.4 5 3.5 3.5 6.8-2.4 4.3-9.4 8.7-9.4 8.7Z"
-                fill="currentColor" />
-              <path th:case="'living'"
-                d="M3 11.2 12 3l9 8.2h-2.7v8.3a1 1 0 0 1-1 1h-3.8v-6H9.5v6H5.7a1 1 0 0 1-1-1v-8.3H3Z"
-                fill="currentColor" />
-              <path th:case="*"
-                d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7V16h5.6v-.5c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3Z"
-                stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </span>
-          <div class="lesson-mini-body">
-            <p th:if="${wisdomUnlocked}" th:text="${p.learned ?: (p.lesson ?: 'この体験談にはまだ教訓が記載されていません')}"></p>
-            <p th:unless="${wisdomUnlocked}" th:text="${p.difficulties ?: (p.outcome ?: 'この経験には学びがあります')}"></p>
-            <p th:unless="${wisdomUnlocked}" class="wisdom-teaser-note">
-              🔒 投稿すると読めます
-            </p>
-            <span th:text="${p.category}"></span>
-          </div>
-        </a>
-      </div>
-    </section>
-
     <section class="home-section ai-insight-section">
       <div class="section-title">
         <p class="eyebrow">AI INSIGHT <span class="badge-coming-soon">COMING SOON</span></p>
@@ -224,41 +180,6 @@
       <p class="eyebrow" th:text="${p.category}">カテゴリ</p>
       <h2 th:text="${p.title}">体験談のタイトル</h2>
       <p th:text="${p.author} + 'さんの体験談'">投稿者</p>
-      <div class="summary-facts"><span th:text="'満足度 ' + ${p.satisfaction} + '/10'">満足度</span></div>
-      <div class="summary-modal-body">
-        <div class="summary-item">
-          <h3>選択前の状況</h3>
-          <p th:text="${p.situationBefore}">内容</p>
-        </div>
-        <div class="summary-item">
-          <h3>選んだこと</h3>
-          <p th:text="${p.choiceMade}">内容</p>
-        </div>
-        <div class="summary-item">
-          <h3>その後の結果</h3>
-          <p th:text="${p.outcome}">内容</p>
-        </div>
-        <div class="summary-item" th:if="${wisdomUnlocked}">
-          <h3>経験して分かったこと</h3>
-          <p th:text="${p.learned ?: p.lesson}">内容</p>
-        </div>
-        <div class="summary-item wisdom-gate" th:unless="${wisdomUnlocked}">
-          <h3>この経験から得た教訓</h3>
-          <p>🔒 あなたの経験を1つ投稿すると読めます。</p>
-          <a class="button" href="/experiences/new">体験談を投稿する</a>
-        </div>
-      </div>
-      <div class="summary-actions"><a class="button" th:href="@{/experiences/{id}(id=${p.id})}">詳細ページで読む</a></div>
-    </section>
-  </div>
-  <div class="summary-modal" sec:authorize="isAuthenticated()" th:each="p:${recommendedPosts}"
-    th:id="|home-reference-summary-${p.id}|" hidden>
-    <div class="summary-backdrop" data-close-summary></div>
-    <section class="summary-modal-card" role="dialog" aria-modal="true">
-      <button class="summary-close" type="button" data-close-summary aria-label="簡易表示を閉じる">×</button>
-      <p class="eyebrow" th:text="${p.category}">カテゴリ</p>
-      <h2 th:text="${p.title}">体験談のタイトル</h2>
-      <p>一人の経験を判断材料として読む</p>
       <div class="summary-facts"><span th:text="'満足度 ' + ${p.satisfaction} + '/10'">満足度</span></div>
       <div class="summary-modal-body">
         <div class="summary-item">

@@ -31,8 +31,12 @@
         </p>
       </div>
 
-      <details class="search-panel-wrap" open>
-        <summary>絞り込み条件</summary>
+      <details class="search-panel-wrap">
+        <summary
+          th:text="${experienceSearchCriteria.activeConditionCount()} > 0
+            ? '絞り込み条件（'+${experienceSearchCriteria.activeConditionCount()}+'件指定中）'
+            : '絞り込み条件'"
+        >絞り込み条件</summary>
         <form class="search-panel" method="get">
           <label
             >キーワード<input

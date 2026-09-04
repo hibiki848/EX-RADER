@@ -3,6 +3,7 @@ package com.exradar.repository;
 import com.exradar.dto.ExperienceSearchCriteria;
 import com.exradar.entity.ExperiencePost;
 import com.exradar.entity.PostStatus;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -63,6 +64,44 @@ public final class ExperiencePostSpecifications {
             cb.and(
                 p,
                 cb.lessThan(root.get("createdAt"), c.dateTo().plusDays(1).atStartOfDay()));
+      return p;
+    };
+  }
+
+  /**
+   * 「教訓まとめ」ページ用。公開投稿のうち、教訓(learned・lessonのいずれか)が実際に
+   * 記入されているものだけを対象にする(教訓を読むためのページに「まだ記載されていません」
+   * という空のカードを並べても閲覧体験を損なうだけのため)。
+   * keywordは教訓本文とタグ名を横断的に検索し(4-1)、tagは既存のタグ絞り込みと同じ完全一致
+   * 条件(4-2、既存のExperienceSearchCriteria.tagをそのまま再利用)で個別に絞り込める。
+   */
+  public static Specification<ExperiencePost> publicLessonSearch(ExperienceSearchCriteria c) {
+    return (root, q, cb) -> {
+      q.distinct(true);
+      Predicate p = cb.equal(root.get("status"), PostStatus.PUBLISHED);
+      p =
+          cb.and(
+              p,
+              cb.or(
+                  cb.gt(cb.length(cb.trim(cb.coalesce(root.get("learned"), ""))), 0),
+                  cb.gt(cb.length(cb.trim(cb.coalesce(root.get("lesson"), ""))), 0)));
+      if (c.categoryId() != null)
+        p = cb.and(p, cb.equal(root.get("category").get("id"), c.categoryId()));
+      if (text(c.keyword())) {
+        String k = "%" + c.keyword().trim().toLowerCase() + "%";
+        var keywordTagJoin = root.join("tags", JoinType.LEFT);
+        p =
+            cb.and(
+                p,
+                cb.or(
+                    cb.like(cb.lower(cb.coalesce(root.get("learned"), "")), k),
+                    cb.like(cb.lower(cb.coalesce(root.get("lesson"), "")), k),
+                    cb.like(cb.lower(keywordTagJoin.get("name")), k)));
+      }
+      if (text(c.tag()))
+        p =
+            cb.and(
+                p, cb.equal(cb.lower(root.join("tags").get("name")), c.tag().trim().toLowerCase()));
       return p;
     };
   }

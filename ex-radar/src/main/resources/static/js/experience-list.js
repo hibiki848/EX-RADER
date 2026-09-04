@@ -152,6 +152,19 @@
     // 読み込みに失敗しても既定のcompact表示のまま続行する。
   }
 
+  // 絞り込みパネル(<details class="search-panel-wrap">)の開閉状態をaria-expandedへ
+  // 明示的に反映する(<summary>はネイティブに開閉可能・JS不要でも壊れないが、
+  // 支援技術向けにopen状態を明示するため)。
+  var searchPanelWrap = document.querySelector('.search-panel-wrap');
+  if (searchPanelWrap) {
+    var summary = searchPanelWrap.querySelector(':scope > summary');
+    var syncAriaExpanded = function () {
+      if (summary) summary.setAttribute('aria-expanded', searchPanelWrap.open ? 'true' : 'false');
+    };
+    syncAriaExpanded();
+    searchPanelWrap.addEventListener('toggle', syncAriaExpanded);
+  }
+
   // 簡易表示モーダルの開閉。イベント委譲にすることで、追加読み込みで後から
   // 挿入されたカード(モーダルは持たないため詳細ページ導線のみ)にも影響なく動作する。
   document.addEventListener('click', function (event) {

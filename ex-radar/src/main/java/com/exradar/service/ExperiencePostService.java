@@ -15,6 +15,9 @@ public class ExperiencePostService {
   /** 一覧の初期表示・追加読み込み(もっと見る)1回あたりの件数。 */
   public static final int SEARCH_PAGE_SIZE = 20;
 
+  /** 教訓まとめ(/choices)ページの1ページあたりの件数。 */
+  public static final int LESSON_PAGE_SIZE = 24;
+
   private final ExperiencePostRepository posts;
   private final UserRepository users;
   private final CategoryRepository categories;
@@ -79,15 +82,38 @@ public class ExperiencePostService {
     return result.map(p -> ExperienceCardDto.from(p, wisdomUnlocked, readIds.contains(p.getId())));
   }
 
+  /**
+   * 「教訓まとめ」ページ用の検索。publicSearchと違い、教訓(learned/lesson)が実際に
+   * 記入されている投稿だけを対象にし、keywordは教訓本文とタグ名を横断的に検索する
+   * (publicLessonSearch参照)。ページングやread状態の付与の仕組み自体はsearch()と同じ。
+   */
   @Transactional(readOnly = true)
-  public List<ExperienceCardDto> latest(boolean wisdomUnlocked) {
-    return posts.findTop6ByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED).stream()
-        .map(p -> ExperienceCardDto.from(p, wisdomUnlocked))
-        .toList();
+  public Page<ExperienceCardDto> lessonSearch(
+      ExperienceSearchCriteria criteria,
+      int page,
+      String sort,
+      boolean wisdomUnlocked,
+      String viewerEmail) {
+    var order =
+        "oldest".equals(sort)
+            ? Sort.by(Sort.Order.asc("createdAt"))
+            : Sort.by(Sort.Order.desc("createdAt"));
+    var result =
+        posts.findAll(
+            ExperiencePostSpecifications.publicLessonSearch(criteria),
+            PageRequest.of(Math.max(0, page), LESSON_PAGE_SIZE, order));
+    Long viewerId =
+        viewerEmail == null ? null : users.findByEmailIgnoreCase(viewerEmail).map(User::getId).orElse(null);
+    Set<Long> readIds =
+        viewerId == null || result.isEmpty()
+            ? Set.of()
+            : new HashSet<>(
+                reads.findReadPostIds(viewerId, result.map(ExperiencePost::getId).toList()));
+    return result.map(p -> ExperienceCardDto.from(p, wisdomUnlocked, readIds.contains(p.getId())));
   }
 
   @Transactional(readOnly = true)
-  public List<ExperienceCardDto> recommended(boolean wisdomUnlocked) {
+  public List<ExperienceCardDto> latest(boolean wisdomUnlocked) {
     return posts.findTop6ByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED).stream()
         .map(p -> ExperienceCardDto.from(p, wisdomUnlocked))
         .toList();
