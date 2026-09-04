@@ -1,10 +1,13 @@
 package com.exradar.form;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 
-public class AdminMessageForm {
+public class AdminAnnouncementForm {
   @NotBlank(message = "タイトルを入力してください")
   @Size(max = 200, message = "タイトルは200文字以内で入力してください")
   private String title;
@@ -13,12 +16,18 @@ public class AdminMessageForm {
   @Size(max = 4000, message = "本文は4000文字以内で入力してください")
   private String body;
 
-  // 空欄は許容するが、指定する場合はhttp(s)絶対URLかサイト内相対パスのみ許可する
-  // (javascript:等の危険なスキームを保存させない)。ログイン時お知らせ(AdminAnnouncementForm)と
-  // 検証パターンを共通化している(LinkUrlPattern参照)。
   @Size(max = 500, message = "リンクは500文字以内で入力してください")
   @Pattern(regexp = LinkUrlPattern.REGEX, message = LinkUrlPattern.MESSAGE)
   private String linkUrl;
+
+  @NotNull(message = "配信開始日時を入力してください")
+  @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+  private LocalDateTime startsAt;
+
+  @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+  private LocalDateTime endsAt;
+
+  private Integer priority = 0;
 
   public String getTitle() {
     return title;
@@ -42,5 +51,29 @@ public class AdminMessageForm {
 
   public void setLinkUrl(String v) {
     linkUrl = v;
+  }
+
+  public LocalDateTime getStartsAt() {
+    return startsAt;
+  }
+
+  public void setStartsAt(LocalDateTime v) {
+    startsAt = v;
+  }
+
+  public LocalDateTime getEndsAt() {
+    return endsAt;
+  }
+
+  public void setEndsAt(LocalDateTime v) {
+    endsAt = v;
+  }
+
+  public Integer getPriority() {
+    return priority;
+  }
+
+  public void setPriority(Integer v) {
+    priority = v;
   }
 }

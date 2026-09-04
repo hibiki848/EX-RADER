@@ -2041,6 +2041,84 @@ input[type="radio"] {
   gap: 18px;
   margin-top: 28px;
 }
+/* ============================================================
+   モーダル(ログイン後お知らせ)
+   ============================================================ */
+.announcement-modal[hidden] {
+  display: none;
+}
+.announcement-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+}
+.announcement-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(3px);
+}
+.announcement-modal-card {
+  position: relative;
+  width: min(480px, 100%);
+  /* iPhone等でも画面からはみ出さないよう、最大高さを制限しカード内部だけをスクロールさせる */
+  max-height: min(80vh, 640px);
+  overflow-y: auto;
+  padding: clamp(22px, 5vw, 32px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 70px #000000a0;
+}
+.announcement-modal-card h2 {
+  margin: 0.2em 42px 0.5em 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+}
+.announcement-body {
+  margin: 0 0 20px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+.announcement-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.announcement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.announcement-dismiss-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.announcement-dismiss-option input {
+  width: auto;
+}
+
 .view-options-page,
 .summary-page {
   max-width: 920px;

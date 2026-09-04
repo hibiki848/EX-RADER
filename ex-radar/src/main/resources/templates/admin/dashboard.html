@@ -299,6 +299,12 @@
           >
             この検索条件に一致する全員へメッセージを送る
           </a>
+          <a
+            class="button button-secondary"
+            th:href="@{/admin/announcements/new} + '?' + ${criteriaQuery}"
+          >
+            この検索条件に一致する全員へお知らせを配信する
+          </a>
         </p>
       </details>
 
@@ -317,6 +323,7 @@
           <button type="button" class="button button-secondary" data-select-clear>選択を解除</button>
           <span id="admin-selection-count" class="field-hint">0件選択中</span>
           <button type="button" class="button" id="admin-message-selected" disabled>選択したユーザーへメッセージを送る</button>
+          <button type="button" class="button" id="admin-announcement-selected" disabled>選択したユーザーへお知らせを配信</button>
         </div>
 
         <div class="admin-table-wrap">
@@ -461,6 +468,7 @@
         var selectPageButton = document.querySelector('[data-select-page]');
         var clearButton = document.querySelector('[data-select-clear]');
         var messageSelectedButton = document.getElementById('admin-message-selected');
+        var announcementSelectedButton = document.getElementById('admin-announcement-selected');
 
         function checkboxes() {
           return Array.prototype.slice.call(table.querySelectorAll('.admin-user-checkbox'));
@@ -480,6 +488,7 @@
           var ids = selectedIds();
           if (countEl) countEl.textContent = ids.length + '件選択中';
           if (messageSelectedButton) messageSelectedButton.disabled = ids.length === 0;
+          if (announcementSelectedButton) announcementSelectedButton.disabled = ids.length === 0;
         }
 
         checkboxes().forEach(function (cb) {
@@ -509,6 +518,16 @@
               })
               .join('&');
             if (params) window.location.href = '/admin/messages/new?' + params;
+          });
+        }
+        if (announcementSelectedButton) {
+          announcementSelectedButton.addEventListener('click', function () {
+            var params = selectedIds()
+              .map(function (id) {
+                return 'selectedUserId=' + encodeURIComponent(id);
+              })
+              .join('&');
+            if (params) window.location.href = '/admin/announcements/new?' + params;
           });
         }
         updateCount();

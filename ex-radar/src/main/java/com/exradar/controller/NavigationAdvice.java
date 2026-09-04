@@ -1,7 +1,9 @@
 package com.exradar.controller;
 
+import com.exradar.entity.AdminAnnouncementRecipient;
 import com.exradar.repository.UserRepository;
 import com.exradar.service.AccountService;
+import com.exradar.service.AdminAnnouncementService;
 import com.exradar.service.AdminMessagingService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,8 +16,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @ControllerAdvice
 public class NavigationAdvice {
+  /** 同一ログインセッション中は原則1回のみモーダル表示するためのセッション属性キー。 */
+  private static final String ANNOUNCEMENT_SHOWN_SESSION_KEY = "exr.announcementShown";
+
   private final ObjectProvider<AccountService> service;
   private final ObjectProvider<AdminMessagingService> adminMessaging;
+  private final ObjectProvider<AdminAnnouncementService> announcements;
   private final ObjectProvider<UserRepository> users;
   private final Environment environment;
 
@@ -35,10 +41,12 @@ public class NavigationAdvice {
   public NavigationAdvice(
       ObjectProvider<AccountService> s,
       ObjectProvider<AdminMessagingService> adminMessaging,
+      ObjectProvider<AdminAnnouncementService> announcements,
       ObjectProvider<UserRepository> users,
       Environment environment) {
     service = s;
     this.adminMessaging = adminMessaging;
+    this.announcements = announcements;
     this.users = users;
     this.environment = environment;
   }
@@ -57,6 +65,39 @@ public class NavigationAdvice {
     long legacy = a == null ? 0 : a.unread(p.getName());
     long messages = m == null ? 0 : m.unreadCount(p.getName());
     return legacy + messages;
+  }
+
+  /**
+   * ログイン後お知らせ(モーダル表示)。運営メッセージ(通知一覧に残るBOX型)とは別機能で、
+   * 対象ユーザーがログイン後にページを表示した際、画面中央のモーダルとして表示する。
+   *
+   * - 匿名ユーザーでは呼ばない(unread()と同じ理由)。
+   * - GET以外(POST等のPRGでリダイレクトのみ返す更新系アクション)や/api/**配下は、
+   *   実際にHTMLを描画してユーザーへモーダルを見せるとは限らない(見せないままDBだけ
+   *   「表示済み」にしてしまう事故を避ける)ため、ここで弾いて対象から外す。
+   * - 同一HTTPセッション中に一度でも表示を選んだら、以後は(GETであっても)再チェックしない
+   *   (session属性ANNOUNCEMENT_SHOWN_SESSION_KEY)。ページ遷移のたびにモーダルが
+   *   出続けるUXを避け、「同一ログインセッション中は原則1回のみ表示」を満たす。
+   *   ログアウトでセッションが破棄され、次回ログインでは新しいセッションになるため、
+   *   次回ログイン時は自然に再度表示対象になる。
+   * - 表示できるお知らせが実際に見つかった場合のみ、AdminAnnouncementService側で
+   *   firstDisplayedAt/lastDisplayedAt/displayCountをその場でDBへ記録してから返す
+   *   (JavaScript側だけで表示したことにする設計にはしない)。
+   */
+  @ModelAttribute("pendingAnnouncement")
+  public AdminAnnouncementRecipient pendingAnnouncement(Principal p, HttpServletRequest request) {
+    if (p == null) return null;
+    if (!"GET".equals(request.getMethod())) return null;
+    if (request.getRequestURI().startsWith("/api/")) return null;
+    var session = request.getSession(false);
+    if (session != null && Boolean.TRUE.equals(session.getAttribute(ANNOUNCEMENT_SHOWN_SESSION_KEY))) return null;
+
+    var svc = announcements.getIfAvailable();
+    if (svc == null) return null;
+    var recipient = svc.pickAndRecordDisplayIfDue(p.getName());
+    if (recipient == null) return null;
+    request.getSession(true).setAttribute(ANNOUNCEMENT_SHOWN_SESSION_KEY, Boolean.TRUE);
+    return recipient;
   }
 
   /**

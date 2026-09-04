@@ -21,6 +21,8 @@ public class AccountService {
   private final ExperienceReadRepository reads;
   private final AdminMessageRecipientRepository adminMessageRecipients;
   private final AdminMessageRepository adminMessages;
+  private final AdminAnnouncementRecipientRepository adminAnnouncementRecipients;
+  private final AdminAnnouncementRepository adminAnnouncements;
   private final PasswordEncoder encoder;
 
   public AccountService(
@@ -34,6 +36,8 @@ public class AccountService {
       ExperienceReadRepository reads,
       AdminMessageRecipientRepository adminMessageRecipients,
       AdminMessageRepository adminMessages,
+      AdminAnnouncementRecipientRepository adminAnnouncementRecipients,
+      AdminAnnouncementRepository adminAnnouncements,
       PasswordEncoder e) {
     users = u;
     posts = p;
@@ -45,6 +49,8 @@ public class AccountService {
     this.reads = reads;
     this.adminMessageRecipients = adminMessageRecipients;
     this.adminMessages = adminMessages;
+    this.adminAnnouncementRecipients = adminAnnouncementRecipients;
+    this.adminAnnouncements = adminAnnouncements;
     encoder = e;
   }
 
@@ -137,10 +143,12 @@ public class AccountService {
     notifications.deleteByRecipientId(userId);
     memos.deleteByUserId(userId);
     reports.deleteByReporterId(userId);
-    // 退会するユーザー自身の受信記録は削除する。送信した管理者メッセージ本体・他の
-    // 受信者の記録は、1人の退会だけでは消えないよう送信者情報だけ外す(FK制約回避)。
+    // 退会するユーザー自身の受信記録は削除する。送信した管理者メッセージ・お知らせ本体、
+    // 他の受信者/対象者の記録は、1人の退会だけでは消えないよう送信者情報だけ外す(FK制約回避)。
     adminMessageRecipients.deleteByUserId(userId);
     adminMessages.clearCreatedByAdmin(userId);
+    adminAnnouncementRecipients.deleteByUserId(userId);
+    adminAnnouncements.clearCreatedByAdmin(userId);
     for (var post : ownedPosts) {
       comments.deleteByPostId(post.getId());
       reactions.deleteByPostId(post.getId());
