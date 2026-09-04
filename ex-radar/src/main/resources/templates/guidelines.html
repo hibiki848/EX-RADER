@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <th:block th:replace="~{fragments/favicon :: links}"></th:block>
+    <title>投稿ガイドライン | EXレーダー</title>
+    <th:block
+      th:replace="~{fragments/seo :: meta(
+        title='投稿ガイドライン | EXレーダー',
+        description='EXレーダーへ投稿する際にお守りいただきたいガイドラインです。経験から得られた学びを、安心して共有・閲覧できる場にするためのお願いをまとめています。',
+        canonicalUrl=${canonicalUrl},
+        ogType='website')}"
+    ></th:block>
+    <meta name="robots" content="index, follow" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="page legal-page">
+      <h1>投稿ガイドライン</h1>
+      <div class="article-body">
+        <h2>基本方針</h2>
+        <p>
+          EXレーダーは、自分や他人の失敗・後悔・経験から得られた教訓を共有し、他のユーザーが今後の行動や考え方をより良くするためのサービスです。
+        </p>
+        <p>
+          投稿は誰かを攻撃するためのものではなく、<strong>「経験から得られた学びを共有する」</strong>ことを基本としてください。「誰が悪かったか」ではなく、「この経験から何を学べるか」を中心に書いていただくことが、読む人にとって最も役立つ投稿につながります。
+        </p>
+
+        <h2>投稿してはいけない内容</h2>
+        <ul>
+          <li>実名等を用いた第三者への攻撃</li>
+          <li>個人を特定可能な情報</li>
+          <li>誹謗中傷</li>
+          <li>差別的表現</li>
+          <li>犯罪を助長する内容</li>
+          <li>第三者のプライバシー侵害</li>
+          <li>著作権侵害</li>
+          <li>営業・広告・スパム</li>
+          <li>虚偽情報</li>
+          <li>EXレーダーの目的と著しく異なる投稿</li>
+        </ul>
+        <p>
+          第三者に関する情報の扱いについては<a href="/terms">利用規約</a>第5条もあわせてご確認ください。上記に該当する、またはそのおそれがあると運営者が判断した投稿は、<a href="/terms">利用規約</a>第7条に基づき非公開・編集・削除等の対応を行うことがあります。
+        </p>
+
+        <h2>推奨する投稿</h2>
+        <p>次のような構成で書いていただくと、読む人にとって特に参考になりやすい投稿になります。</p>
+        <ul>
+          <li>実際に起きたこと</li>
+          <li>そのとき何を考えていたか</li>
+          <li>なぜ失敗・後悔したか</li>
+          <li>そこから何を学んだか</li>
+          <li>次に同じ状況ならどうするか</li>
+        </ul>
+
+        <h2>不適切な投稿を見つけたら</h2>
+        <p>
+          ガイドラインに反すると思われる投稿を見つけた場合は、<a href="/contact">お問い合わせ</a>（種別「不適切な投稿の報告」）より対象の投稿をお知らせください。
+        </p>
+      </div>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

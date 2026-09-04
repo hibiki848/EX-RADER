@@ -90,13 +90,14 @@
 
     <!--/* 管理画面専用サブナビ。共通headerには管理者専用リンクを置かないため、
          管理画面配下のページ本文にこれを差し込み、既存の管理者導線を維持する。
-         current: 'dashboard' | 'articles' | 'reports' | 'messages' | 'announcements' */-->
+         current: 'dashboard' | 'articles' | 'reports' | 'messages' | 'announcements' | 'inquiries' */-->
     <nav th:fragment="adminSubnav(current)" class="admin-subnav" aria-label="管理画面ナビゲーション">
       <a href="/admin" th:classappend="${current == 'dashboard'} ? ' is-active'">管理者ダッシュボード</a>
       <a href="/admin/articles" th:classappend="${current == 'articles'} ? ' is-active'">記事管理</a>
       <a href="/admin/reports" th:classappend="${current == 'reports'} ? ' is-active'">通報管理</a>
       <a href="/admin/messages" th:classappend="${current == 'messages'} ? ' is-active'">メッセージ配信</a>
       <a href="/admin/announcements" th:classappend="${current == 'announcements'} ? ' is-active'">ログイン時お知らせ</a>
+      <a href="/admin/inquiries" th:classappend="${current == 'inquiries'} ? ' is-active'">お問い合わせ管理</a>
     </nav>
   </body>
 </html>

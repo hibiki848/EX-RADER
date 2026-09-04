@@ -23,6 +23,7 @@ public class AccountService {
   private final AdminMessageRepository adminMessages;
   private final AdminAnnouncementRecipientRepository adminAnnouncementRecipients;
   private final AdminAnnouncementRepository adminAnnouncements;
+  private final ContactInquiryRepository contactInquiries;
   private final PasswordEncoder encoder;
 
   public AccountService(
@@ -38,6 +39,7 @@ public class AccountService {
       AdminMessageRepository adminMessages,
       AdminAnnouncementRecipientRepository adminAnnouncementRecipients,
       AdminAnnouncementRepository adminAnnouncements,
+      ContactInquiryRepository contactInquiries,
       PasswordEncoder e) {
     users = u;
     posts = p;
@@ -51,6 +53,7 @@ public class AccountService {
     this.adminMessages = adminMessages;
     this.adminAnnouncementRecipients = adminAnnouncementRecipients;
     this.adminAnnouncements = adminAnnouncements;
+    this.contactInquiries = contactInquiries;
     encoder = e;
   }
 
@@ -149,10 +152,14 @@ public class AccountService {
     adminMessages.clearCreatedByAdmin(userId);
     adminAnnouncementRecipients.deleteByUserId(userId);
     adminAnnouncements.clearCreatedByAdmin(userId);
+    // 退会するユーザーが送信したお問い合わせ自体はサポート履歴として残す(userだけを外す)。
+    contactInquiries.clearUser(userId);
     for (var post : ownedPosts) {
       comments.deleteByPostId(post.getId());
       reactions.deleteByPostId(post.getId());
       reads.deleteByPostId(post.getId());
+      // 削除する投稿を関連投稿として参照しているお問い合わせがあれば、先に外しておく(FK制約回避)。
+      contactInquiries.clearRelatedPost(post.getId());
       posts.delete(post);
     }
     users.delete(user);

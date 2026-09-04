@@ -45,4 +45,18 @@ public class UserService {
             .orElseThrow(() -> new ResourceNotFoundException("ユーザーが見つかりません"));
     user.completeDisplayNameSetup(displayName.trim());
   }
+
+  /**
+   * Google新規登録ユーザーの規約同意画面(/auth/consent)から呼ばれる。
+   * 通常登録(register)と同じUser#agreeToTermsAndPrivacyPolicyを再利用し、
+   * 同意日時の記録ロジックを共通化している。
+   */
+  @Transactional
+  public void completeTermsConsent(String email) {
+    User user =
+        users
+            .findByEmailIgnoreCase(email)
+            .orElseThrow(() -> new ResourceNotFoundException("ユーザーが見つかりません"));
+    user.agreeToTermsAndPrivacyPolicy(LocalDateTime.now());
+  }
 }
