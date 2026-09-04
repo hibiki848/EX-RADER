@@ -15,12 +15,17 @@
           共通化前の各ページの挙動をそのまま維持する。
       「詳細表示」で追加される要素(タグ・満足度)は常にDOM上へ出力し、
       表示切替は祖先要素の[data-view]属性によるCSSのみで行う(JS側での再描画が不要なため)。
+      カード全体は/experiences/{id}への遷移用にdata-url+tabindexを常に持つ(site-nav.jsが
+      クリック・キーボード操作を処理する。認証有無に関わらず遷移先は公開ページのため、
+      gateActionsToAuthの認証ゲートとは無関係に常時有効)。内部のリンク・ボタンとのクリック
+      競合はsite-nav.js側でevent.target.closest('a, button, ...')により回避する。
     */-->
     <article
       class="experience-card category-accent reveal"
       th:fragment="card(p, wisdomUnlocked, modalPrefix, extraClass, gateActionsToAuth)"
       th:classappend="${extraClass}"
-      th:attr="data-category=${p.category}"
+      tabindex="0"
+      th:attr="data-category=${p.category},data-url=@{/experiences/{id}(id=${p.id})}"
     >
       <div class="card-top">
         <span class="category-badge" th:text="${p.category}"></span>

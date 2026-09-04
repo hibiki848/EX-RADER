@@ -315,8 +315,6 @@ class ExperiencePostServiceTest {
 
     assertThat(service.latest(false).get(0).learned()).isNull();
     assertThat(service.latest(true).get(0).learned()).isEqualTo("学んだこと本文");
-    assertThat(service.recommended(false).get(0).lesson()).isNull();
-    assertThat(service.recommended(true).get(0).lesson()).isEqualTo("教訓本文");
     assertThat(service.byAuthor(owner.getId(), 0, false).getContent().get(0).learned()).isNull();
     assertThat(service.byAuthor(owner.getId(), 0, true).getContent().get(0).learned())
         .isEqualTo("学んだこと本文");

@@ -421,6 +421,46 @@ class ExperiencePostControllerTest {
         .andExpect(jsonPath("$.content[0].read").value(true));
   }
 
+  /** 絞り込みパネルは初期状態で閉じており(<details>にopen属性がない)、条件未指定時は件数表示がない。 */
+  @Test
+  void searchPanelIsClosedByDefaultAndShowsNoCountWhenNoConditionsAreActive() throws Exception {
+    var body = mvc.perform(get("/experiences")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+    assertThat(body)
+        .contains("<details class=\"search-panel-wrap\">")
+        .doesNotContain("<details class=\"search-panel-wrap\" open>")
+        .contains(">絞り込み条件<");
+  }
+
+  /** 検索条件を指定してアクセスすると、絞り込みパネルの見出しに指定件数が表示される。 */
+  @Test
+  void searchPanelHeadingShowsActiveConditionCountAfterSearching() throws Exception {
+    var category = categories.save(new Category("転職", "filter-count-category", 1));
+
+    var body =
+        mvc.perform(get("/experiences").param("categoryId", String.valueOf(category.getId())).param("keyword", "後悔"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    assertThat(body).contains("絞り込み条件（2件指定中）");
+  }
+
+  /** 「新着」等で使う体験談カードは、詳細ページへの遷移用にdata-url属性とtabindexを持ち、キーボード操作にも対応する。 */
+  @Test
+  void experienceCardsAreWholeCardClickableViaDataUrlAttribute() throws Exception {
+    var author = users.save(new User("card-click-author@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "card-click-category", 1));
+    var postId = publish(author, category, "カード全体クリック確認用");
+
+    var body = mvc.perform(get("/experiences")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+    assertThat(body)
+        .contains("data-url=\"/experiences/" + postId + "\"")
+        .contains("tabindex=\"0\"");
+  }
+
   private Long publish(User author, Category category, String title) {
     var f = new ExperiencePostForm();
     f.setCategoryId(category.getId());

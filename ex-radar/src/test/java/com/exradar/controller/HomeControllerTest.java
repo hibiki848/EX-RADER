@@ -144,58 +144,6 @@ class HomeControllerTest {
         .andExpect(content().string(containsString("href=\"/articles\"")));
   }
 
-  /**
-   * give to get: 「経験から得られた教訓」カードの教訓本文(learned/lesson)は、
-   * 自分自身の公開体験談を1件以上投稿した閲覧者にのみ表示される。
-   * 匿名・未投稿の閲覧者には教訓本文の代わりに、公開情報(大変だったこと)を使った
-   * 見出しとロック表示を出す(教訓本文そのものはHTMLへ一切出力しない)。
-   */
-  @Test
-  void referenceCardShowsLearnedTextOnlyToUsersWhoHavePublishedTheirOwn() throws Exception {
-    var owner =
-        users.save(new User("home-lesson-user@example.com", encoder.encode("password"), "教訓投稿者", Role.USER));
-    var category = categories.save(new Category("転職", "home-lesson-category", 1));
-    var f = validForm(category.getId());
-    f.setTitle("タイトルはカードのメインテキストには使われないはず");
-    f.setLearned("資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった");
-    f.setDifficulties("勉強時間の確保に苦労した");
-    postService.create(f, owner.getEmail());
-
-    var anonymousBody =
-        mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-    org.assertj.core.api.Assertions.assertThat(anonymousBody)
-        .doesNotContain("資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった")
-        .contains("勉強時間の確保に苦労した")
-        .contains("投稿すると読めます");
-
-    var contributor =
-        users.save(new User("home-lesson-reader@example.com", encoder.encode("password"), "貢献者", Role.USER));
-    postService.create(validForm(category.getId()), contributor.getEmail());
-    var contributorBody =
-        mvc.perform(get("/").with(org.springframework.security.test.web.servlet.request
-                .SecurityMockMvcRequestPostProcessors.user(contributor.getEmail())))
-            .andExpect(status().isOk())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    org.assertj.core.api.Assertions.assertThat(contributorBody)
-        .contains("資格そのものより、挑戦する過程で自分に合う学び方を見つけることが大切だった");
-  }
-
-  @Test
-  void referenceCardFallsBackGracefullyWhenLearnedAndLessonAreBothBlank() throws Exception {
-    var owner =
-        users.save(
-            new User("home-lesson-fallback@example.com", encoder.encode("password"), "教訓未記入者", Role.USER));
-    var category = categories.save(new Category("転職", "home-lesson-fallback-category", 1));
-    var f = validForm(category.getId());
-    // learned/lessonをどちらも未入力のまま(古い投稿を想定)保存する
-    postService.create(f, owner.getEmail());
-
-    // 画面エラー(500)にならず、正常にホームが表示されること
-    mvc.perform(get("/")).andExpect(status().isOk());
-  }
-
   /** 「新着の体験談」カード上部の投稿日は、コンパクトな "yyyy.MM.dd" 形式で表示される。 */
   @Test
   void homeExperienceCardDatesUseCompactDotFormat() throws Exception {
@@ -264,6 +212,41 @@ class HomeControllerTest {
     org.assertj.core.api.Assertions.assertThat(body)
         .doesNotContain("未貢献者には見せない学び本文")
         .contains("あなたの経験を1つ投稿すると読めます");
+  }
+
+  /**
+   * 「経験から得られた教訓」セクションはトップページから完全に削除されている
+   * (見出し・カード・専用モーダルのいずれも出力されない)。
+   */
+  @Test
+  void homeNoLongerHasTheRecommendedLessonsSection() throws Exception {
+    var owner =
+        users.save(new User("home-section-removed@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "home-section-removed-category", 1));
+    postService.create(validForm(category.getId()), owner.getEmail());
+
+    var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+    org.assertj.core.api.Assertions.assertThat(body)
+        .doesNotContain("経験から得られた教訓")
+        .doesNotContain("home-reference-summary-");
+  }
+
+  /**
+   * 「新着の体験談」カードは、詳細ページへ遷移するdata-url属性を(ログイン有無に関わらず)常に持ち、
+   * カード全体がクリック可能になっている(旧・経験から得られた教訓カードが持っていた、
+   * 未ログインでも詳細ページへ直接遷移できる導線を引き継ぐ)。
+   */
+  @Test
+  void latestPostsCardsAreWholeCardClickableEvenForAnonymousVisitors() throws Exception {
+    var owner =
+        users.save(new User("home-card-click@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "home-card-click-category", 1));
+    var post = postService.create(validForm(category.getId()), owner.getEmail());
+
+    var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+    org.assertj.core.api.Assertions.assertThat(body).contains("data-url=\"/experiences/" + post.getId() + "\"");
   }
 
   private ExperiencePostForm validForm(Long categoryId) {
