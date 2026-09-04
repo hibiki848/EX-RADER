@@ -447,6 +447,30 @@
           </article>
         </div>
       </section>
+      <section class="panel reveal admin-posts" th:if="${selectedUser != null}">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PREMIUM BENEFITS</p>
+            <h2>保有特典</h2>
+          </div>
+        </div>
+        <p th:if="${#lists.isEmpty(selectedUserBenefits)}">特典はありません。</p>
+        <div class="admin-post-list" th:unless="${#lists.isEmpty(selectedUserBenefits)}">
+          <article class="admin-post" th:each="b : ${selectedUserBenefits}">
+            <h3 th:text="${b.benefitNameSnapshot}"></h3>
+            <p th:text="${b.sourceDescription}+' ・ '+${#temporals.format(b.grantedAt, 'yyyy/MM/dd')}+'獲得 ・ 状態: '+${b.status}"></p>
+            <form
+              th:if="${b.status.name() == 'AVAILABLE' or b.status.name() == 'RESERVED'}"
+              th:action="@{/admin/users/{userId}/benefits/{benefitId}/revoke(userId=${selectedUser.id},benefitId=${b.id})}"
+              method="post"
+              onsubmit="return confirm('この特典を取り消します。よろしいですか？');"
+              style="display:inline"
+            >
+              <button type="submit" class="text-button">取り消す</button>
+            </form>
+          </article>
+        </div>
+      </section>
     </main>
     <div th:replace="~{fragments/footer :: footer}"></div>
     <script>

@@ -31,3 +31,19 @@ exradar:
     # staging等、検索エンジンに一切載せたくない環境でのみ明示的にfalseを設定する。
     # 未設定時はtrue(=本番のSEO仕様)になるため、設定し忘れても誤ってnoindexにはならない。
     indexable: ${SEO_INDEXABLE:true}
+  stripe:
+    # 未設定(空文字)のままでもアプリ自体は起動する(dev/test等、Stripe機能を使わない環境向け)。
+    # プレミアム決済系のエンドポイントを実際に呼んだ時点でエラーとして顕在化する。
+    api-key: ${STRIPE_API_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    # プレミアム月額のStripe Price ID(Checkoutのline itemに使う)。
+    premium-price-id: ${STRIPE_PREMIUM_PRICE_ID:}
+    # benefit_definitions.stripe_coupon_key(DISCOUNT_20/30/50/FREE_MONTH)を、
+    # 環境(テスト/本番)ごとの実際のStripe Coupon IDへ解決するためのキー。
+    # いずれもStripe Dashboard側でduration=onceの単発Couponとして作成しておくこと
+    # (1回の請求だけに適用する前提のため)。
+    coupons:
+      discount-20: ${STRIPE_COUPON_DISCOUNT_20:}
+      discount-30: ${STRIPE_COUPON_DISCOUNT_30:}
+      discount-50: ${STRIPE_COUPON_DISCOUNT_50:}
+      free-month: ${STRIPE_COUPON_FREE_MONTH:}

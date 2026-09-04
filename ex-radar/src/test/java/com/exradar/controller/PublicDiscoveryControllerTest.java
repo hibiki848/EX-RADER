@@ -11,6 +11,7 @@ import com.exradar.entity.*;
 import com.exradar.repository.*;
 import com.exradar.service.ExperiencePostService;
 import com.exradar.service.InteractionService;
+import com.exradar.service.RewardService;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ class PublicDiscoveryControllerTest {
   @MockBean CategoryRepository categories;
   @MockBean PersonalValueRepository personalValues;
   @MockBean UserRepository users;
+  @MockBean RewardService rewards;
 
   @Test
   void anonymousCanSearchWithPagingAndAllFilters() throws Exception {

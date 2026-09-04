@@ -4,6 +4,8 @@ import com.exradar.form.*;
 import com.exradar.service.AccountService;
 import com.exradar.service.AdminAnnouncementService;
 import com.exradar.service.AdminMessagingService;
+import com.exradar.service.BenefitService;
+import com.exradar.service.RewardService;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +21,20 @@ public class AccountController {
   private final AccountService service;
   private final AdminMessagingService messaging;
   private final AdminAnnouncementService announcements;
+  private final RewardService rewards;
+  private final BenefitService benefits;
 
-  public AccountController(AccountService s, AdminMessagingService messaging, AdminAnnouncementService announcements) {
+  public AccountController(
+      AccountService s,
+      AdminMessagingService messaging,
+      AdminAnnouncementService announcements,
+      RewardService rewards,
+      BenefitService benefits) {
     service = s;
     this.messaging = messaging;
     this.announcements = announcements;
+    this.rewards = rewards;
+    this.benefits = benefits;
   }
 
   @GetMapping
@@ -33,6 +44,8 @@ public class AccountController {
     m.addAttribute("posts", service.posts(p.getName()));
     m.addAttribute("drafts", service.drafts(p.getName()));
     m.addAttribute("reactions", service.reactions(p.getName()));
+    m.addAttribute("userBenefits", benefits.listFor(u.getId()));
+    m.addAttribute("rewardProgress", rewards.progressFor(u));
     return "mypage";
   }
 

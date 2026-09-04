@@ -26,6 +26,8 @@
       </nav>
       <section class="panel reveal">
         <h1 th:text="|${user.displayName}さんのマイページ|">マイページ</h1>
+        <p class="success" th:if="${success}" th:text="${success}"></p>
+        <p class="error" th:if="${premiumError}" th:text="${premiumError}"></p>
         <div class="account-actions">
           <a class="button" href="/mypage/profile">プロフィール編集</a
           ><a href="/mypage/password">パスワード変更</a
@@ -35,6 +37,60 @@
           ><a th:if="${user.role.name() == 'ADMIN'}" href="/admin">管理者画面</a>
         </div>
       </section>
+
+      <section class="panel reveal reward-progress-panel">
+        <h2>次の投稿特典まで</h2>
+        <div th:if="${rewardProgress.nextThreshold != null}">
+          <p class="reward-progress-text">
+            現在 <strong th:text="${rewardProgress.currentCount}"></strong> /
+            <strong th:text="${rewardProgress.nextThreshold}"></strong>件<br />
+            あと<strong th:text="${rewardProgress.postsRemaining}"></strong>件の体験談投稿で
+            「<strong th:text="${rewardProgress.nextBenefitName}"></strong>」を獲得できます。
+          </p>
+          <div class="reward-progress-bar" role="progressbar"
+            th:attr="aria-valuenow=${rewardProgress.progressPercent},aria-valuemin=0,aria-valuemax=100">
+            <div class="reward-progress-bar-fill" th:style="'width:'+${rewardProgress.progressPercent}+'%'"></div>
+          </div>
+        </div>
+        <p th:unless="${rewardProgress.nextThreshold != null}">
+          現在 <strong th:text="${rewardProgress.currentCount}"></strong>件投稿済みです。
+        </p>
+        <a class="button button-learning" href="/experiences/new">体験談を投稿する</a>
+      </section>
+
+      <section class="panel reveal user-benefits-panel">
+        <h2 th:text="'獲得特典（保有中 '+${#lists.size(userBenefits)}+'件）'">獲得特典</h2>
+        <p th:if="${#lists.isEmpty(userBenefits)}">まだ特典はありません。体験談を投稿すると獲得できます。</p>
+        <div class="benefit-card-grid" th:unless="${#lists.isEmpty(userBenefits)}">
+          <article class="benefit-card" th:each="b : ${userBenefits}">
+            <div class="benefit-card-top">
+              <span th:text="${b.benefitNameSnapshot}" class="benefit-card-name"></span>
+              <span
+                class="status-badge"
+                th:classappend="${b.status.name() == 'AVAILABLE'} ? '' : ' is-stopped'"
+                th:text="${
+                  b.status.name() == 'AVAILABLE' ? '利用可能' :
+                  (b.status.name() == 'RESERVED' ? '手続き中' :
+                  (b.status.name() == 'APPLIED' ? '適用済み（請求確定待ち）' :
+                  (b.status.name() == 'USED' ? '使用済み' :
+                  (b.status.name() == 'REVOKED' ? '取消済み' : '期限切れ'))))}"
+              ></span>
+            </div>
+            <p th:text="${b.sourceDescription}"></p>
+            <p class="benefit-card-meta" th:text="${#temporals.format(b.grantedAt, 'yyyy年MM月dd日')}+'獲得'"></p>
+            <p class="benefit-card-meta" th:text="${b.expiresAt != null ? '有効期限 '+#temporals.format(b.expiresAt, 'yyyy年MM月dd日') : '有効期限なし'}"></p>
+            <form
+              th:if="${b.status.name() == 'AVAILABLE'}"
+              th:action="@{/mypage/benefits/{id}/use(id=${b.id})}"
+              method="post"
+              onsubmit="return confirm('この特典を使用します。よろしいですか？（1回の請求につき使用できる特典は1つです）');"
+            >
+              <button type="submit" class="button">この特典を使う</button>
+            </form>
+          </article>
+        </div>
+      </section>
+
       <section class="account-grid">
         <article class="panel reveal">
           <h2>自分の投稿</h2>

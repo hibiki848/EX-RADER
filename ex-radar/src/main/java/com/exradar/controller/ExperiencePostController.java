@@ -27,16 +27,36 @@ public class ExperiencePostController {
   private final InteractionService interactions;
   private final CategoryRepository categories;
   private final PersonalValueRepository values;
+  private final RewardService rewards;
 
   public ExperiencePostController(
       ExperiencePostService service,
       InteractionService interactions,
       CategoryRepository categories,
-      PersonalValueRepository values) {
+      PersonalValueRepository values,
+      RewardService rewards) {
     this.service = service;
     this.interactions = interactions;
     this.categories = categories;
     this.values = values;
+    this.rewards = rewards;
+  }
+
+  /**
+   * 投稿保存成功後に特典対象投稿数を再評価し、新たに達成したマイルストームがあればここで
+   * 通知メッセージへ追記する(RewardServiceが付与自体とアプリ内通知(Notification)は既に
+   * 行っているため、ここではフラッシュメッセージでの即時フィードバックのみを担う。
+   * ロジック自体はRewardServiceに閉じているため、Controllerは呼び出すだけ)。
+   */
+  private String withRewardNotice(String baseMessage, com.exradar.entity.User author) {
+    var granted = rewards.evaluateAndGrant(author);
+    if (granted.isEmpty()) return baseMessage;
+    var sb = new StringBuilder(baseMessage);
+    for (var benefit : granted) {
+      sb.append(" ").append(benefit.getSourceDescription())
+          .append("！「").append(benefit.getBenefitNameSnapshot()).append("」特典を獲得しました。");
+    }
+    return sb.toString();
   }
 
   @ModelAttribute
@@ -144,7 +164,7 @@ public class ExperiencePostController {
       return "experiences/form";
     }
     var post = service.create(form, principal.getName());
-    redirect.addFlashAttribute("successMessage", "経験談を投稿しました");
+    redirect.addFlashAttribute("successMessage", withRewardNotice("経験談を投稿しました", post.getAuthor()));
     return "redirect:/experiences/" + post.getId();
   }
 
@@ -238,8 +258,8 @@ public class ExperiencePostController {
       model.addAttribute("isDraft", false);
       return "experiences/form";
     }
-    service.update(id, form, principal.getName());
-    redirect.addFlashAttribute("successMessage", "体験談を更新しました");
+    var post = service.update(id, form, principal.getName());
+    redirect.addFlashAttribute("successMessage", withRewardNotice("体験談を更新しました", post.getAuthor()));
     return "redirect:/experiences/" + id;
   }
 
