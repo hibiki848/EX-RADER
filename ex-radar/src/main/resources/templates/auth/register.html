@@ -48,6 +48,15 @@
               required /><small
               th:errors="*{passwordConfirmation}"
             ></small></label
+          ><label class="agree-to-terms"
+            ><input th:field="*{agreedToTerms}" type="checkbox" required /><span
+              >「<a href="/terms" target="_blank" rel="noopener noreferrer">利用規約</a>」および「<a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                >プライバシーポリシー</a
+              >」に同意する</span
+            ><small th:errors="*{agreedToTerms}"></small></label
           ><button class="button" type="submit">登録する</button>
         </form>
         <p><a href="/login">ログインへ戻る</a></p>

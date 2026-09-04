@@ -40,11 +40,49 @@ class AuthControllerTest {
                 .param("email", "web@example.com")
                 .param("displayName", "Webユーザー")
                 .param("password", "password123")
-                .param("passwordConfirmation", "password123"))
+                .param("passwordConfirmation", "password123")
+                .param("agreedToTerms", "true"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/login"));
     org.assertj.core.api.Assertions.assertThat(users.findByEmailIgnoreCase("web@example.com"))
         .isPresent();
+  }
+
+  /** 利用規約・プライバシーポリシーへの同意は、フロントエンドだけでなくサーバー側(Bean Validation)でも必須とする。 */
+  @Test
+  void registrationWithoutAgreeingToTermsIsRejected() throws Exception {
+    mvc.perform(
+            post("/register")
+                .with(csrf())
+                .param("email", "no-agreement@example.com")
+                .param("displayName", "同意なしユーザー")
+                .param("password", "password123")
+                .param("passwordConfirmation", "password123"))
+        .andExpect(status().isOk())
+        .andExpect(view().name("auth/register"))
+        .andExpect(
+            model()
+                .attributeHasFieldErrorCode(
+                    "registrationForm", "agreedToTerms", "AssertTrue"));
+    org.assertj.core.api.Assertions.assertThat(users.findByEmailIgnoreCase("no-agreement@example.com"))
+        .isEmpty();
+  }
+
+  @Test
+  void registrationRecordsTermsAndPrivacyPolicyAgreementTimestamps() throws Exception {
+    mvc.perform(
+            post("/register")
+                .with(csrf())
+                .param("email", "agreement-timestamp@example.com")
+                .param("displayName", "同意日時確認ユーザー")
+                .param("password", "password123")
+                .param("passwordConfirmation", "password123")
+                .param("agreedToTerms", "true"))
+        .andExpect(status().is3xxRedirection());
+
+    var saved = users.findByEmailIgnoreCase("agreement-timestamp@example.com").orElseThrow();
+    org.assertj.core.api.Assertions.assertThat(saved.getTermsAgreedAt()).isNotNull();
+    org.assertj.core.api.Assertions.assertThat(saved.getPrivacyPolicyAgreedAt()).isNotNull();
   }
 
   @Test

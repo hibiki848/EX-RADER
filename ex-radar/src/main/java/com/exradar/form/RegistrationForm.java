@@ -19,6 +19,9 @@ public class RegistrationForm {
   @NotBlank(message = "確認用パスワードを入力してください")
   private String passwordConfirmation;
 
+  @AssertTrue(message = "登録するには利用規約およびプライバシーポリシーへの同意が必要です。")
+  private boolean agreedToTerms;
+
   public String getEmail() {
     return email;
   }
@@ -49,5 +52,13 @@ public class RegistrationForm {
 
   public void setPasswordConfirmation(String v) {
     passwordConfirmation = v;
+  }
+
+  public boolean isAgreedToTerms() {
+    return agreedToTerms;
+  }
+
+  public void setAgreedToTerms(boolean v) {
+    agreedToTerms = v;
   }
 }

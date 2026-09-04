@@ -24,6 +24,7 @@ class UserServiceTest {
     f.setDisplayName("テストユーザー");
     f.setPassword("password123");
     f.setPasswordConfirmation("password123");
+    f.setAgreedToTerms(true);
     return f;
   }
 
@@ -33,6 +34,23 @@ class UserServiceTest {
     assertThat(saved.getId()).isNotNull();
     assertThat(saved.getPassword()).doesNotContain("password123");
     assertThat(users.findByEmailIgnoreCase("NEW@example.com")).isPresent();
+  }
+
+  @Test
+  void recordsTermsAndPrivacyPolicyAgreementTimestampOnRegistration() {
+    var saved = service.register(form("agreement@example.com"));
+    assertThat(saved.getTermsAgreedAt()).isNotNull();
+    assertThat(saved.getPrivacyPolicyAgreedAt()).isNotNull();
+  }
+
+  @Test
+  void rejectsRegistrationWithoutAgreeingToTermsEvenIfCalledDirectly() {
+    var f = form("no-agreement@example.com");
+    f.setAgreedToTerms(false);
+    assertThatThrownBy(() -> service.register(f))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("登録するには利用規約およびプライバシーポリシーへの同意が必要です。");
+    assertThat(users.findByEmailIgnoreCase("no-agreement@example.com")).isEmpty();
   }
 
   @Test
