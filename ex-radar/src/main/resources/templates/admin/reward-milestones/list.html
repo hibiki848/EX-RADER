@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <th:block th:replace="~{fragments/favicon :: links}"></th:block>
+    <title>投稿報酬設定 | EXレーダー</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="page admin-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='reward-milestones')}"></div>
+      <div class="page-heading">
+        <p class="eyebrow">ADMIN CONSOLE</p>
+        <h1>投稿報酬設定</h1>
+        <p>体験談の特典対象投稿数に応じて自動付与するプレミアム特典を、コード変更なしで設定できます。</p>
+        <p><a class="button" href="/admin/reward-milestones/new">新しい設定を追加</a></p>
+      </div>
+      <p class="success" th:if="${success}" th:text="${success}"></p>
+
+      <section class="panel reveal">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>必要投稿数</th>
+                <th>配布特典</th>
+                <th>繰り返し間隔</th>
+                <th>表示順</th>
+                <th>状態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="m : ${milestones}">
+                <td data-label="必要投稿数" th:text="${m.requiredPostCount}+'件'"></td>
+                <td data-label="配布特典" th:text="${m.benefitDefinition.name}"></td>
+                <td data-label="繰り返し間隔" th:text="${m.repeatInterval != null ? m.repeatInterval+'件ごと' : '1回のみ'}"></td>
+                <td data-label="表示順" th:text="${m.displayOrder}"></td>
+                <td data-label="状態"><span th:class="${m.active ? 'status-badge' : 'status-badge is-stopped'}" th:text="${m.active ? '有効' : '無効'}"></span></td>
+                <td data-label="操作">
+                  <a th:href="@{/admin/reward-milestones/{id}/edit(id=${m.id})}">編集</a>
+                  <form th:action="@{/admin/reward-milestones/{id}/deactivate(id=${m.id})}" method="post" style="display:inline" th:if="${m.active}">
+                    <button type="submit" class="text-button">無効にする</button>
+                  </form>
+                  <form th:action="@{/admin/reward-milestones/{id}/activate(id=${m.id})}" method="post" style="display:inline" th:unless="${m.active}">
+                    <button type="submit" class="text-button">有効にする</button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="empty-state" th:if="${#lists.isEmpty(milestones)}">設定はまだありません。</p>
+      </section>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

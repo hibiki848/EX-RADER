@@ -50,6 +50,9 @@ public interface ExperiencePostRepository
 
   boolean existsByAuthorIdAndStatus(Long authorId, PostStatus status);
 
+  /** 投稿報酬(RewardService)の特典対象投稿数の判定に使う。DRAFTには「未公開」「管理者による非公開対応」両方が含まれるため、これらは自動的にカウント対象から除外される。 */
+  long countByAuthorIdAndStatus(Long authorId, PostStatus status);
+
   long countByStatus(PostStatus status);
 
   long countByCreatedAtAfter(LocalDateTime since);

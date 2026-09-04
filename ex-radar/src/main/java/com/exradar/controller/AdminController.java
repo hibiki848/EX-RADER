@@ -24,8 +24,10 @@ import com.exradar.dto.AdminUserSortField;
 import com.exradar.entity.InquiryStatus;
 import com.exradar.entity.PlanType;
 import com.exradar.entity.Role;
+import com.exradar.repository.UserRepository;
 import com.exradar.service.AdminService;
 import com.exradar.service.AdminUserSearchService;
+import com.exradar.service.BenefitService;
 import com.exradar.service.ContactInquiryService;
 
 @Controller
@@ -36,11 +38,20 @@ public class AdminController {
   private final AdminService service;
   private final AdminUserSearchService userSearch;
   private final ContactInquiryService inquiries;
+  private final BenefitService benefits;
+  private final UserRepository users;
 
-  public AdminController(AdminService service, AdminUserSearchService userSearch, ContactInquiryService inquiries) {
+  public AdminController(
+      AdminService service,
+      AdminUserSearchService userSearch,
+      ContactInquiryService inquiries,
+      BenefitService benefits,
+      UserRepository users) {
     this.service = service;
     this.userSearch = userSearch;
     this.inquiries = inquiries;
+    this.benefits = benefits;
+    this.users = users;
   }
 
   @ModelAttribute
@@ -95,9 +106,24 @@ public class AdminController {
     model.addAttribute("currentEmail", principal.getName());
     model.addAttribute("selectedUser", service.user(id));
     model.addAttribute("selectedUserPosts", service.posts(id));
+    model.addAttribute("selectedUserBenefits", benefits.listFor(id));
     model.addAttribute("browserAnalyticsExcluded", NavigationAdvice.isBrowserExcluded(request));
     model.addAttribute("pendingInquiryCount", inquiries.countByStatus(InquiryStatus.NEW));
     return "admin/dashboard";
+  }
+
+  /** 不正投稿等によって獲得された未使用特典を管理者が取り消す。USED/REVOKED/EXPIRED済みは取り消せない(BenefitService側で判定)。 */
+  @PostMapping("/users/{userId}/benefits/{benefitId}/revoke")
+  public String revokeBenefit(
+      Principal principal, @PathVariable Long userId, @PathVariable Long benefitId, RedirectAttributes redirect) {
+    try {
+      var admin = users.findByEmailIgnoreCase(principal.getName()).orElseThrow();
+      benefits.revokeAsAdmin(admin, benefitId);
+      redirect.addFlashAttribute("success", "特典を取り消しました");
+    } catch (IllegalStateException e) {
+      redirect.addFlashAttribute("error", e.getMessage());
+    }
+    return "redirect:/admin/users/" + userId;
   }
 
   /**

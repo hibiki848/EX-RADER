@@ -38,5 +38,9 @@ public interface UserRepository
 
   Optional<User> findByProviderUserId(String providerUserId);
 
+  Optional<User> findByStripeCustomerId(String stripeCustomerId);
+
+  Optional<User> findByStripeSubscriptionId(String stripeSubscriptionId);
+
   java.util.List<User> findAllByOrderByCreatedAtDesc();
 }

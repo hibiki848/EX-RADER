@@ -98,6 +98,31 @@ class ExperiencePostControllerTest {
     assertThat(saved.isPublished()).isTrue();
   }
 
+  /**
+   * 投稿完了(公開)によって初めて投稿報酬マイルストーム(1件達成→20%OFF)を達成した場合、
+   * Controllerが投稿完了メッセージへ獲得通知を追記する(RewardServiceの評価がController経由で
+   * 確実に呼ばれていることの回帰確認。ロジック自体の詳細はRewardServiceTestで検証済み)。
+   */
+  @Test
+  void publishingFirstPostAppendsRewardNoticeToTheSuccessFlashMessage() throws Exception {
+    var author = users.save(new User("reward-flash-user@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "reward-flash-category", 1));
+
+    mvc.perform(
+            post("/experiences")
+                .with(user(author.getEmail()))
+                .with(csrf())
+                .param("categoryId", String.valueOf(category.getId()))
+                .param("title", "報酬通知確認用の投稿")
+                .param("situationBefore", "状況")
+                .param("choiceMade", "選択")
+                .param("outcome", "結果")
+                .param("satisfaction", "7")
+                .param("regret", "3"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(flash().attribute("successMessage", org.hamcrest.Matchers.containsString("プレミアム20%OFF")));
+  }
+
   @Test
   void ownerCanEditOwnPublishedPost() throws Exception {
     var owner = users.save(new User("edit-owner@example.com", encoder.encode("password"), "投稿者", Role.USER));

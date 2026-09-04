@@ -71,7 +71,8 @@ public class SecurityConfig {
                         "/sitemap.xml",
                         "/css/**",
                         "/js/**",
-                        "/error")
+                        "/error",
+                        "/webhooks/stripe")
                     .permitAll()
                     // "/experiences"はGET(検索・一覧)のみ未ログインで許可する。POST(新規投稿)まで
                     // 誤って許可しないよう、他の"/experiences/**"配下と同様に認証を必須にする
@@ -96,6 +97,10 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated())
+        // Stripe Webhookは外部(Stripe)からのサーバー間POSTのため、ブラウザセッションに
+        // 紐づくCSRFトークンを持たない。署名検証(Stripe-Signatureヘッダー)自体が
+        // このエンドポイントの正当性確認を代替するため、ここだけCSRF検証の対象から外す。
+        .csrf(csrf -> csrf.ignoringRequestMatchers("/webhooks/stripe"))
         .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/", true).permitAll())
         .logout(l -> l.logoutSuccessUrl("/?logout").permitAll())
         // /admin/**等でのロール不足やCSRF不備によるアクセス拒否を、応答内容は変えずに

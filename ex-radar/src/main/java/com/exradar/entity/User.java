@@ -107,6 +107,16 @@ public class User extends BaseEntity {
   @Column(name = "premium_period_ended_at")
   private LocalDateTime premiumPeriodEndedAt;
 
+  // Stripe側でこのユーザーを一意に特定するためのID。決済を一度もしていないユーザーは
+  // 両方ともNULL。stripeSubscriptionIdは現在アクティブな(または直近の)Subscriptionのみを
+  // 保持し、EXレーダー側で「既にStripe Subscriptionを持っているか」を判定する唯一の根拠とする
+  // (Stripe側の状態だけに依存しないよう、確定した変更はここへ同期する)。
+  @Column(name = "stripe_customer_id")
+  private String stripeCustomerId;
+
+  @Column(name = "stripe_subscription_id")
+  private String stripeSubscriptionId;
+
   @ManyToMany
   @JoinTable(
       name = "user_values",
@@ -255,6 +265,24 @@ public class User extends BaseEntity {
       premiumPeriodEndedAt = at;
     }
     currentPlan = newPlan;
+  }
+
+  public String getStripeCustomerId() {
+    return stripeCustomerId;
+  }
+
+  public String getStripeSubscriptionId() {
+    return stripeSubscriptionId;
+  }
+
+  /** Stripe Customer作成直後に一度だけ呼ぶ(以後は不変)。 */
+  public void assignStripeCustomerId(String stripeCustomerId) {
+    if (this.stripeCustomerId == null) this.stripeCustomerId = stripeCustomerId;
+  }
+
+  /** Subscription作成・解約時にWebhookから同期する(customer.subscription.deleted等でnullへ戻す)。 */
+  public void updateStripeSubscriptionId(String stripeSubscriptionId) {
+    this.stripeSubscriptionId = stripeSubscriptionId;
   }
 
   public void completeDisplayNameSetup(String displayName) {

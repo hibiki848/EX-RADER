@@ -24,6 +24,7 @@ public class AccountService {
   private final AdminAnnouncementRecipientRepository adminAnnouncementRecipients;
   private final AdminAnnouncementRepository adminAnnouncements;
   private final ContactInquiryRepository contactInquiries;
+  private final UserBenefitRepository userBenefits;
   private final PasswordEncoder encoder;
 
   public AccountService(
@@ -40,6 +41,7 @@ public class AccountService {
       AdminAnnouncementRecipientRepository adminAnnouncementRecipients,
       AdminAnnouncementRepository adminAnnouncements,
       ContactInquiryRepository contactInquiries,
+      UserBenefitRepository userBenefits,
       PasswordEncoder e) {
     users = u;
     posts = p;
@@ -54,6 +56,7 @@ public class AccountService {
     this.adminAnnouncementRecipients = adminAnnouncementRecipients;
     this.adminAnnouncements = adminAnnouncements;
     this.contactInquiries = contactInquiries;
+    this.userBenefits = userBenefits;
     encoder = e;
   }
 
@@ -144,6 +147,7 @@ public class AccountService {
     reactions.deleteByUserId(userId);
     reads.deleteByUserId(userId);
     notifications.deleteByRecipientId(userId);
+    userBenefits.deleteByUserId(userId);
     memos.deleteByUserId(userId);
     reports.deleteByReporterId(userId);
     // 退会するユーザー自身の受信記録は削除する。送信した管理者メッセージ・お知らせ本体、
