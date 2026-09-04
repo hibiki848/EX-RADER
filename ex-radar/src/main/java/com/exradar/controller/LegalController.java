@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
- * 利用規約・プライバシーポリシー・お問い合わせ等、ユーザー登録の有無を問わず常に閲覧できる
- * 静的な規約・案内ページ。SecurityConfigで/terms・/privacy・/contactをpermitAllにしている。
+ * 利用規約・プライバシーポリシー・投稿ガイドライン等、ユーザー登録の有無を問わず常に閲覧できる
+ * 静的な規約・案内ページ。SecurityConfigで/terms・/privacy・/guidelinesをpermitAllにしている。
+ * お問い合わせ(/contact)はフォーム送信を伴うため、専用のContactControllerへ分離している。
  */
 @Controller
 public class LegalController {
@@ -24,10 +25,10 @@ public class LegalController {
     return "privacy";
   }
 
-  @GetMapping("/contact")
-  String contact(HttpServletRequest request, Model model) {
-    model.addAttribute("canonicalUrl", canonicalUrl(request, "/contact"));
-    return "contact";
+  @GetMapping("/guidelines")
+  String guidelines(HttpServletRequest request, Model model) {
+    model.addAttribute("canonicalUrl", canonicalUrl(request, "/guidelines"));
+    return "guidelines";
   }
 
   private String canonicalUrl(HttpServletRequest request, String path) {

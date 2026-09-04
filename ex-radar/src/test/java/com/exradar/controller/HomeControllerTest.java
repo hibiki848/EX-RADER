@@ -53,7 +53,7 @@ class HomeControllerTest {
     var body = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
     org.assertj.core.api.Assertions.assertThat(body)
-        .contains("<title>EXレーダー | 他人の失敗・後悔から学び、これからを賢く生きる</title>")
+        .contains("<title>EXレーダー |自分自身や他人の失敗・後悔から学び、これからを賢く生きる</title>")
         .contains("EXレーダー | 自分や他人の失敗・後悔から学び、これからを賢く生きる\" />")
         .contains(
             "悔いのない人生などない。学びのない人生などない。自分と他人の失敗を「学び」に変え、あなたの人生を賢く導く。")

@@ -66,6 +66,7 @@ public class SecurityConfig {
                         "/terms",
                         "/privacy",
                         "/contact",
+                        "/guidelines",
                         "/robots.txt",
                         "/sitemap.xml",
                         "/css/**",

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <th:block th:replace="~{fragments/favicon :: links}"></th:block>
+    <title th:text="${inquiry.subject} + ' | お問い合わせ管理 | EXレーダー'"></title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="detail-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='inquiries')}"></div>
+      <a class="back-link" href="/admin/inquiries">← お問い合わせ一覧に戻る</a>
+      <p class="success" th:if="${success}" th:text="${success}"></p>
+
+      <article class="detail-hero panel">
+        <p class="eyebrow">
+          <span
+            class="status-badge"
+            th:classappend="${inquiry.status.name() == 'NEW'} ? ' is-stopped' : ''"
+            th:text="${inquiry.status.displayName()}"
+          ></span>
+          <span th:text="${inquiry.category.displayName()}"></span>
+          ・受付: <span th:text="${#temporals.format(inquiry.createdAt, 'yyyy/MM/dd HH:mm')}"></span>
+        </p>
+        <h1 th:text="${inquiry.subject}"></h1>
+        <p>
+          <strong th:text="${inquiry.name ?: '（お名前未入力）'}"></strong>
+          <small th:text="${inquiry.email}"></small>
+        </p>
+        <p th:if="${inquiry.user != null}">
+          EXレーダーアカウント: <a th:href="@{/admin/users/{id}(id=${inquiry.user.id})}" th:text="${inquiry.user.displayName}"></a>
+        </p>
+        <p th:if="${inquiry.user == null}">未ログインユーザーからの送信です。</p>
+        <p th:if="${inquiry.relatedPost != null}">
+          関連投稿: <a th:href="@{/experiences/{id}(id=${inquiry.relatedPost.id})}" th:text="${inquiry.relatedPost.title}"></a>
+        </p>
+        <div class="admin-actions" th:if="${inquiry.user != null}">
+          <a class="button button-secondary" th:href="@{/admin/messages/new(selectedUserId=${inquiry.user.id})}"
+            >このユーザーに運営メッセージを送る</a
+          >
+        </div>
+      </article>
+
+      <section class="panel story-section">
+        <h2>お問い合わせ内容</h2>
+        <p th:text="${inquiry.body}" style="white-space: pre-wrap"></p>
+      </section>
+
+      <section class="panel story-section">
+        <h2>ステータス</h2>
+        <form th:action="@{/admin/inquiries/{id}/status(id=${inquiry.id})}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <label
+            >ステータス<select name="status">
+              <option
+                th:each="s : ${statusOptions}"
+                th:value="${s}"
+                th:text="${s.displayName()}"
+                th:selected="${s == inquiry.status}"
+              ></option>
+            </select></label
+          >
+          <button class="button" type="submit">ステータスを更新</button>
+        </form>
+      </section>
+
+      <section class="panel story-section">
+        <h2>管理者メモ</h2>
+        <form th:action="@{/admin/inquiries/{id}/memo(id=${inquiry.id})}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <label
+            >このお問い合わせに関する社内メモ(ユーザーには表示されません)<textarea
+              name="memo"
+              rows="5"
+              maxlength="2000"
+              th:text="${inquiry.adminMemo}"
+            ></textarea
+          ></label>
+          <button class="button button-secondary" type="submit">メモを保存</button>
+        </form>
+      </section>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

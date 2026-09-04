@@ -8,7 +8,7 @@
     <th:block
       th:replace="~{fragments/seo :: meta(
         title='お問い合わせ | EXレーダー',
-        description='EXレーダーに関するお問い合わせ窓口のご案内です。',
+        description='EXレーダーに関するお問い合わせフォームです。サービス・アカウント・投稿・不適切な投稿の報告・プレミアムプラン・不具合・個人情報についてなど、お気軽にお問い合わせください。',
         canonicalUrl=${canonicalUrl},
         ogType='website')}"
     ></th:block>
@@ -20,15 +20,51 @@
     <div th:replace="~{fragments/loading :: loading}"></div>
     <div th:replace="~{fragments/analytics :: analytics}"></div>
     <div th:replace="~{fragments/header :: siteHeader}"></div>
-    <main class="page legal-page">
-      <h1>お問い合わせ</h1>
-      <div class="article-body">
-        <p>EXレーダー（以下「本サービス」といいます。）に関するお問い合わせ窓口を準備中です。</p>
-        <p>
-          お問い合わせフォームまたは受付用メールアドレスを含む正式な窓口は、内容確定後に本ページで公開いたします。
-        </p>
-        <p>本サービスの利用条件については<a href="/terms">利用規約</a>を、個人情報の取扱いについては<a href="/privacy">プライバシーポリシー</a>をご確認ください。</p>
+    <main class="form-page">
+      <div class="page-heading">
+        <p class="eyebrow">CONTACT</p>
+        <h1>お問い合わせ</h1>
+        <p>サービスやアカウント、投稿に関するご質問・ご報告等はこちらからお送りください。</p>
       </div>
+      <p class="success" th:if="${success}" th:text="${success}"></p>
+
+      <form class="experience-form" th:object="${contactInquiryForm}" th:action="@{/contact}" method="post">
+        <div class="error-summary" th:if="${#fields.hasAnyErrors()}" role="alert">
+          <strong>入力内容を確認してください</strong>
+          <ul>
+            <li th:each="e:${#fields.allErrors()}" th:text="${e}"></li>
+          </ul>
+        </div>
+        <p class="error" th:if="${rateLimitError}" th:text="${rateLimitError}"></p>
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <section class="panel form-section">
+          <label
+            >お問い合わせ種別（必須）<select th:field="*{category}">
+              <option value="">選択してください</option>
+              <option th:each="c : ${categoryOptions}" th:value="${c}" th:text="${c.displayName()}"></option></select
+            ><small th:errors="*{category}"></small></label
+          ><label
+            >お名前（任意）<input th:field="*{name}" maxlength="100" /><small th:errors="*{name}"></small></label
+          ><label
+            >メールアドレス（必須）<input th:field="*{email}" type="email" maxlength="254" /><small
+              th:errors="*{email}"
+            ></small></label
+          ><label
+            >件名（必須）<input th:field="*{subject}" maxlength="100" /><small th:errors="*{subject}"></small></label
+          ><label
+            >お問い合わせ内容（必須）<textarea th:field="*{body}" maxlength="3000" rows="8"></textarea
+            ><small th:errors="*{body}"></small></label
+          ><label
+            >関連する投稿ID（任意）<input th:field="*{relatedPostId}" type="number" min="1" /><span class="field-hint"
+              >不適切な投稿の報告等で、対象の体験談のIDが分かる場合のみ入力してください。</span
+            ><small th:errors="*{relatedPostId}"></small></label
+          >
+        </section>
+
+        <button type="submit">送信する</button>
+      </form>
     </main>
     <div th:replace="~{fragments/footer :: footer}"></div>
   </body>

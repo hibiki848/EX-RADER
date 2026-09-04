@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <th:block th:replace="~{fragments/favicon :: links}"></th:block>
+    <title>お問い合わせ管理 | EXレーダー</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="page admin-page">
+      <div th:replace="~{fragments/header :: adminSubnav(current='inquiries')}"></div>
+      <div class="page-heading">
+        <p class="eyebrow">ADMIN CONSOLE</p>
+        <h1>お問い合わせ管理</h1>
+        <p>ユーザーおよび未ログイン利用者から届いたお問い合わせの一覧です。新着順に表示します。</p>
+      </div>
+      <p class="success" th:if="${success}" th:text="${success}"></p>
+
+      <nav class="admin-subnav" aria-label="ステータス絞り込み" style="margin-bottom: 20px">
+        <a href="/admin/inquiries" th:classappend="${statusFilter == null} ? ' is-active'">すべて</a>
+        <a
+          th:each="s : ${statusOptions}"
+          th:href="@{/admin/inquiries(status=${s})}"
+          th:classappend="${statusFilter == s} ? ' is-active'"
+          th:text="${s.displayName()}"
+        ></a>
+      </nav>
+
+      <section class="panel reveal">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>種別</th>
+                <th>件名</th>
+                <th>ユーザー</th>
+                <th>メールアドレス</th>
+                <th>ステータス</th>
+                <th>受付日時</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                th:each="i : ${result.content}"
+                class="admin-user-row"
+                th:attr="data-url=@{/admin/inquiries/{id}(id=${i.id})}"
+                tabindex="0"
+              >
+                <td data-label="ID" th:text="${i.id}"></td>
+                <td data-label="種別" th:text="${i.category.displayName()}"></td>
+                <td data-label="件名"><a class="admin-user-link" th:href="@{/admin/inquiries/{id}(id=${i.id})}" th:text="${i.subject}"></a></td>
+                <td data-label="ユーザー" th:text="${i.userDisplayName ?: '（未ログイン）'}"></td>
+                <td data-label="メールアドレス" th:text="${i.email}"></td>
+                <td data-label="ステータス">
+                  <span
+                    class="status-badge"
+                    th:classappend="${i.status.name() == 'NEW'} ? ' is-stopped' : ''"
+                    th:text="${i.status.displayName()}"
+                  ></span>
+                </td>
+                <td data-label="受付日時" th:text="${#temporals.format(i.createdAt, 'yyyy/MM/dd HH:mm')}"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="empty-state" th:if="${result.empty}">お問い合わせはまだありません。</p>
+
+        <nav class="pagination" th:if="${result.totalPages > 1}">
+          <a
+            th:if="${result.hasPrevious()}"
+            th:href="@{/admin/inquiries(status=${statusFilter}, page=${result.number - 1})}"
+            >前へ</a
+          ><span th:text="${result.number + 1}+'/'+${result.totalPages}"></span
+          ><a
+            th:if="${result.hasNext()}"
+            th:href="@{/admin/inquiries(status=${statusFilter}, page=${result.number + 1})}"
+            >次へ</a
+          >
+        </nav>
+      </section>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script>
+      document.querySelectorAll('.admin-user-row').forEach(function (row) {
+        row.addEventListener('click', function (event) {
+          if (event.target.closest('a, button, form')) return;
+          window.location.href = row.dataset.url;
+        });
+        row.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') window.location.href = row.dataset.url;
+        });
+      });
+    </script>
+  </body>
+</html>

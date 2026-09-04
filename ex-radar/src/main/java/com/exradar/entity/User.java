@@ -83,6 +83,14 @@ public class User extends BaseEntity {
   @Column(name = "privacy_policy_agreed_at")
   private LocalDateTime privacyPolicyAgreedAt;
 
+  // Google認証による「新規」ユーザー作成時(forGoogleSignup)だけtrueで作られるフラグ。
+  // 通常登録は/registerのチェックボックスで登録と同時に同意させるため常にfalse。
+  // 既存ユーザーはマイグレーション時点でDEFAULT FALSEのため、本カラム追加より前に
+  // 作られたGoogleユーザーが強制同意の対象になることはない(termsAgreedAt==nullだけを
+  // 理由に既存ユーザー全員へ強制しないため、この専用フラグで「新規」を明示的に区別する)。
+  @Column(name = "terms_consent_pending", nullable = false)
+  private boolean termsConsentPending;
+
   // 有料プランの概念自体が本カラム追加まで存在しなかったため、既存ユーザーは全員
   // FREE・関連日時は全てNULLから始まる。実際の加入・解約フローは別機能(未実装)が
   // changePlan(...)を呼び出すことを想定している。
@@ -129,6 +137,7 @@ public class User extends BaseEntity {
     user.authProvider = AuthProvider.GOOGLE;
     user.providerUserId = providerUserId;
     user.displayNamePending = true;
+    user.termsConsentPending = true;
     return user;
   }
 
@@ -199,10 +208,19 @@ public class User extends BaseEntity {
     return privacyPolicyAgreedAt;
   }
 
-  /** 新規登録時、利用規約・プライバシーポリシーへの同意チェックを提出した瞬間に1回だけ呼ぶ。 */
+  public boolean isTermsConsentPending() {
+    return termsConsentPending;
+  }
+
+  /**
+   * 利用規約・プライバシーポリシーへの同意を記録する。通常登録(/register)・Google新規登録後の
+   * 同意画面(/auth/consent)の両方から共通で呼ばれる(同意日時更新ロジックの共通化)。
+   * termsConsentPendingは元々falseの通常登録では単なる無害な代入になる。
+   */
   public void agreeToTermsAndPrivacyPolicy(LocalDateTime at) {
     termsAgreedAt = at;
     privacyPolicyAgreedAt = at;
+    termsConsentPending = false;
   }
 
   public PlanType getCurrentPlan() {

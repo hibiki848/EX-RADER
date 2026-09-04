@@ -21,10 +21,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.exradar.dto.AdminUserSearchCriteria;
 import com.exradar.dto.AdminUserSortField;
+import com.exradar.entity.InquiryStatus;
 import com.exradar.entity.PlanType;
 import com.exradar.entity.Role;
 import com.exradar.service.AdminService;
 import com.exradar.service.AdminUserSearchService;
+import com.exradar.service.ContactInquiryService;
 
 @Controller
 @RequestMapping("/admin")
@@ -33,10 +35,12 @@ public class AdminController {
 
   private final AdminService service;
   private final AdminUserSearchService userSearch;
+  private final ContactInquiryService inquiries;
 
-  public AdminController(AdminService service, AdminUserSearchService userSearch) {
+  public AdminController(AdminService service, AdminUserSearchService userSearch, ContactInquiryService inquiries) {
     this.service = service;
     this.userSearch = userSearch;
+    this.inquiries = inquiries;
   }
 
   @ModelAttribute
@@ -68,6 +72,7 @@ public class AdminController {
     model.addAttribute("filter", filter == null ? "all" : filter);
     model.addAttribute("currentEmail", principal.getName());
     model.addAttribute("browserAnalyticsExcluded", NavigationAdvice.isBrowserExcluded(request));
+    model.addAttribute("pendingInquiryCount", inquiries.countByStatus(InquiryStatus.NEW));
     return "admin/dashboard";
   }
 
@@ -91,6 +96,7 @@ public class AdminController {
     model.addAttribute("selectedUser", service.user(id));
     model.addAttribute("selectedUserPosts", service.posts(id));
     model.addAttribute("browserAnalyticsExcluded", NavigationAdvice.isBrowserExcluded(request));
+    model.addAttribute("pendingInquiryCount", inquiries.countByStatus(InquiryStatus.NEW));
     return "admin/dashboard";
   }
 

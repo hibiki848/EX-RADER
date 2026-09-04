@@ -1,6 +1,7 @@
 package com.exradar.controller;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -52,6 +53,40 @@ class LegalControllerTest {
   }
 
   @Test
+  void loggedInUserCanAlsoViewPrivacy() throws Exception {
+    var loggedIn =
+        users.save(new User("privacy-logged-in@example.com", encoder.encode("password123"), "ログイン中ユーザー", Role.USER));
+    mvc.perform(get("/privacy").with(user(loggedIn.getEmail()).roles("USER")))
+        .andExpect(status().isOk())
+        .andExpect(view().name("privacy"));
+  }
+
+  /** プライバシーポリシーは実際に確認した取得情報・Google Analytics・Cookie等の説明を含む正式版であること。 */
+  @Test
+  void privacyPageContainsRealPolicySectionsNotAPlaceholder() throws Exception {
+    mvc.perform(get("/privacy"))
+        .andExpect(content().string(containsString("取得する情報")))
+        .andExpect(content().string(containsString("Google Analytics")))
+        .andExpect(content().string(containsString("Cookie")))
+        .andExpect(content().string(not(containsString("準備中"))));
+  }
+
+  @Test
+  void anonymousUserCanViewGuidelines() throws Exception {
+    mvc.perform(get("/guidelines"))
+        .andExpect(status().isOk())
+        .andExpect(view().name("guidelines"))
+        .andExpect(content().string(containsString("投稿してはいけない内容")));
+  }
+
+  @Test
+  void loggedInUserCanAlsoViewGuidelines() throws Exception {
+    var loggedIn =
+        users.save(new User("guidelines-logged-in@example.com", encoder.encode("password123"), "ログイン中ユーザー", Role.USER));
+    mvc.perform(get("/guidelines").with(user(loggedIn.getEmail()).roles("USER"))).andExpect(status().isOk());
+  }
+
+  @Test
   void termsPageHasCanonicalLinkAndIsIndexable() throws Exception {
     mvc.perform(get("/terms"))
         .andExpect(content().string(containsString("<title>利用規約 | EXレーダー</title>")))
@@ -60,10 +95,11 @@ class LegalControllerTest {
   }
 
   @Test
-  void footerLinksToTermsPrivacyAndContactAreRenderedOnAPublicPage() throws Exception {
+  void footerLinksToTermsPrivacyGuidelinesAndContactAreRenderedOnAPublicPage() throws Exception {
     mvc.perform(get("/terms"))
         .andExpect(content().string(containsString("href=\"/terms\"")))
         .andExpect(content().string(containsString("href=\"/privacy\"")))
+        .andExpect(content().string(containsString("href=\"/guidelines\"")))
         .andExpect(content().string(containsString("href=\"/contact\"")));
   }
 }

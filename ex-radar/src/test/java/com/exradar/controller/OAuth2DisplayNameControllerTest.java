@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.exradar.entity.User;
 import com.exradar.repository.UserRepository;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,7 +19,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Googleログイン初回時の「表示名を設定してください」導線(DisplayNameSetupInterceptor含む)のテスト。 */
+/**
+ * Googleログイン初回時の「表示名を設定してください」導線(DisplayNameSetupInterceptor含む)のテスト。
+ * ここでは表示名設定ステップだけを単独で検証するため、各テストユーザーは
+ * (規約同意は既に済んでいる=termsConsentPending=false)状態で作っている
+ * (規約同意そのものの導線・優先順序はTermsConsentInterceptorTest/OAuth2ConsentFlowTest側で検証する)。
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -28,12 +34,15 @@ class OAuth2DisplayNameControllerTest {
   @Autowired UserRepository users;
   @Autowired PasswordEncoder encoder;
 
+  private User googleUserWithConsentAlreadyCompleted(String email, String sub) {
+    var user = User.forGoogleSignup(email, sub, "新規ユーザー", encoder.encode("x"));
+    user.agreeToTermsAndPrivacyPolicy(LocalDateTime.now());
+    return users.save(user);
+  }
+
   @Test
   void userWithPendingDisplayNameIsRedirectedToSetupPage() throws Exception {
-    User google =
-        users.save(
-            User.forGoogleSignup(
-                "pending-google-user@example.com", "sub-abc", "新規ユーザー", encoder.encode("x")));
+    User google = googleUserWithConsentAlreadyCompleted("pending-google-user@example.com", "sub-abc");
 
     mvc.perform(get("/").with(user(google.getEmail()).roles("USER")))
         .andExpect(status().is3xxRedirection())
@@ -42,10 +51,7 @@ class OAuth2DisplayNameControllerTest {
 
   @Test
   void setupPageItselfIsNotRedirected() throws Exception {
-    User google =
-        users.save(
-            User.forGoogleSignup(
-                "setup-page-user@example.com", "sub-def", "新規ユーザー", encoder.encode("x")));
+    User google = googleUserWithConsentAlreadyCompleted("setup-page-user@example.com", "sub-def");
 
     mvc.perform(get("/oauth2/display-name").with(user(google.getEmail()).roles("USER")))
         .andExpect(status().isOk())
@@ -54,10 +60,7 @@ class OAuth2DisplayNameControllerTest {
 
   @Test
   void submittingDisplayNameClearsPendingFlagAndAllowsNormalAccess() throws Exception {
-    User google =
-        users.save(
-            User.forGoogleSignup(
-                "completes-setup@example.com", "sub-ghi", "新規ユーザー", encoder.encode("x")));
+    User google = googleUserWithConsentAlreadyCompleted("completes-setup@example.com", "sub-ghi");
 
     mvc.perform(
             post("/oauth2/display-name")
@@ -76,9 +79,7 @@ class OAuth2DisplayNameControllerTest {
 
   @Test
   void blankDisplayNameIsRejected() throws Exception {
-    User google =
-        users.save(
-            User.forGoogleSignup("blank-name-user@example.com", "sub-jkl", "新規ユーザー", encoder.encode("x")));
+    User google = googleUserWithConsentAlreadyCompleted("blank-name-user@example.com", "sub-jkl");
 
     mvc.perform(
             post("/oauth2/display-name")

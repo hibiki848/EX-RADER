@@ -212,6 +212,9 @@
         <a class="admin-stat panel reveal" th:href="@{/admin(filter='suspended')}" th:classappend="${filter == 'suspended'} ? ' is-selected' : ''">
           <span>停止中</span><strong th:text="${suspendedUserCount}">0</strong><small>ログインできないアカウント</small>
         </a>
+        <a class="admin-stat panel reveal" href="/admin/inquiries">
+          <span>未対応のお問い合わせ</span><strong th:text="${pendingInquiryCount}">0</strong><small>件</small>
+        </a>
       </section>
 
       <details class="search-panel-wrap" aria-label="ユーザー検索">
