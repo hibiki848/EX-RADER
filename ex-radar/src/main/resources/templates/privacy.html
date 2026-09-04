@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <th:block th:replace="~{fragments/favicon :: links}"></th:block>
+    <title>プライバシーポリシー | EXレーダー</title>
+    <th:block
+      th:replace="~{fragments/seo :: meta(
+        title='プライバシーポリシー | EXレーダー',
+        description='EXレーダーにおける個人情報の取扱いについて説明するプライバシーポリシーです。',
+        canonicalUrl=${canonicalUrl},
+        ogType='website')}"
+    ></th:block>
+    <meta name="robots" content="index, follow" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="/js/site-nav.js" defer></script>
+  </head>
+  <body>
+    <div th:replace="~{fragments/loading :: loading}"></div>
+    <div th:replace="~{fragments/analytics :: analytics}"></div>
+    <div th:replace="~{fragments/header :: siteHeader}"></div>
+    <main class="page legal-page">
+      <h1>プライバシーポリシー</h1>
+      <div class="article-body">
+        <p>
+          EXレーダー運営者（以下「運営者」といいます。）は、「EXレーダー」（以下「本サービス」といいます。）における個人情報その他の利用者情報の取扱いについて、正式なプライバシーポリシーを準備中です。
+        </p>
+        <p>
+          個人情報の具体的な取得項目、利用目的、第三者提供の有無、開示・訂正・削除等のご請求方法を含む本文は、内容確定後に本ページで公開いたします。
+        </p>
+        <p>
+          <a href="/terms">利用規約</a>にも記載のとおり、個人情報の取扱いについては本ポリシーの内容が優先して適用されます。プライバシーポリシーに関するお問い合わせは<a href="/contact">お問い合わせページ</a>よりご連絡ください。
+        </p>
+      </div>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

@@ -1852,6 +1852,24 @@ input[type="radio"] {
   height: 1px;
   background: var(--border-default);
 }
+.agree-to-terms {
+  display: flex !important;
+  grid-template-columns: none !important;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.agree-to-terms input {
+  flex-shrink: 0;
+  width: auto;
+  margin-top: 3px;
+}
+.agree-to-terms a {
+  color: var(--cyan);
+}
 
 /* ============================================================
    アラート(Flash message) - success/error/warning/info
@@ -2442,6 +2460,28 @@ input[type="radio"] {
 }
 
 /* ============================================================
+   利用規約・プライバシーポリシー等の規約ページ
+   ============================================================ */
+.legal-page {
+  margin-top: 6vh;
+  margin-bottom: 96px;
+}
+.legal-page > h1 {
+  margin: 0 0 28px;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+.legal-page .article-body h2 {
+  font-size: 1.1rem;
+}
+.legal-enacted-date {
+  margin-top: 40px !important;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-default);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ============================================================
    公開記事(SEO)の本文タイポグラフィ
    ============================================================ */
 .article-body {
@@ -2462,7 +2502,8 @@ input[type="radio"] {
 .article-body p {
   margin: 0 0 18px;
 }
-.article-body ul {
+.article-body ul,
+.article-body ol {
   margin: 0 0 18px;
   padding-left: 1.4em;
 }

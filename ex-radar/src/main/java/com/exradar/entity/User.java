@@ -75,6 +75,14 @@ public class User extends BaseEntity {
   @Column(name = "last_login_at")
   private LocalDateTime lastLoginAt;
 
+  // 利用規約・プライバシーポリシーへの同意日時。本カラム追加以前に登録した既存ユーザーは
+  // 同意日時を推測で埋めずNULLのままにする(新規登録時のみ、登録直後に記録する)。
+  @Column(name = "terms_agreed_at")
+  private LocalDateTime termsAgreedAt;
+
+  @Column(name = "privacy_policy_agreed_at")
+  private LocalDateTime privacyPolicyAgreedAt;
+
   // 有料プランの概念自体が本カラム追加まで存在しなかったため、既存ユーザーは全員
   // FREE・関連日時は全てNULLから始まる。実際の加入・解約フローは別機能(未実装)が
   // changePlan(...)を呼び出すことを想定している。
@@ -181,6 +189,20 @@ public class User extends BaseEntity {
   public void recordLogin(LocalDateTime at) {
     if (firstLoginAt == null) firstLoginAt = at;
     lastLoginAt = at;
+  }
+
+  public LocalDateTime getTermsAgreedAt() {
+    return termsAgreedAt;
+  }
+
+  public LocalDateTime getPrivacyPolicyAgreedAt() {
+    return privacyPolicyAgreedAt;
+  }
+
+  /** 新規登録時、利用規約・プライバシーポリシーへの同意チェックを提出した瞬間に1回だけ呼ぶ。 */
+  public void agreeToTermsAndPrivacyPolicy(LocalDateTime at) {
+    termsAgreedAt = at;
+    privacyPolicyAgreedAt = at;
   }
 
   public PlanType getCurrentPlan() {
