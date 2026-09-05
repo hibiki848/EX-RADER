@@ -7,10 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.exradar.entity.Category;
+import com.exradar.entity.ExperiencePost;
 import com.exradar.entity.Role;
 import com.exradar.entity.User;
 import com.exradar.form.ExperiencePostForm;
 import com.exradar.repository.CategoryRepository;
+import com.exradar.repository.ExperiencePostRepository;
 import com.exradar.repository.UserRepository;
 import com.exradar.service.ExperiencePostService;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,7 @@ class ChoiceGuideFeedTest {
   @Autowired MockMvc mvc;
   @Autowired UserRepository users;
   @Autowired CategoryRepository categories;
+  @Autowired ExperiencePostRepository posts;
   @Autowired ExperiencePostService postService;
   @Autowired PasswordEncoder encoder;
 
@@ -137,12 +140,22 @@ class ChoiceGuideFeedTest {
         .andExpect(content().string(containsString("条件をクリア")));
   }
 
+  /**
+   * 教訓必須化(ExperiencePostService.requireLesson)より前に作成された投稿を想定したケース。
+   * 現在の投稿フローでは教訓なしの投稿を新規作成できないため、既存データを模してリポジトリへ
+   * 直接保存し、教訓まとめのフィードから正しく除外されることを確認する。
+   */
   @Test
   void postsWithoutAnyLessonTextAreExcludedFromTheFeed() throws Exception {
     var me = contributor("choice-feed-no-lesson@example.com");
     var category = categories.save(new Category("転職", "choice-feed-no-lesson-category", 1));
-    var f = validForm(category.getId(), "教訓未記入の体験談タイトルABCXYZ", null);
-    postService.create(f, me.getEmail());
+    var legacyPost = new ExperiencePost(me);
+    legacyPost.updateContent(
+        category, "教訓未記入の体験談タイトルABCXYZ", null, null, null, null,
+        "状況", "悩み", "選択肢", "選んだこと", "理由", "結果", "良かったこと", "大変だったこと", "想定外だったこと",
+        8, 2, false, "アドバイス");
+    legacyPost.publish();
+    posts.save(legacyPost);
 
     var body = mvc.perform(get("/choices").with(user(me.getEmail())))
         .andExpect(status().isOk())
@@ -174,8 +187,16 @@ class ChoiceGuideFeedTest {
   void paginationLinksPreserveCurrentFiltersAndPagingWorks() throws Exception {
     var me = contributor("choice-feed-paging@example.com");
     var category = categories.save(new Category("転職", "choice-feed-paging-category", 1));
+    // タイトルが数字の接頭辞違いだけ(例:"確認用1"と"確認用10")だと類似度チェックに
+    // 引っかかりやすいため、件数分の異なる話題語を組み合わせて内容を十分に異ならせる。
+    String[] topics = {
+      "転職", "独立", "進学", "留学", "資格取得", "副業開始", "引っ越し", "復職", "育児休業", "起業",
+      "移住", "部署異動", "休職", "退職", "出向", "兼業解禁", "婚活", "一人暮らし", "同棲解消", "卒業",
+      "就職活動", "転勤", "キャリアチェンジ", "昇進", "降格"
+    };
     for (int i = 0; i < 25; i++) {
-      postService.create(validForm(category.getId(), "ページング確認用" + i, "ページング確認用の教訓" + i), me.getEmail());
+      String title = topics[i % topics.length] + "に関するページング確認用" + i;
+      postService.create(validForm(category.getId(), title, "ページング確認用の教訓" + title), me.getEmail());
     }
 
     var firstPage = mvc.perform(
@@ -199,21 +220,27 @@ class ChoiceGuideFeedTest {
     return f;
   }
 
+  /**
+   * titleを本文の複数箇所へ織り込み、生成する投稿ごとの内容を十分に異ならせる
+   * (新設のDuplicatePostDetectionServiceが「同一ユーザーの実質同一投稿」として
+   * 誤検出しないようにするため。1人のcontributorが複数投稿を作るテストが多いため)。
+   */
   private void copyValidFields(ExperiencePostForm f, Long categoryId, String title, String lesson) {
     f.setCategoryId(categoryId);
     f.setTitle(title);
-    f.setSituationBefore("状況");
-    f.setWorries("悩み");
-    f.setAlternatives("選択肢");
-    f.setChoiceMade("選んだこと");
-    f.setReason("理由");
-    f.setOutcome("結果");
-    f.setGoodThings("良かったこと");
-    f.setDifficulties("大変だったこと");
-    f.setUnexpectedThings("想定外だったこと");
-    f.setLearned(lesson);
+    f.setSituationBefore("状況の詳細です。" + title);
+    f.setWorries("悩みの内容です。" + title);
+    f.setAlternatives("検討した選択肢です。" + title);
+    f.setChoiceMade("実際に選んだことです。" + title);
+    f.setReason("選んだ理由です。" + title);
+    f.setOutcome("その後の結果です。" + title);
+    f.setGoodThings("良かったことです。" + title);
+    f.setDifficulties("大変だったことです。" + title);
+    f.setUnexpectedThings("想定外だったことです。" + title);
+    // lessonそのものが10文字未満の呼び出し元があるため、titleを連結して常に最小文字数を満たす
+    f.setLesson(lesson + "。" + title);
     f.setSatisfaction(8);
     f.setRegret(2);
-    f.setAdviceToPastSelf("アドバイス");
+    f.setAdviceToPastSelf("アドバイスです。" + title);
   }
 }

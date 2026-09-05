@@ -42,12 +42,19 @@
         th:data-autosave-create-url="@{/experiences/draft/autosave}"
         th:data-autosave-update-url="${editing ? '/experiences/'+postId+'/draft/autosave' : ''}"
       >
+        <input type="hidden" th:field="*{submissionToken}" />
         <div
+          id="error-summary"
           class="error-summary"
           th:if="${#fields.hasAnyErrors()}"
           role="alert"
+          tabindex="-1"
         >
           <strong>入力内容を確認してください</strong>
+          <span
+            class="error-summary-count"
+            th:text="${#fields.allErrors().size()}+'件の項目に修正が必要です'"
+          ></span>
           <ul>
             <li th:each="e:${#fields.allErrors()}" th:text="${e}"></li>
           </ul>
@@ -55,20 +62,28 @@
         <section class="panel form-section">
           <h2>基本情報</h2>
           <label
-            >カテゴリ（必須）<select th:field="*{categoryId}">
+            >カテゴリ（必須）<select
+              th:field="*{categoryId}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('categoryId')},aria-describedby=${#fields.hasErrors('categoryId')} ? 'categoryId-error' : null"
+            >
               <option value="">選択してください</option>
               <option
                 th:each="c:${categories}"
                 th:value="${c.id}"
                 th:text="${c.name}"
               ></option></select
-            ><small th:errors="*{categoryId}"></small></label
+            ><small th:errors="*{categoryId}" id="categoryId-error" class="field-error"></small></label
           ><label
             >タイトル（必須）<input
               th:field="*{title}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('title')},aria-describedby=${#fields.hasErrors('title')} ? 'title-error' : null"
               maxlength="150"
               placeholder="例：未経験からIT業界へ転職した3年間" /><small
               th:errors="*{title}"
+              id="title-error"
+              class="field-error"
             ></small
           ></label>
           <div class="form-grid">
@@ -104,63 +119,81 @@
           <label
             >当時の状況（必須）<textarea
               th:field="*{situationBefore}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('situationBefore')},aria-describedby=${#fields.hasErrors('situationBefore')} ? 'situationBefore-error' : null"
               maxlength="3000"
               placeholder="そのとき、どんな状況でしたか？"
             ></textarea
-            ><small th:errors="*{situationBefore}"></small></label
+            ><small th:errors="*{situationBefore}" id="situationBefore-error" class="field-error"></small></label
           ><label
             >当時の悩み<textarea
               th:field="*{worries}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('worries')},aria-describedby=${#fields.hasErrors('worries')} ? 'worries-error' : null"
               maxlength="3000"
               placeholder="何に迷っていましたか？"
             ></textarea
-            ><small th:errors="*{worries}"></small></label
+            ><small th:errors="*{worries}" id="worries-error" class="field-error"></small></label
           ><label
             >検討した選択肢<textarea
               th:field="*{alternatives}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('alternatives')},aria-describedby=${#fields.hasErrors('alternatives')} ? 'alternatives-error' : null"
               maxlength="3000"
               placeholder="他にどんな選択肢がありましたか？"
             ></textarea
-            ><small th:errors="*{alternatives}"></small></label
+            ><small th:errors="*{alternatives}" id="alternatives-error" class="field-error"></small></label
           ><label
             >選択・行動（必須）<textarea
               th:field="*{choiceMade}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('choiceMade')},aria-describedby=${#fields.hasErrors('choiceMade')} ? 'choiceMade-error' : null"
               maxlength="3000"
               placeholder="そのとき、どんな選択や行動をしましたか？"
             ></textarea
-            ><small th:errors="*{choiceMade}"></small></label
+            ><small th:errors="*{choiceMade}" id="choiceMade-error" class="field-error"></small></label
           ><label
             >選んだ理由<textarea
               th:field="*{reason}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('reason')},aria-describedby=${#fields.hasErrors('reason')} ? 'reason-error' : null"
               maxlength="3000"
               placeholder="なぜその選択をしましたか？"
             ></textarea
-            ><small th:errors="*{reason}"></small></label
+            ><small th:errors="*{reason}" id="reason-error" class="field-error"></small></label
           ><label
             >結果（必須）<textarea
               th:field="*{outcome}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('outcome')},aria-describedby=${#fields.hasErrors('outcome')} ? 'outcome-error' : null"
               maxlength="5000"
               placeholder="その後、実際にどうなりましたか？"
             ></textarea
-            ><small th:errors="*{outcome}"></small></label
+            ><small th:errors="*{outcome}" id="outcome-error" class="field-error"></small></label
           ><label
             >良かったこと<textarea
               th:field="*{goodThings}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('goodThings')},aria-describedby=${#fields.hasErrors('goodThings')} ? 'goodThings-error' : null"
               maxlength="3000"
             ></textarea
-            ><small th:errors="*{goodThings}"></small></label
+            ><small th:errors="*{goodThings}" id="goodThings-error" class="field-error"></small></label
           ><label
             >大変だったこと<textarea
               th:field="*{difficulties}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('difficulties')},aria-describedby=${#fields.hasErrors('difficulties')} ? 'difficulties-error' : null"
               maxlength="3000"
             ></textarea
-            ><small th:errors="*{difficulties}"></small></label
+            ><small th:errors="*{difficulties}" id="difficulties-error" class="field-error"></small></label
           ><label
             >想定外だったこと<textarea
               th:field="*{unexpectedThings}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('unexpectedThings')},aria-describedby=${#fields.hasErrors('unexpectedThings')} ? 'unexpectedThings-error' : null"
               maxlength="3000"
             ></textarea
-            ><small th:errors="*{unexpectedThings}"></small
+            ><small th:errors="*{unexpectedThings}" id="unexpectedThings-error" class="field-error"></small
           ></label>
         </section>
         <section class="panel form-section wisdom-form">
@@ -170,19 +203,24 @@
             ここが一番大切な部分です。経験を通して見えてきた教訓を言葉にすることで、自分の判断基準を整理でき、同じ状況にある誰かの助けにもなります。
           </p>
           <label class="lesson-field"
-            >この経験から得た教訓<textarea
+            >この経験から得た教訓（必須）<textarea
               th:field="*{lesson}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('lesson')},aria-describedby=${#fields.hasErrors('lesson')} ? 'lesson-error' : null"
               maxlength="3000"
               placeholder="この経験から得た教訓は何ですか？　次に同じ状況になったら、何を判断基準にしますか？"
-            ></textarea>
+            ></textarea
+            ><small th:errors="*{lesson}" id="lesson-error" class="field-error"></small>
           </label>
           <label
             >今ならどうするか<textarea
               th:field="*{adviceToPastSelf}"
+              th:errorclass="is-invalid"
+              th:attr="aria-invalid=${#fields.hasErrors('adviceToPastSelf')},aria-describedby=${#fields.hasErrors('adviceToPastSelf')} ? 'adviceToPastSelf-error' : null"
               maxlength="3000"
               placeholder="今の自分なら、どう行動しますか？"
             ></textarea
-            ><small th:errors="*{adviceToPastSelf}"></small></label
+            ><small th:errors="*{adviceToPastSelf}" id="adviceToPastSelf-error" class="field-error"></small></label
           ><label
             >後悔・失敗<textarea
               th:field="*{missedRegret}"
@@ -196,15 +234,23 @@
                 type="number"
                 min="1"
                 max="10"
-                th:field="*{satisfaction}" /><small
+                th:field="*{satisfaction}"
+                th:errorclass="is-invalid"
+                th:attr="aria-invalid=${#fields.hasErrors('satisfaction')},aria-describedby=${#fields.hasErrors('satisfaction')} ? 'satisfaction-error' : null"
+              /><small
                 th:errors="*{satisfaction}"
+                id="satisfaction-error"
+                class="field-error"
               ></small></label
             ><label
               >後悔度 1〜10（必須）<input
                 type="number"
                 min="1"
                 max="10"
-                th:field="*{regret}" /><small th:errors="*{regret}"></small
+                th:field="*{regret}"
+                th:errorclass="is-invalid"
+                th:attr="aria-invalid=${#fields.hasErrors('regret')},aria-describedby=${#fields.hasErrors('regret')} ? 'regret-error' : null"
+              /><small th:errors="*{regret}" id="regret-error" class="field-error"></small
             ></label>
           </div>
           <label class="check"
@@ -300,8 +346,10 @@
                 ><label
                   >タイトル（必須）<input
                     th:field="*{lifeEvents[__${stat.index}__].title}"
+                    th:errorclass="is-invalid"
                     maxlength="100" /><small
                     th:errors="*{lifeEvents[__${stat.index}__].title}"
+                    class="field-error"
                   ></small
                 ></label>
               </div>

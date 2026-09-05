@@ -6,6 +6,9 @@ import com.exradar.exception.*;
 import com.exradar.form.*;
 import com.exradar.repository.*;
 import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,18 @@ public class ExperiencePostService {
   private final TagRepository tags;
   private final PersonalValueRepository values;
   private final ExperienceReadRepository reads;
+  private final DuplicatePostDetectionService duplicateDetection;
+
+  /**
+   * TOCTOUレース(異なるsubmissionTokenでの完全同一内容の同時create())発生時、
+   * DB UNIQUE制約違反(DataIntegrityViolationException)を受けたトランザクションの
+   * Hibernateセッションは以後使用できない(壊れた状態のまま操作を続けるとHibernateの
+   * AssertionFailureを誘発する)。復旧のための再検索は必ず新しいトランザクション/
+   * セッションで行う必要があるため、@Transactionalなpublish処理を自己呼び出しではなく
+   * Spring管理プロキシ経由(self)で呼び出し、例外発生時にそのトランザクションを
+   * 確実に終了(ロールバック)させてから復旧処理に入れるようにする。
+   */
+  @Lazy @Autowired private ExperiencePostService self;
 
   public ExperiencePostService(
       ExperiencePostRepository posts,
@@ -31,13 +46,15 @@ public class ExperiencePostService {
       CategoryRepository categories,
       TagRepository tags,
       PersonalValueRepository values,
-      ExperienceReadRepository reads) {
+      ExperienceReadRepository reads,
+      DuplicatePostDetectionService duplicateDetection) {
     this.posts = posts;
     this.users = users;
     this.categories = categories;
     this.tags = tags;
     this.values = values;
     this.reads = reads;
+    this.duplicateDetection = duplicateDetection;
   }
 
   /**
@@ -167,12 +184,51 @@ public class ExperiencePostService {
         .map(p -> ExperienceCardDto.from(p, wisdomUnlocked));
   }
 
-  @Transactional
+  /**
+   * 投稿ボタン連打・通信再送による二重投稿を防止し(submissionTokenの冪等チェック+DB UNIQUE制約)、
+   * 教訓の必須チェック・同一ユーザーの過去投稿との重複チェックを経てから公開する。
+   *
+   * このメソッド自体は@Transactionalを付けない。実際の保存はself.publishNewPost(...)
+   * (別のトランザクション境界)で行い、そこでDB UNIQUE制約違反が起きた場合、その
+   * トランザクション/Hibernateセッションは例外とともに確実にロールバック・破棄される。
+   * その後の復旧処理(トークンでの再検索)は必ず新しいトランザクションで行われるため、
+   * 壊れたセッションを使い回してHibernateのAssertionFailureを誘発することがない。
+   */
   public ExperiencePost create(ExperiencePostForm form, String email) {
     var user = user(email);
+    var token = blankToNull(form.getSubmissionToken());
+    if (token != null) {
+      var existing = posts.findBySubmissionTokenAndAuthorId(token, user.getId());
+      if (existing.isPresent()) return existing.get();
+    }
+    try {
+      return self.publishNewPost(user, form, token);
+    } catch (DataIntegrityViolationException e) {
+      // submission_tokenのUNIQUE制約競合(ごく短時間の多重送信によるレース)。
+      // 既に別リクエストが同じトークンで保存済みのはずなので、その投稿をそのまま返す(冪等)。
+      if (token != null) {
+        var existing = posts.findBySubmissionTokenAndAuthorId(token, user.getId());
+        if (existing.isPresent()) return existing.get();
+      }
+      // トークンでの回収に失敗した場合、原因は(author_id, content_fingerprint)の
+      // UNIQUE制約競合(異なるsubmissionTokenでの完全同一内容の同時送信=TOCTOU)しかあり得ない。
+      // 事前の重複チェック(requireNotDuplicate)をすり抜けたごく短時間のレースなので、
+      // 500にはせず通常の重複投稿と同じユーザー向けエラーへ変換する。
+      throw new IllegalArgumentException(DuplicatePostDetectionService.DUPLICATE_MESSAGE, e);
+    }
+  }
+
+  /** create()から自己プロキシ経由でのみ呼ばれる、独立したトランザクション境界を持つ実際の保存処理。 */
+  @Transactional
+  public ExperiencePost publishNewPost(User user, ExperiencePostForm form, String token) {
+    requireLesson(form);
+    requireNotDuplicate(user, form, null);
+
     var post = new ExperiencePost(user);
     applyContent(post, form);
+    post.assignSubmissionToken(token);
     post.publish();
+    assignPublishedFingerprint(post, form);
     return posts.save(post);
   }
 
@@ -220,9 +276,21 @@ public class ExperiencePostService {
   public ExperiencePost update(Long id, ExperiencePostForm form, String email) {
     var post = find(id);
     requireManage(post, email);
+    requireLesson(form);
+    requireNotDuplicate(post.getAuthor(), form, id);
     applyContent(post, form);
     post.publish();
-    return post;
+    assignPublishedFingerprint(post, form);
+    try {
+      // updateは既存の管理対象エンティティを変更するだけで通常はflushが遅延されるため、
+      // UNIQUE制約違反(TOCTOUレース)をこのメソッド内で確実に捕捉できるよう明示的にflushする。
+      return posts.saveAndFlush(post);
+    } catch (DataIntegrityViolationException e) {
+      // (author_id, content_fingerprint)のUNIQUE制約競合。事前の重複チェック
+      // (requireNotDuplicate)をすり抜けたごく短時間のレースなので、500にはせず
+      // 通常の重複投稿と同じユーザー向けエラーへ変換する。
+      throw new IllegalArgumentException(DuplicatePostDetectionService.DUPLICATE_MESSAGE, e);
+    }
   }
 
   @Transactional
@@ -282,6 +350,46 @@ public class ExperiencePostService {
 
   private String nullToEmpty(String v) {
     return v == null ? "" : v;
+  }
+
+  private String blankToNull(String v) {
+    return v == null || v.isBlank() ? null : v;
+  }
+
+  /**
+   * 教訓の必須チェック(Service側の防御)。Form DTOのBean Validation(ExperiencePostForm.lesson)と
+   * 同じ条件をここでも独立して確認する。Controllerの@Validatedを経由しない将来の呼び出し元
+   * (テスト・別のAPI等)からもこの制約を回避できないようにするため。
+   */
+  private void requireLesson(ExperiencePostForm f) {
+    var lesson = f.getLesson();
+    if (lesson == null || lesson.isBlank())
+      throw new IllegalArgumentException("教訓を入力してください");
+    if (lesson.trim().length() < ExperiencePost.LESSON_MIN_LENGTH)
+      throw new IllegalArgumentException("教訓は" + ExperiencePost.LESSON_MIN_LENGTH + "文字以上で入力してください");
+  }
+
+  /**
+   * 同一ユーザーの過去のPUBLISHED投稿と完全一致・実質同一であれば拒否する
+   * (他ユーザー同士の似た体験談は対象外。DuplicatePostDetectionService参照)。
+   */
+  private void requireNotDuplicate(User author, ExperiencePostForm f, Long excludePostId) {
+    duplicateDetection
+        .checkDuplicateOfOwnPosts(author, f, excludePostId)
+        .ifPresent(
+            message -> {
+              throw new IllegalArgumentException(message);
+            });
+  }
+
+  /**
+   * content_fingerprintは「公開済み(PUBLISHED)投稿のみ」に設定する。下書きでは常にnullのままにし、
+   * (author_id, content_fingerprint)へのDB UNIQUE制約(V22参照)が下書き同士の偶発的な
+   * 一致で失敗しないようにする(標準SQLではUNIQUE制約下でnull同士は衝突しない)。
+   * 呼び出し元(create/update)でpost.publish()の前後どちらで呼んでも結果は同じ。
+   */
+  private void assignPublishedFingerprint(ExperiencePost p, ExperiencePostForm f) {
+    p.assignContentFingerprint(duplicateDetection.fingerprint(duplicateDetection.normalizedTextOf(f)));
   }
 
   private void applyContent(ExperiencePost p, ExperiencePostForm f) {

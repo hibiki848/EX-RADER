@@ -14,6 +14,7 @@ import com.exradar.form.ExperiencePostForm;
 import com.exradar.repository.CategoryRepository;
 import com.exradar.repository.ExperienceReadRepository;
 import com.exradar.repository.ExperiencePostRepository;
+import com.exradar.repository.UserBenefitRepository;
 import com.exradar.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,7 @@ class ExperiencePostControllerTest {
   @Autowired CategoryRepository categories;
   @Autowired ExperiencePostRepository posts;
   @Autowired ExperienceReadRepository reads;
+  @Autowired UserBenefitRepository userBenefits;
   @Autowired PasswordEncoder encoder;
   @Autowired com.exradar.service.ExperiencePostService postService;
 
@@ -85,6 +87,7 @@ class ExperiencePostControllerTest {
                 .param("situationBefore", "状況のみ入力")
                 .param("choiceMade", "選択のみ入力")
                 .param("outcome", "結果のみ入力")
+                .param("lesson", "この経験から得た教訓のみ入力")
                 .param("satisfaction", "7")
                 .param("regret", "3"))
         .andExpect(status().is3xxRedirection());
@@ -117,6 +120,7 @@ class ExperiencePostControllerTest {
                 .param("situationBefore", "状況")
                 .param("choiceMade", "選択")
                 .param("outcome", "結果")
+                .param("lesson", "報酬通知確認用の教訓本文です")
                 .param("satisfaction", "7")
                 .param("regret", "3"))
         .andExpect(status().is3xxRedirection())
@@ -144,6 +148,7 @@ class ExperiencePostControllerTest {
                 .param("goodThings", "良かったこと")
                 .param("difficulties", "大変だったこと")
                 .param("unexpectedThings", "想定外だったこと")
+                .param("lesson", "編集後の教訓本文です")
                 .param("satisfaction", "9")
                 .param("regret", "1")
                 .param("adviceToPastSelf", "アドバイス"))
@@ -175,6 +180,7 @@ class ExperiencePostControllerTest {
                 .param("goodThings", "良かったこと")
                 .param("difficulties", "大変だったこと")
                 .param("unexpectedThings", "想定外だったこと")
+                .param("lesson", "改ざんしようとした教訓本文です")
                 .param("satisfaction", "9")
                 .param("regret", "1")
                 .param("adviceToPastSelf", "アドバイス"))
@@ -379,6 +385,7 @@ class ExperiencePostControllerTest {
                 .param("goodThings", "良かったこと")
                 .param("difficulties", "大変だったこと")
                 .param("unexpectedThings", "想定外だったこと")
+                .param("lesson", "未ログインでの教訓本文です")
                 .param("satisfaction", "8")
                 .param("regret", "2")
                 .param("adviceToPastSelf", "アドバイス"))
@@ -486,6 +493,191 @@ class ExperiencePostControllerTest {
         .contains("tabindex=\"0\"");
   }
 
+  /** 同一submissionTokenでの二重送信(ネットワーク再送やボタン連打を想定)はDBに1件しか残さない。 */
+  @Test
+  void sameSubmissionTokenDoesNotCreateDuplicateRowsOnRepeatedSubmission() throws Exception {
+    var author = users.save(new User("dup-token@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "dup-token-category", 1));
+    long countBefore = posts.count();
+    String token = java.util.UUID.randomUUID().toString();
+
+    for (int i = 0; i < 2; i++) {
+      mvc.perform(
+              post("/experiences")
+                  .with(user(author.getEmail()))
+                  .with(csrf())
+                  .param("categoryId", String.valueOf(category.getId()))
+                  .param("title", "二重送信防止確認用の投稿")
+                  .param("situationBefore", "状況")
+                  .param("choiceMade", "選択")
+                  .param("outcome", "結果")
+                  .param("lesson", "この経験から得た教訓の本文です")
+                  .param("satisfaction", "8")
+                  .param("regret", "2")
+                  .param("submissionToken", token))
+          .andExpect(status().is3xxRedirection());
+    }
+
+    assertThat(posts.count()).isEqualTo(countBefore + 1);
+  }
+
+  /** 同一submissionTokenでの二重送信は特典(RewardService)の重複付与も起こさない。 */
+  @Test
+  void sameSubmissionTokenDoesNotDoubleGrantRewardOnRepeatedSubmission() throws Exception {
+    var author = users.save(new User("dup-token-reward@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "dup-token-reward-category", 1));
+    String token = java.util.UUID.randomUUID().toString();
+
+    for (int i = 0; i < 2; i++) {
+      mvc.perform(
+              post("/experiences")
+                  .with(user(author.getEmail()))
+                  .with(csrf())
+                  .param("categoryId", String.valueOf(category.getId()))
+                  .param("title", "特典重複防止確認用の投稿")
+                  .param("situationBefore", "状況")
+                  .param("choiceMade", "選択")
+                  .param("outcome", "結果")
+                  .param("lesson", "この経験から得た教訓の本文です")
+                  .param("satisfaction", "8")
+                  .param("regret", "2")
+                  .param("submissionToken", token))
+          .andExpect(status().is3xxRedirection());
+    }
+
+    assertThat(userBenefits.findByUserIdOrderByGrantedAtDesc(author.getId())).hasSize(1);
+  }
+
+  /** 教訓が null・空文字・空白のみ・改行のみのいずれでも投稿は拒否され、DBに保存されない。 */
+  @Test
+  void blankLessonInAnyFormIsRejectedAndDoesNotSave() throws Exception {
+    var author = users.save(new User("lesson-blank@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "lesson-blank-category", 1));
+
+    // null相当(パラメータ自体を送らない)・空文字・空白のみ・改行のみ、をそれぞれ確認する
+    java.util.List<org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder> requests =
+        java.util.List.of(
+            baseRequest(author, category, "教訓null確認用"),
+            baseRequest(author, category, "教訓空文字確認用").param("lesson", ""),
+            baseRequest(author, category, "教訓空白のみ確認用").param("lesson", "　　　"),
+            baseRequest(author, category, "教訓改行のみ確認用").param("lesson", "\n\n\n"));
+
+    for (var request : requests) {
+      long countBefore = posts.count();
+      mvc.perform(request)
+          .andExpect(status().isOk())
+          .andExpect(view().name("experiences/form"))
+          .andExpect(model().attributeHasFieldErrors("experiencePostForm", "lesson"));
+      assertThat(posts.count()).isEqualTo(countBefore);
+    }
+  }
+
+  /** 教訓欄のエラーは、ページ上部だけでなく入力欄直下にもaria連携された形で表示される。 */
+  @Test
+  void lessonErrorIsShownInlineUnderTheFieldWithAriaAttributes() throws Exception {
+    var author = users.save(new User("lesson-inline-error@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "lesson-inline-error-category", 1));
+
+    var body =
+        mvc.perform(baseRequest(author, category, "教訓インラインエラー確認用"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    assertThat(body)
+        .contains("id=\"lesson-error\"")
+        .contains("aria-describedby=\"lesson-error\"")
+        .contains("aria-invalid=\"true\"")
+        .contains("教訓を入力してください");
+  }
+
+  /** ページ上部のエラーサマリーには、件数と一覧(教訓を含む)が表示される。 */
+  @Test
+  void errorSummaryShowsCountAndListOfIssues() throws Exception {
+    var author = users.save(new User("error-summary@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "error-summary-category", 1));
+
+    var body =
+        mvc.perform(
+                baseRequest(author, category, "エラーサマリー確認用")
+                    .param("situationBefore", ""))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    assertThat(body)
+        .contains("id=\"error-summary\"")
+        .contains("入力内容を確認してください")
+        .containsPattern("\\d+件の項目に修正が必要です")
+        .contains("教訓を入力してください");
+  }
+
+  /** バリデーションエラーで再表示されても、既に入力していた値(タイトル)は消えずに残る。 */
+  @Test
+  void inputIsPreservedWhenValidationFails() throws Exception {
+    var author = users.save(new User("input-preserved@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "input-preserved-category", 1));
+
+    var body =
+        mvc.perform(
+                baseRequest(author, category, "入力保持確認用のタイトルABCXYZ")
+                    .param("situationBefore", ""))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    assertThat(body).contains("value=\"入力保持確認用のタイトルABCXYZ\"");
+  }
+
+  /** 同一ユーザーが実質同じ内容を再投稿すると、重複エラーが表示され新規行は作られない。 */
+  @Test
+  void resubmittingEssentiallyIdenticalContentIsRejectedAsDuplicate() throws Exception {
+    var author = users.save(new User("dup-content@example.com", encoder.encode("password"), "投稿者", Role.USER));
+    var category = categories.save(new Category("転職", "dup-content-category", 1));
+    mvc.perform(
+            baseRequest(author, category, "重複投稿確認用タイトル")
+                .param("lesson", "この経験から得た教訓です。重複投稿確認用タイトル"))
+        .andExpect(status().is3xxRedirection());
+    long countAfterFirst = posts.count();
+
+    var body =
+        mvc.perform(
+                baseRequest(author, category, "重複投稿確認用タイトル")
+                    .param("lesson", "この経験から得た教訓です。重複投稿確認用タイトル"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("experiences/form"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    assertThat(body).contains(com.exradar.service.DuplicatePostDetectionService.DUPLICATE_MESSAGE);
+    assertThat(posts.count()).isEqualTo(countAfterFirst);
+  }
+
+  /**
+   * 上記の複数テストで共通して使う、教訓以外は有効な最小限のPOSTリクエストを組み立てる。
+   * lessonパラメータは意図的に付与しない(呼び出し側で必要に応じて追加する。付与しなければ
+   * 教訓null相当のケースになる)。submissionTokenは毎回ランダムに発行し、二重送信防止の
+   * 仕組みが別テストの検証と干渉しないようにする。
+   */
+  private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder baseRequest(
+      User author, Category category, String title) {
+    return post("/experiences")
+        .with(user(author.getEmail()))
+        .with(csrf())
+        .param("categoryId", String.valueOf(category.getId()))
+        .param("title", title)
+        .param("situationBefore", "状況の詳細です。" + title)
+        .param("choiceMade", "選んだことです。" + title)
+        .param("outcome", "結果です。" + title)
+        .param("satisfaction", "8")
+        .param("regret", "2")
+        .param("submissionToken", java.util.UUID.randomUUID().toString());
+  }
+
   private Long publish(User author, Category category, String title) {
     var f = new ExperiencePostForm();
     f.setCategoryId(category.getId());
@@ -499,6 +691,7 @@ class ExperiencePostControllerTest {
     f.setGoodThings("良かったこと");
     f.setDifficulties("大変だったこと");
     f.setUnexpectedThings("想定外だったこと");
+    f.setLesson("この経験から得た教訓です。" + title);
     f.setSatisfaction(8);
     f.setRegret(2);
     f.setAdviceToPastSelf("アドバイス");
@@ -527,7 +720,7 @@ class ExperiencePostControllerTest {
     f.setRegret(2);
     f.setAdviceToPastSelf("今ならどうするかの本文");
     f.setDecisionCriteria("判断基準の本文");
-    f.setLesson("教訓の本文");
+    f.setLesson("教訓の本文をここに詳しく記載します");
     f.setLearned("学んだことの本文");
     f.setMissedRegret("後悔の本文");
     return postService.create(f, author.getEmail()).getId();

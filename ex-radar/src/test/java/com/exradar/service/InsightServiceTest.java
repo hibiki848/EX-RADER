@@ -49,9 +49,9 @@ class InsightServiceTest {
 
   @Test
   void aggregatesDistinctContributorsAndRoundsPercent() {
-    postService.create(form(8, 3, true), one.getEmail());
-    postService.create(form(9, 2, false), one.getEmail());
-    postService.create(form(7, 4, true), two.getEmail());
+    postService.create(form(8, 3, true, "その1"), one.getEmail());
+    postService.create(form(9, 2, false, "その2"), one.getEmail());
+    postService.create(form(7, 4, true, ""), two.getEmail());
     var s = insights.publicStatistics().getFirst();
     assertThat(s.postCount()).isEqualTo(3);
     assertThat(s.contributorCount()).isEqualTo(2);
@@ -74,28 +74,28 @@ class InsightServiceTest {
     assertThatThrownBy(() -> insights.detailedStatistics(one.getEmail()))
         .isInstanceOf(ForbiddenOperationException.class);
 
-    postService.create(form(8, 3, true), one.getEmail());
+    postService.create(form(8, 3, true, "1回目"), one.getEmail());
     assertThat(insights.dashboard(one.getEmail()).unlockedLevel()).isOne();
     assertThat(insights.dashboard(one.getEmail()).canSeeBasicStatistics()).isTrue();
     assertThat(insights.dashboard(one.getEmail()).canSeeSimilarUsers()).isFalse();
 
-    postService.create(form(8, 3, true), one.getEmail());
+    postService.create(form(8, 3, true, "2回目"), one.getEmail());
     assertThat(insights.dashboard(one.getEmail()).unlockedLevel()).isEqualTo(2);
     assertThat(insights.dashboard(one.getEmail()).canSeeSimilarUsers()).isTrue();
     assertThatThrownBy(() -> insights.detailedStatistics(one.getEmail()))
         .isInstanceOf(ForbiddenOperationException.class);
 
-    postService.create(form(8, 3, true), one.getEmail());
+    postService.create(form(8, 3, true, "3回目"), one.getEmail());
     assertThatCode(() -> insights.detailedStatistics(one.getEmail())).doesNotThrowAnyException();
     assertThatThrownBy(() -> insights.nextRoutes(one.getEmail()))
         .isInstanceOf(ForbiddenOperationException.class);
 
-    postService.create(form(8, 3, true), one.getEmail());
+    postService.create(form(8, 3, true, "4回目"), one.getEmail());
     assertThatCode(() -> insights.nextRoutes(one.getEmail())).doesNotThrowAnyException();
     assertThatThrownBy(() -> insights.satisfactionTrends(one.getEmail()))
         .isInstanceOf(ForbiddenOperationException.class);
 
-    postService.create(form(8, 3, true), one.getEmail());
+    postService.create(form(8, 3, true, "5回目"), one.getEmail());
     assertThatCode(() -> insights.satisfactionTrends(one.getEmail())).doesNotThrowAnyException();
     assertThat(insights.dashboard(one.getEmail()).unlockedLevel()).isEqualTo(5);
   }
@@ -114,26 +114,31 @@ class InsightServiceTest {
   }
 
   private ExperiencePostForm form(int satisfaction, int regret, boolean again) {
+    return form(satisfaction, regret, again, "");
+  }
+
+  private ExperiencePostForm form(int satisfaction, int regret, boolean again, String variant) {
     var f = new ExperiencePostForm();
     f.setCategoryId(category.getId());
-    f.setTitle("進路選択のその後");
+    f.setTitle("進路選択のその後" + variant);
     f.setAgeAtChoice(22);
     f.setStatusAtChoice("学生");
     f.setCurrentAgeGroup("20代");
     f.setYearsElapsed(2);
-    f.setSituationBefore("進路に迷った");
-    f.setWorries("費用が心配だった");
-    f.setAlternatives("就職する");
-    f.setChoiceMade("進学した");
-    f.setReason("学びたかった");
-    f.setOutcome("専門性を得た");
-    f.setGoodThings("仲間ができた");
-    f.setDifficulties("費用が大変だった");
-    f.setUnexpectedThings("興味が広がった");
+    f.setSituationBefore("進路に迷った" + variant);
+    f.setWorries("費用が心配だった" + variant);
+    f.setAlternatives("就職する" + variant);
+    f.setChoiceMade("進学した" + variant);
+    f.setReason("学びたかった" + variant);
+    f.setOutcome("専門性を得た" + variant);
+    f.setGoodThings("仲間ができた" + variant);
+    f.setDifficulties("費用が大変だった" + variant);
+    f.setUnexpectedThings("興味が広がった" + variant);
+    f.setLesson("この経験から学んだ教訓です" + variant);
     f.setSatisfaction(satisfaction);
     f.setRegret(regret);
     f.setChooseAgain(again);
-    f.setAdviceToPastSelf("比較して決めよう");
+    f.setAdviceToPastSelf("比較して決めよう" + variant);
     return f;
   }
 }

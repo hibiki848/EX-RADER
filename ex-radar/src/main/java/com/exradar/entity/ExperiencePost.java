@@ -6,6 +6,14 @@ import java.util.*;
 @Entity
 @Table(name = "experience_posts")
 public class ExperiencePost extends BaseEntity {
+  /**
+   * 教訓(lesson)を「有効」とみなす最小文字数。投稿フォームのBean Validation
+   * (ExperiencePostForm)・投稿保存時のService層チェック(ExperiencePostService)・
+   * 報酬対象投稿数の判定(ExperiencePostRepository/RewardService)の3箇所で
+   * 条件がずれないよう、ここを唯一の定義箇所とする。
+   */
+  public static final int LESSON_MIN_LENGTH = 10;
+
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   private User author;
 
@@ -96,6 +104,16 @@ public class ExperiencePost extends BaseEntity {
   @Column(nullable = false, length = 20)
   private PostStatus status = PostStatus.DRAFT;
 
+  // 投稿ボタン連打・通信再送による二重投稿の防止用(フォーム表示時にサーバー側で発行するUUID)。
+  // 一度設定したら変更しない。同じ値の投稿は1回しか受理しない(DB UNIQUE制約でも担保)。
+  @Column(name = "submission_token")
+  private String submissionToken;
+
+  // 主要な自由記述項目を正規化・連結してSHA-256でハッシュ化したもの。同一ユーザーの
+  // 過去投稿との完全一致検出を高速化するために保持する(DuplicatePostDetectionService参照)。
+  @Column(name = "content_fingerprint")
+  private String contentFingerprint;
+
   @ManyToMany
   @JoinTable(
       name = "experience_post_tags",
@@ -168,6 +186,24 @@ public class ExperiencePost extends BaseEntity {
 
   public void publish() {
     this.status = PostStatus.PUBLISHED;
+  }
+
+  /** 投稿作成時に一度だけ設定する(以後は変更しない)。二重送信検出のキーとして使う。 */
+  public void assignSubmissionToken(String token) {
+    if (this.submissionToken == null) this.submissionToken = token;
+  }
+
+  /** 本文を正規化・連結してハッシュ化した値を保存する(内容が変わるたびにapplyContent経由で更新される)。 */
+  public void assignContentFingerprint(String fingerprint) {
+    this.contentFingerprint = fingerprint;
+  }
+
+  public String getSubmissionToken() {
+    return submissionToken;
+  }
+
+  public String getContentFingerprint() {
+    return contentFingerprint;
   }
 
   /**
