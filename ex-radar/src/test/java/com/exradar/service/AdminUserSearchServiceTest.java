@@ -59,18 +59,19 @@ class AdminUserSearchServiceTest {
     var f = new ExperiencePostForm();
     f.setCategoryId(category.getId());
     f.setTitle(title);
-    f.setSituationBefore("状況");
-    f.setWorries("悩み");
-    f.setAlternatives("選択肢");
-    f.setChoiceMade("選んだこと");
-    f.setReason("理由");
-    f.setOutcome("結果");
-    f.setGoodThings("良かったこと");
-    f.setDifficulties("大変だったこと");
-    f.setUnexpectedThings("想定外だったこと");
+    f.setSituationBefore("状況の詳細です。" + title + "に関する背景です。");
+    f.setWorries("悩みの内容です。" + title + "について悩みました。");
+    f.setAlternatives("選択肢は複数ありました。" + title + "の場合の代替案です。");
+    f.setChoiceMade("選んだことは、" + title + "に関連する決断です。");
+    f.setReason("理由は、" + title + "を重視したためです。");
+    f.setOutcome("結果として、" + title + "に関する成果を得ました。");
+    f.setGoodThings("良かったことは、" + title + "を通じて得た経験です。");
+    f.setDifficulties("大変だったことは、" + title + "に伴う苦労です。");
+    f.setUnexpectedThings("想定外だったことは、" + title + "に関する発見です。");
+    f.setLesson("この経験から得た教訓は、" + title + "を通じて学んだ内容です。");
     f.setSatisfaction(8);
     f.setRegret(2);
-    f.setAdviceToPastSelf("アドバイス");
+    f.setAdviceToPastSelf("アドバイスとしては、" + title + "を意識することです。");
     postService.create(f, author.getEmail());
   }
 

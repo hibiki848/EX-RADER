@@ -107,10 +107,14 @@ class ExperiencePostServiceTest {
   void oldestSortReturnsAscendingCreatedAt() {
     var first = valid();
     first.setTitle("先に投稿");
+    first.setSituationBefore("将来に不安がありました(1件目)");
+    first.setLesson("この経験から得た教訓の本文です(1件目)");
     service.create(first, owner.getEmail());
     posts.flush();
     var second = valid();
     second.setTitle("後に投稿");
+    second.setSituationBefore("将来に不安がありました(2件目)");
+    second.setLesson("この経験から得た教訓の本文です(2件目)");
     service.create(second, owner.getEmail());
     posts.flush();
 
@@ -293,7 +297,7 @@ class ExperiencePostServiceTest {
   void cardDtoOmitsWisdomFieldsWhenLocked() {
     var f = valid();
     f.setLearned("学んだこと本文");
-    f.setLesson("教訓本文");
+    f.setLesson("教訓本文をここに記載します");
     var saved = service.create(f, owner.getEmail());
     posts.flush();
 
@@ -311,7 +315,7 @@ class ExperiencePostServiceTest {
 
     var unlockedCard = service.search(criteria, 0, "latest", true).getContent().get(0);
     assertThat(unlockedCard.learned()).isEqualTo("学んだこと本文");
-    assertThat(unlockedCard.lesson()).isEqualTo("教訓本文");
+    assertThat(unlockedCard.lesson()).isEqualTo("教訓本文をここに記載します");
 
     assertThat(service.latest(false).get(0).learned()).isNull();
     assertThat(service.latest(true).get(0).learned()).isEqualTo("学んだこと本文");
@@ -379,6 +383,7 @@ class ExperiencePostServiceTest {
     f.setGoodThings("専門性が身についたこと");
     f.setDifficulties("最初の学習");
     f.setUnexpectedThings("仲間が増えたこと");
+    f.setLesson("この経験から得た教訓の本文です");
     f.setSatisfaction(9);
     f.setRegret(2);
     f.setChooseAgain(true);

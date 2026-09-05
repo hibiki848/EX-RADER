@@ -123,7 +123,17 @@ public class ExperiencePostForm {
   @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
   private String missedRegret;
 
-  @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
+  // EXレーダーの中核価値(経験から得られた知恵を他人が使えること)を担保するため、
+  // 公開(投稿する・変更を保存する)時は教訓を必須にする。下書き保存では引き続き空でよい。
+  @NotBlank(message = "教訓を入力してください", groups = PublishValidation.class)
+  @Size(
+      min = ExperiencePost.LESSON_MIN_LENGTH,
+      message = "教訓は" + ExperiencePost.LESSON_MIN_LENGTH + "文字以上で入力してください",
+      groups = PublishValidation.class)
+  @Size(
+      max = 3000,
+      message = "教訓は3000文字以内で入力してください",
+      groups = {DraftValidation.class, PublishValidation.class})
   private String lesson;
 
   @Size(max = 3000, groups = {DraftValidation.class, PublishValidation.class})
@@ -180,6 +190,10 @@ public class ExperiencePostForm {
       message = "人生イベントは20件以内で入力してください",
       groups = {DraftValidation.class, PublishValidation.class})
   private List<LifeEventForm> lifeEvents = new ArrayList<>();
+
+  // 投稿ボタン連打・通信再送による二重投稿の防止用。新規投稿フォーム表示時にController側で
+  // UUIDを発行しhiddenフィールドとして送信する(JS任せにせず、サーバー側で必ず検証する)。
+  private String submissionToken;
 
   public static ExperiencePostForm from(ExperiencePost p) {
     var f = new ExperiencePostForm();
@@ -468,5 +482,13 @@ public class ExperiencePostForm {
 
   public void setTagNames(String v) {
     tagNames = v;
+  }
+
+  public String getSubmissionToken() {
+    return submissionToken;
+  }
+
+  public void setSubmissionToken(String v) {
+    submissionToken = v;
   }
 }

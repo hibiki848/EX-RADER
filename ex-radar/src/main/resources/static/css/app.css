@@ -425,6 +425,33 @@ button:active {
   background: var(--danger);
   color: #1a0a0c;
 }
+/* 二重送信防止(投稿フォーム等): 送信直後にボタンを無効化・文言変更する際の
+   簡易ローディング表示。 */
+.button.is-submitting,
+button.is-submitting {
+  position: relative;
+  padding-right: 2.4em;
+  cursor: default;
+}
+.button.is-submitting::after,
+button.is-submitting::after {
+  content: "";
+  position: absolute;
+  right: 0.9em;
+  top: 50%;
+  width: 1em;
+  height: 1em;
+  margin-top: -0.5em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: button-spin 0.6s linear infinite;
+}
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .button-danger:hover {
   background: #f78790;
   box-shadow: 0 0 0 4px #f46d7522;
@@ -1004,6 +1031,33 @@ textarea:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* 入力検証エラー(投稿フォーム等)。既存の--dangerトークンを使い、他のcyan/amber系
+   アクセントと衝突しない落ち着いた色調にする(派手な赤にしない)。 */
+input.is-invalid,
+select.is-invalid,
+textarea.is-invalid {
+  border-color: var(--danger);
+  background: #f46d750d;
+}
+input.is-invalid:focus-visible,
+select.is-invalid:focus-visible,
+textarea.is-invalid:focus-visible {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px #f46d7526;
+}
+.field-error {
+  display: block;
+  margin-top: 4px;
+  color: #f9b3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.field-error:empty {
+  display: none;
+}
+.field-error:not(:empty)::before {
+  content: "⚠ ";
+}
 select {
   appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
@@ -1054,6 +1108,11 @@ input[type="radio"] {
 .lesson-field textarea {
   border-color: var(--amber);
   border-width: 2px;
+}
+/* エラー時は「重要項目」のamber枠より優先してdangerの枠を出す(入力検証エラーの
+   視認性を優先するため)。 */
+.lesson-field textarea.is-invalid {
+  border-color: var(--danger);
 }
 .form-more {
   display: grid;
@@ -1827,6 +1886,39 @@ input[type="radio"] {
 .detail-page > .success,
 .detail-page > .error {
   display: block;
+}
+/* フォームのエラーサマリー(入力欄ごとのインラインエラーとは別に、
+   ページ上部で件数付きの一覧を示す)。既存の.errorと同系色でまとめる。 */
+.error-summary {
+  display: block;
+  padding: 16px 18px;
+  margin: 0 0 24px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--danger);
+  background: #f46d7514;
+}
+.error-summary:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 3px;
+}
+.error-summary strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.error-summary .error-summary-count {
+  display: block;
+  margin-top: 2px;
+  color: #f9b3b8;
+  font-size: 0.88rem;
+}
+.error-summary ul {
+  margin: 10px 0 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 4px;
+  color: #f9b3b8;
+  font-size: 0.9rem;
 }
 
 /* ============================================================

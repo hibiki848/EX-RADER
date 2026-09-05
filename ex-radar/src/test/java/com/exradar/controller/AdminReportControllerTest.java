@@ -179,6 +179,7 @@ class AdminReportControllerTest {
     f.setGoodThings("良かったこと");
     f.setDifficulties("大変だったこと");
     f.setUnexpectedThings("想定外だったこと");
+    f.setLesson("この経験から得た教訓です。" + title);
     f.setSatisfaction(8);
     f.setRegret(2);
     f.setAdviceToPastSelf("アドバイス");

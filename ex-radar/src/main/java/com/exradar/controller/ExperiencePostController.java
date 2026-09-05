@@ -126,8 +126,12 @@ public class ExperiencePostController {
 
   @GetMapping("/new")
   String createForm(Model model) {
-    if (!model.containsAttribute("experiencePostForm"))
-      model.addAttribute("experiencePostForm", new ExperiencePostForm());
+    if (!model.containsAttribute("experiencePostForm")) {
+      var form = new ExperiencePostForm();
+      // 投稿ボタン連打・通信再送による二重投稿防止用のトークンをここで発行する(hiddenフィールドで送信)。
+      form.setSubmissionToken(java.util.UUID.randomUUID().toString());
+      model.addAttribute("experiencePostForm", form);
+    }
     model.addAttribute("editing", false);
     model.addAttribute("isDraft", true);
     return "experiences/form";
@@ -163,9 +167,18 @@ public class ExperiencePostController {
       model.addAttribute("isDraft", true);
       return "experiences/form";
     }
-    var post = service.create(form, principal.getName());
-    redirect.addFlashAttribute("successMessage", withRewardNotice("経験談を投稿しました", post.getAuthor()));
-    return "redirect:/experiences/" + post.getId();
+    try {
+      var post = service.create(form, principal.getName());
+      redirect.addFlashAttribute("successMessage", withRewardNotice("経験談を投稿しました", post.getAuthor()));
+      return "redirect:/experiences/" + post.getId();
+    } catch (IllegalArgumentException e) {
+      // 教訓未入力・重複投稿等、Bean Validationでは表現しきれないService側の検証エラー。
+      // 入力内容は保持したままフォームへ戻す(グローバルエラーとしてerror-summaryに表示される)。
+      result.reject("business.validation", e.getMessage());
+      model.addAttribute("editing", false);
+      model.addAttribute("isDraft", true);
+      return "experiences/form";
+    }
   }
 
   @PostMapping("/draft")
@@ -258,9 +271,17 @@ public class ExperiencePostController {
       model.addAttribute("isDraft", false);
       return "experiences/form";
     }
-    var post = service.update(id, form, principal.getName());
-    redirect.addFlashAttribute("successMessage", withRewardNotice("体験談を更新しました", post.getAuthor()));
-    return "redirect:/experiences/" + id;
+    try {
+      var post = service.update(id, form, principal.getName());
+      redirect.addFlashAttribute("successMessage", withRewardNotice("体験談を更新しました", post.getAuthor()));
+      return "redirect:/experiences/" + id;
+    } catch (IllegalArgumentException e) {
+      result.reject("business.validation", e.getMessage());
+      model.addAttribute("postId", id);
+      model.addAttribute("editing", true);
+      model.addAttribute("isDraft", false);
+      return "experiences/form";
+    }
   }
 
   @PostMapping("/{id}/draft")

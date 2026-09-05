@@ -1,6 +1,7 @@
 package com.exradar.service;
 
 import com.exradar.entity.BenefitSourceType;
+import com.exradar.entity.ExperiencePost;
 import com.exradar.entity.Notification;
 import com.exradar.entity.NotificationType;
 import com.exradar.entity.PostRewardMilestone;
@@ -19,9 +20,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 「特典対象投稿数」に応じたプレミアム特典の自動付与を担う。特典対象投稿数は
- * ExperiencePostRepository.countByAuthorIdAndStatus(authorId, PUBLISHED)で判定する
+ * ExperiencePostRepository.countRewardEligibleByAuthorIdで判定する: PUBLISHEDであること
  * (下書き・削除済み・管理者による非公開対応済みの投稿は、既存のPostStatus設計上すべて
- * PUBLISHED以外になるため、追加のフラグ管理なしに自動的に除外される)。
+ * PUBLISHED以外になるため、追加のフラグ管理なしに自動的に除外される)に加えて、教訓
+ * (lesson)が投稿フォームと同じ条件(空白のみは不可・ExperiencePost.LESSON_MIN_LENGTH文字
+ * 以上)で実際に有効であることも独立して確認する。投稿フォーム側のバリデーション
+ * (教訓必須)が将来何らかの理由で回避されても、ここでの再確認により教訓が無効な投稿が
+ * 報酬対象として水増しされることはない。
+ *
+ * 重複・実質重複投稿は投稿保存時点(ExperiencePostService)で拒否され、そもそもDBへ
+ * 保存されないため、ここで改めて重複除外の判定を行う必要はない。
  *
  * 通常投稿は投稿完了時点(create/update経由でPUBLISHEDになった瞬間)で即座に特典対象として扱い、
  * 審査待ちにはしない。ただし後から管理者が不正投稿としてhideByModeration()した場合、
@@ -66,7 +74,9 @@ public class RewardService {
 
   @Transactional(readOnly = true)
   public int eligiblePostCount(Long userId) {
-    return (int) posts.countByAuthorIdAndStatus(userId, PostStatus.PUBLISHED);
+    return (int)
+        posts.countRewardEligibleByAuthorId(
+            userId, PostStatus.PUBLISHED, ExperiencePost.LESSON_MIN_LENGTH);
   }
 
   /** マイページの進捗表示用。次に到達する閾値と、それによって得られる特典名を返す。 */

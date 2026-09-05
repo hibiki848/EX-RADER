@@ -53,6 +53,23 @@ public interface ExperiencePostRepository
   /** 投稿報酬(RewardService)の特典対象投稿数の判定に使う。DRAFTには「未公開」「管理者による非公開対応」両方が含まれるため、これらは自動的にカウント対象から除外される。 */
   long countByAuthorIdAndStatus(Long authorId, PostStatus status);
 
+  /**
+   * 投稿報酬の特典対象投稿数。単にPUBLISHEDであるだけでなく、教訓(lesson)が投稿フォームと
+   * 同じ条件(空白のみは不可・ExperiencePost.LESSON_MIN_LENGTH文字以上)で実際に有効な投稿
+   * のみを対象にする(RewardService参照。投稿フォーム側のバリデーションが将来的に不具合を
+   * 起こしても、ここで独立して教訓の有効性を再確認することで報酬の水増しを防ぐ)。
+   */
+  @Query(
+      "select count(p) from ExperiencePost p where p.author.id = :authorId and p.status = :status"
+          + " and p.lesson is not null and length(trim(p.lesson)) >= :minLessonLength")
+  long countRewardEligibleByAuthorId(
+      @Param("authorId") Long authorId,
+      @Param("status") PostStatus status,
+      @Param("minLessonLength") int minLessonLength);
+
+  /** 投稿ボタン連打・通信再送による二重投稿防止(submissionToken)の冪等性チェックに使う。 */
+  Optional<ExperiencePost> findBySubmissionTokenAndAuthorId(String submissionToken, Long authorId);
+
   long countByStatus(PostStatus status);
 
   long countByCreatedAtAfter(LocalDateTime since);
